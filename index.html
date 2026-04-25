@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SPD Incident Tracker</title>
+  
+  <style>
+    :root {
+      --bg: #0b0e18;
+      --bg2: #111827;
+      --bg3: #1a2236;
+      --text: #edf0fa;
+      --text2: #9da8c4;
+      --text3: #606880;
+      --border: rgba(255,255,255,0.12);
+      --accent: #2979e8;
+      --green: #22c55e;
+      --red: #ef4444;
+      --font: 'Courier New', monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html, body {
+      height: 100%;
+      width: 100%;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 13px;
+    }
+
+    .screen {
+      display: none;
+      width: 100%;
+      height: 100vh;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 40px;
+    }
+
+    .screen.active {
+      display: flex;
+    }
+
+    .container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 30px;
+      max-width: 400px;
+      width: 100%;
+    }
+
+    .logo {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .logo-icon {
+      font-size: 60px;
+      margin-bottom: 10px;
+    }
+
+    .logo-title {
+      font-size: 32px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      color: var(--text);
+    }
+
+    .logo-subtitle {
+      font-size: 11px;
+      color: var(--text3);
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      margin-top: 8px;
+    }
+
+    .form-group {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+
+    .form-group label {
+      font-size: 10px;
+      color: var(--text3);
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+    }
+
+    .form-group input {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 14px;
+      border-radius: 6px;
+      font-family: var(--font);
+      font-size: 14px;
+      transition: all 0.15s;
+    }
+
+    .form-group input:focus {
+      outline: none;
+      border-color: var(--accent);
+      background: #1a2236;
+    }
+
+    .button-group {
+      width: 100%;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-top: 10px;
+    }
+
+    .btn {
+      padding: 14px 20px;
+      border: 1px solid var(--border);
+      background: var(--bg3);
+      color: var(--text2);
+      border-radius: 6px;
+      font-family: var(--font);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      cursor: pointer;
+      transition: all 0.15s;
+      text-transform: uppercase;
+    }
+
+    .btn:hover {
+      background: #1f2d3d;
+      border-color: var(--accent);
+      color: var(--text);
+    }
+
+    .btn.primary {
+      background: rgba(41, 121, 232, 0.15);
+      border-color: var(--accent);
+      color: var(--accent);
+      grid-column: 1 / -1;
+      padding: 16px;
+      font-size: 13px;
+    }
+
+    .btn.primary:hover {
+      background: rgba(41, 121, 232, 0.25);
+      color: #fff;
+    }
+
+    .error-msg {
+      color: var(--red);
+      font-size: 12px;
+      text-align: center;
+      min-height: 20px;
+    }
+
+    .version {
+      font-size: 10px;
+      color: var(--text3);
+      margin-top: 20px;
+      text-align: center;
+    }
+  </style>
+</head>
+
+<body>
+
+<!-- LOGIN SCREEN -->
+<div class="screen active" id="login-screen">
+  <div class="container">
+    <div class="logo">
+      <div class="logo-icon">🛡️</div>
+      <div class="logo-title">INCIDENT<br>TRACKER</div>
+      <div class="logo-subtitle">Shrewsbury Police Department</div>
+    </div>
+
+    <div class="form-group" style="width: 100%;">
+      <div>
+        <label>Username</label>
+        <input id="username" type="text" placeholder="Enter username" autocomplete="off">
+      </div>
+
+      <div>
+        <label>Password</label>
+        <input id="password" type="password" placeholder="Enter password" autocomplete="off">
+      </div>
+
+      <div class="error-msg" id="error"></div>
+
+      <div class="button-group">
+        <button class="btn" onclick="loginAdmin()">Admin</button>
+        <button class="btn" onclick="loginIC()">IC</button>
+      </div>
+    </div>
+
+    <div class="version">v1.0 | Real-Time GPS Tracking</div>
+  </div>
+</div>
+
+<!-- ADMIN SCREEN (PLACEHOLDER) -->
+<div class="screen" id="admin-screen">
+  <div class="container">
+    <h1>ADMIN</h1>
+    <button class="btn primary" onclick="logout()">LOGOUT</button>
+  </div>
+</div>
+
+<!-- IC SCREEN (PLACEHOLDER) -->
+<div class="screen" id="ic-screen">
+  <div class="container">
+    <h1>IC DASHBOARD</h1>
+    <button class="btn primary" onclick="logout()">LOGOUT</button>
+  </div>
+</div>
+
+<!-- FIREBASE -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+
+<script>
+// Firebase config
+const firebaseConfig = {
+  apiKey: "AIzaSyC-56rq9DEw2U0XJ37O8rujeO6O4zAphXE",
+  authDomain: "shrewsbury-pd-track.firebaseapp.com",
+  databaseURL: "https://shrewsbury-pd-track-default-rtdb.firebaseio.com",
+  projectId: "shrewsbury-pd-track",
+  storageBucket: "shrewsbury-pd-track.firebasestorage.app",
+  messagingSenderId: "183303387326",
+  appId: "1:183303387326:web:09b8659a1004aa42bbc6ef"
+};
+
+// Initialize Firebase
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+// State
+let currentUser = null;
+let userRole = null;
+
+// Show error
+function showError(msg) {
+  const el = document.getElementById('error');
+  el.textContent = msg;
+  setTimeout(() => el.textContent = '', 3000);
+}
+
+// Show screen
+function showScreen(screenId) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(screenId).classList.add('active');
+}
+
+// Login as Admin
+async function loginAdmin() {
+  const username = document.getElementById('username').value.trim();
+  const password = document.getElementById('password').value.trim();
+
+  if (!username || !password) {
+    showError('Enter username and password');
+    return;
+  }
+
+  // Check hardcoded admin
+  if (username === 'admin' && password === '1234') {
+    currentUser = username;
+    userRole = 'admin';
+    document.getElementById('username').value = '';
+    document.getElementById('password').value = '';
+    showScreen('admin-screen');
+    return;
+  }
+
+  showError('Invalid credentials');
+}
+
+// Login as IC
+async function loginIC() {
+  const username = document.getElementById('username').value.trim();
+  const password = document.getElementById('password').value.trim();
+
+  if (!username || !password) {
+    showError('Enter username and password');
+    return;
+  }
+
+  try {
+    const snap = await db.ref('ics/' + username).once('value');
+    const ic = snap.val();
+    if (ic && ic.password === password) {
+      currentUser = username;
+      userRole = 'ic';
+      document.getElementById('username').value = '';
+      document.getElementById('password').value = '';
+      showScreen('ic-screen');
+      return;
+    }
+  } catch (err) {
+    console.error('Firebase error:', err);
+  }
+
+  showError('Invalid credentials');
+}
+
+// Logout
+function logout() {
+  currentUser = null;
+  userRole = null;
+  document.getElementById('username').value = '';
+  document.getElementById('password').value = '';
+  showScreen('login-screen');
+}
+
+// Allow Enter key
+document.addEventListener('keypress', (e) => {
+  if (e.key === 'Enter') {
+    if (document.getElementById('login-screen').classList.contains('active')) {
+      loginAdmin();
+    }
+  }
+});
+</script>
+
+</body>
+</html>

@@ -268,18 +268,112 @@
 </div>
 
 <div class="screen" id="screen-officer-status">
-  <div style="text-align: center;">
-    <h1>Officer Status</h1>
-    <p>(Coming soon)</p>
-    <button class="btn primary" onclick="logout()">Logout</button>
+  <div style="width: 100%; max-width: 500px; padding: 20px; text-align: center;">
+    <div style="font-size: 28px; color: var(--green); margin-bottom: 15px;">✓</div>
+    <div style="font-size: 24px; font-weight: 700; color: var(--text); margin-bottom: 8px;">CHECKED IN</div>
+    <div style="font-size: 13px; color: var(--text2); margin-bottom: 30px;" id="officer-status-name">--</div>
+    
+    <div style="background: var(--bg3); border: 1px solid var(--border2); padding: 20px; border-radius: 6px; margin-bottom: 20px; text-align: left;">
+      <div style="font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px;">Officer Details</div>
+      <div style="font-size: 12px; color: var(--text); line-height: 1.8;">
+        <div><strong>Badge:</strong> <span id="status-badge">--</span></div>
+        <div><strong>Agency:</strong> <span id="status-agency">--</span></div>
+        <div><strong>Role:</strong> <span id="status-role">--</span></div>
+        <div><strong>Department:</strong> <span id="status-department">--</span></div>
+      </div>
+    </div>
+    
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 15px;">
+      <button type="button" class="btn" onclick="editOfficerInfo()" style="width: 100%;">📝 UPDATE</button>
+      <button type="button" class="btn" onclick="savePosition()" style="width: 100%;">📍 SAVE GPS</button>
+    </div>
+    
+    <button type="button" class="btn primary" onclick="checkoutOfficer()" style="width: 100%; background: rgba(239, 68, 68, 0.15); border-color: var(--red); color: var(--red);">CHECK OUT</button>
   </div>
 </div>
 
 <div class="screen" id="screen-checkin">
-  <div style="text-align: center;">
-    <h1>Check-In Form</h1>
-    <p>(Coming soon)</p>
-    <button class="btn primary" onclick="backToLogin()">Back</button>
+  <div style="width: 100%; max-width: 500px; padding: 20px;">
+    <!-- Header -->
+    <div style="text-align: center; margin-bottom: 30px;">
+      <div style="font-size: 24px; font-weight: 700; color: var(--text);">CHECK IN</div>
+      <div style="font-size: 11px; color: var(--text3); margin-top: 6px; letter-spacing: 1px; text-transform: uppercase;" id="checkin-incident">--</div>
+    </div>
+
+    <!-- Form -->
+    <form onsubmit="submitCheckin(event)" style="display: flex; flex-direction: column; gap: 15px;">
+      
+      <!-- Name Fields -->
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+        <div>
+          <label style="font-size: 10px; color: var(--text3); letter-spacing: 1px; text-transform: uppercase; display: block; margin-bottom: 6px;">Last Name</label>
+          <input id="ci-last" type="text" placeholder="Smith" required style="width: 100%; background: var(--bg3); border: 1px solid var(--border2); color: var(--text); padding: 12px; border-radius: 6px; font-family: var(--font); font-size: 13px;">
+        </div>
+        <div>
+          <label style="font-size: 10px; color: var(--text3); letter-spacing: 1px; text-transform: uppercase; display: block; margin-bottom: 6px;">First Name</label>
+          <input id="ci-first" type="text" placeholder="John" style="width: 100%; background: var(--bg3); border: 1px solid var(--border2); color: var(--text); padding: 12px; border-radius: 6px; font-family: var(--font); font-size: 13px;">
+        </div>
+      </div>
+
+      <!-- Badge -->
+      <div>
+        <label style="font-size: 10px; color: var(--text3); letter-spacing: 1px; text-transform: uppercase; display: block; margin-bottom: 6px;">Badge / Unit #</label>
+        <input id="ci-badge" type="text" placeholder="412" required style="width: 100%; background: var(--bg3); border: 1px solid var(--border2); color: var(--text); padding: 12px; border-radius: 6px; font-family: var(--font); font-size: 16px; letter-spacing: 2px; font-weight: 700;">
+      </div>
+
+      <!-- Agency Selector -->
+      <div>
+        <label style="font-size: 10px; color: var(--text3); letter-spacing: 1px; text-transform: uppercase; display: block; margin-bottom: 8px;">Agency</label>
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px;">
+          <button type="button" class="agency-btn" data-agency="Police" onclick="selectAgency(this, 'Police')" style="padding: 12px; background: var(--bg3); border: 1px solid var(--border2); color: var(--text2); border-radius: 6px; font-size: 12px; font-weight: 700; cursor: pointer; transition: all 0.15s;">🛡️ Police</button>
+          <button type="button" class="agency-btn" data-agency="Fire" onclick="selectAgency(this, 'Fire')" style="padding: 12px; background: var(--bg3); border: 1px solid var(--border2); color: var(--text2); border-radius: 6px; font-size: 12px; font-weight: 700; cursor: pointer; transition: all 0.15s;">🚒 Fire</button>
+          <button type="button" class="agency-btn" data-agency="EMS" onclick="selectAgency(this, 'EMS')" style="padding: 12px; background: var(--bg3); border: 1px solid var(--border2); color: var(--text2); border-radius: 6px; font-size: 12px; font-weight: 700; cursor: pointer; transition: all 0.15s;">⚕️ EMS</button>
+        </div>
+      </div>
+
+      <!-- Roles (Dynamic) -->
+      <div id="role-container" style="display: none;">
+        <label style="font-size: 10px; color: var(--text3); letter-spacing: 1px; text-transform: uppercase; display: block; margin-bottom: 8px;">Role</label>
+        <div id="role-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+        </div>
+      </div>
+
+      <!-- Department -->
+      <div>
+        <label style="font-size: 10px; color: var(--text3); letter-spacing: 1px; text-transform: uppercase; display: block; margin-bottom: 6px;">Department</label>
+        <input id="ci-department" type="text" placeholder="e.g. Shrewsbury PD, Marlborough Fire" style="width: 100%; background: var(--bg3); border: 1px solid var(--border2); color: var(--text); padding: 12px; border-radius: 6px; font-family: var(--font); font-size: 13px;">
+      </div>
+
+      <!-- CHECK IN Button -->
+      <button type="submit" class="btn primary" style="padding: 18px; font-size: 14px; margin-top: 10px;">CHECK IN</button>
+
+      <!-- Expandable More Info -->
+      <button type="button" class="btn" onclick="toggleMoreInfo()" style="width: 100%; margin-top: 8px; padding: 12px; font-size: 11px;">+ MORE INFORMATION</button>
+
+      <div id="more-info-section" style="display: none; border-top: 1px solid var(--border2); padding-top: 15px; margin-top: 15px;">
+        <div style="margin-bottom: 12px;">
+          <label style="font-size: 10px; color: var(--text3); letter-spacing: 1px; text-transform: uppercase; display: block; margin-bottom: 6px;">Radio Channel</label>
+          <input id="ci-radio" type="text" placeholder="CH1" style="width: 100%; background: var(--bg3); border: 1px solid var(--border2); color: var(--text); padding: 12px; border-radius: 6px; font-family: var(--font); font-size: 13px;">
+        </div>
+
+        <div style="margin-bottom: 12px;">
+          <label style="font-size: 10px; color: var(--text3); letter-spacing: 1px; text-transform: uppercase; display: block; margin-bottom: 6px;">Cell Number</label>
+          <input id="ci-phone" type="tel" placeholder="555-1234" style="width: 100%; background: var(--bg3); border: 1px solid var(--border2); color: var(--text); padding: 12px; border-radius: 6px; font-family: var(--font); font-size: 13px;">
+        </div>
+
+        <div style="margin-bottom: 12px;">
+          <label style="font-size: 10px; color: var(--text3); letter-spacing: 1px; text-transform: uppercase; display: block; margin-bottom: 6px;">Vehicle / Equipment</label>
+          <input id="ci-vehicle" type="text" placeholder="Unit 12" style="width: 100%; background: var(--bg3); border: 1px solid var(--border2); color: var(--text); padding: 12px; border-radius: 6px; font-family: var(--font); font-size: 13px;">
+        </div>
+
+        <div>
+          <label style="font-size: 10px; color: var(--text3); letter-spacing: 1px; text-transform: uppercase; display: block; margin-bottom: 6px;">Notes</label>
+          <textarea id="ci-notes" placeholder="Any additional info..." style="width: 100%; background: var(--bg3); border: 1px solid var(--border2); color: var(--text); padding: 12px; border-radius: 6px; font-family: var(--font); font-size: 13px; resize: none; height: 80px;"></textarea>
+        </div>
+      </div>
+
+      <div class="error" id="checkin-error" style="margin-top: 10px;"></div>
+    </form>
   </div>
 </div>
 
@@ -517,10 +611,222 @@ function showScreen(screenId) {
 
 // Initialize check-in form
 function initCheckInForm() {
-  // Will be filled in Step 3
+  const verified = JSON.parse(localStorage.getItem('spd-incident-verified'));
+  if (verified) {
+    document.getElementById('checkin-incident').textContent = verified.incidentName || 'Incident ' + verified.incidentId;
+  }
+  document.getElementById('ci-last').focus();
 }
 
-// Logout
+// Select agency and show/populate roles
+window.selectedAgency = null;
+window.selectedRole = null;
+
+function selectAgency(btn, agency) {
+  window.selectedAgency = agency;
+  
+  // Update button styles
+  document.querySelectorAll('.agency-btn').forEach(b => {
+    b.style.background = 'var(--bg3)';
+    b.style.borderColor = 'var(--border2)';
+    b.style.color = 'var(--text2)';
+  });
+  btn.style.background = 'rgba(41, 121, 232, 0.15)';
+  btn.style.borderColor = 'var(--accent)';
+  btn.style.color = 'var(--accent)';
+  
+  // Show role container and populate
+  const roleOptions = {
+    'Police': ['Patrol', 'Supervisor', 'K9', 'Drone', 'Other'],
+    'Fire': ['Firefighter', 'Officer', 'Chief', 'Other'],
+    'EMS': ['Paramedic', 'EMT', 'Supervisor', 'Other']
+  };
+  
+  const roles = roleOptions[agency] || [];
+  const roleGrid = document.getElementById('role-grid');
+  roleGrid.innerHTML = roles.map(role => 
+    `<button type="button" class="role-btn" onclick="selectRole(this, '${role}')" style="padding: 10px; background: var(--bg3); border: 1px solid var(--border2); color: var(--text2); border-radius: 6px; font-size: 11px; font-weight: 700; cursor: pointer; transition: all 0.15s;">${role}</button>`
+  ).join('');
+  
+  document.getElementById('role-container').style.display = 'block';
+  window.selectedRole = null;
+}
+
+function selectRole(btn, role) {
+  window.selectedRole = role;
+  
+  // Update button styles
+  document.querySelectorAll('.role-btn').forEach(b => {
+    b.style.background = 'var(--bg3)';
+    b.style.borderColor = 'var(--border2)';
+    b.style.color = 'var(--text2)';
+  });
+  btn.style.background = 'rgba(41, 121, 232, 0.15)';
+  btn.style.borderColor = 'var(--accent)';
+  btn.style.color = 'var(--accent)';
+}
+
+// Toggle more info section
+function toggleMoreInfo() {
+  const section = document.getElementById('more-info-section');
+  section.style.display = section.style.display === 'none' ? 'block' : 'none';
+}
+
+// Submit check-in
+async function submitCheckin(event) {
+  event.preventDefault();
+  
+  const last = document.getElementById('ci-last').value.trim();
+  const first = document.getElementById('ci-first').value.trim();
+  const badge = document.getElementById('ci-badge').value.trim();
+  const department = document.getElementById('ci-department').value.trim();
+  const errorEl = document.getElementById('checkin-error');
+  
+  if (!last) {
+    errorEl.textContent = '❌ Enter last name';
+    errorEl.classList.add('show');
+    return;
+  }
+  
+  if (!badge) {
+    errorEl.textContent = '❌ Enter badge number';
+    errorEl.classList.add('show');
+    return;
+  }
+  
+  if (!window.selectedAgency) {
+    errorEl.textContent = '❌ Select agency';
+    errorEl.classList.add('show');
+    return;
+  }
+  
+  if (!window.selectedRole) {
+    errorEl.textContent = '❌ Select role';
+    errorEl.classList.add('show');
+    return;
+  }
+
+  const verified = JSON.parse(localStorage.getItem('spd-incident-verified'));
+  const incidentId = verified.incidentId;
+  
+  // Create officer record
+  const officerId = 'off-' + Date.now().toString(36);
+  const officer = {
+    id: officerId,
+    lastName: last,
+    firstName: first,
+    badge: badge,
+    agency: window.selectedAgency,
+    role: window.selectedRole,
+    department: department || 'Unknown',
+    radio: document.getElementById('ci-radio').value.trim(),
+    phone: document.getElementById('ci-phone').value.trim(),
+    vehicle: document.getElementById('ci-vehicle').value.trim(),
+    notes: document.getElementById('ci-notes').value.trim(),
+    deviceId: window.deviceId,
+    incidentId: incidentId,
+    status: 'On Scene',
+    checkinTime: new Date().toISOString(),
+    lat: null,
+    lng: null,
+    accuracy: null
+  };
+  
+  try {
+    // Save to Firebase
+    await db.ref('incidents/' + incidentId + '/officers/' + officerId).set(officer);
+    
+    // Save to local storage for quick reference
+    localStorage.setItem('spd-current-officer', JSON.stringify(officer));
+    
+    window.currentOfficer = officer;
+    window.userRole = 'officer';
+    
+    // Go to officer status screen
+    showScreen('screen-officer-status');
+    initOfficerStatus();
+  } catch (err) {
+    console.error('Check-in error:', err);
+    errorEl.textContent = '❌ Check-in failed: ' + err.message;
+    errorEl.classList.add('show');
+  }
+}
+
+// Initialize officer status screen
+function initOfficerStatus() {
+  const officer = window.currentOfficer;
+  document.getElementById('officer-status-name').textContent = officer.firstName + ' ' + officer.lastName;
+  document.getElementById('status-badge').textContent = officer.badge;
+  document.getElementById('status-agency').textContent = officer.agency;
+  document.getElementById('status-role').textContent = officer.role;
+  document.getElementById('status-department').textContent = officer.department;
+}
+
+// Edit officer info
+function editOfficerInfo() {
+  // Step 4 will implement this
+  alert('Update feature coming in next step');
+}
+
+// Save GPS position
+function savePosition() {
+  if (!navigator.geolocation) {
+    alert('GPS not available on this device');
+    return;
+  }
+  
+  navigator.geolocation.getCurrentPosition((pos) => {
+    const officer = window.currentOfficer;
+    const lat = pos.coords.latitude;
+    const lng = pos.coords.longitude;
+    const accuracy = pos.coords.accuracy;
+    
+    officer.lat = lat;
+    officer.lng = lng;
+    officer.accuracy = accuracy;
+    
+    // Update Firebase
+    const verified = JSON.parse(localStorage.getItem('spd-incident-verified'));
+    db.ref('incidents/' + verified.incidentId + '/officers/' + officer.id).update({
+      lat: lat,
+      lng: lng,
+      accuracy: accuracy
+    });
+    
+    localStorage.setItem('spd-current-officer', JSON.stringify(officer));
+    alert('✓ Position saved');
+  }, (err) => {
+    alert('Unable to get location: ' + err.message);
+  });
+}
+
+// Checkout officer
+async function checkoutOfficer() {
+  if (!confirm('Check out ' + window.currentOfficer.firstName + ' ' + window.currentOfficer.lastName + '?')) {
+    return;
+  }
+  
+  try {
+    const officer = window.currentOfficer;
+    const verified = JSON.parse(localStorage.getItem('spd-incident-verified'));
+    
+    // Remove from Firebase
+    await db.ref('incidents/' + verified.incidentId + '/officers/' + officer.id).remove();
+    
+    // Clear local storage
+    localStorage.removeItem('spd-current-officer');
+    localStorage.removeItem('spd-incident-verified');
+    
+    window.currentOfficer = null;
+    window.userRole = null;
+    
+    // Back to login
+    showScreen('screen-login');
+  } catch (err) {
+    console.error('Checkout error:', err);
+    alert('Checkout failed: ' + err.message);
+  }
+}
 function logout() {
   window.currentUser = null;
   window.userRole = null;

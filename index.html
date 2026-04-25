@@ -394,6 +394,19 @@ input,select,textarea{font-family:var(--font);}
 .mb4{margin-bottom:4px;}.mb8{margin-bottom:8px;}
 .text-center{text-align:center;}
 </style>
+
+<script>
+// Stub functions to prevent errors before main script loads
+window.verifyICLogin = window.verifyICLogin || function() { console.log('verifyICLogin stub'); };
+window.verifyAdminLogin = window.verifyAdminLogin || function() { console.log('verifyAdminLogin stub'); };
+window.showScreen = window.showScreen || function(id) { 
+  var screens = document.querySelectorAll('.screen');
+  for (var i = 0; i < screens.length; i++) screens[i].style.display = 'none';
+  var s = document.getElementById(id);
+  if (s) s.style.display = 'flex';
+};
+</script>
+
 </head>
 <body>
 

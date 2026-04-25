@@ -466,7 +466,59 @@ input,select,textarea{font-family:var(--font);}
      SCREEN: LANDING
      ══════════════════════════════════════════ -->
 <!-- DISPATCHER LOGIN SCREEN -->
+<div class="screen" id="screen-dispatcher-login" style="display:none;background:var(--bg);">
+  <div style="padding:20px;text-align:center;margin-top:40px;">
+    <div style="font-size:40px;margin-bottom:16px;">📡</div>
+    <div style="font-size:13px;font-weight:700;letter-spacing:3px;color:rgba(168,85,247,.7);text-transform:uppercase;margin-bottom:4px;">Dispatch</div>
+    <div style="font-size:18px;font-weight:700;color:#edf0fa;margin-bottom:24px;">View Only Access</div>
+    
+    <div style="max-width:320px;margin:0 auto;">
+      <input id="dispatcher-username" type="text" placeholder="Dispatcher username" style="width:100%;background:var(--bg2);border:1px solid var(--border);color:var(--text);padding:12px;border-radius:6px;font-size:14px;margin-bottom:10px;font-family:monospace;" autocomplete="off" />
+      <input id="dispatcher-password" type="password" placeholder="Password" style="width:100%;background:var(--bg2);border:1px solid var(--border);color:var(--text);padding:12px;border-radius:6px;font-size:14px;margin-bottom:8px;font-family:monospace;" autocomplete="off" onkeypress="if(event.key==='Enter') verifyDispatcherLogin()" />
+      <div id="dispatcher-error" style="color:var(--red);font-size:10px;margin-bottom:12px;display:none;font-weight:700;"></div>
+      <button onclick="verifyDispatcherLogin()" style="width:100%;background:rgba(168,85,247,.15);color:#edf0fa;border:1px solid rgba(168,85,247,.5);padding:12px;border-radius:6px;font-family:monospace;font-size:11px;font-weight:700;letter-spacing:2px;cursor:pointer;text-transform:uppercase;margin-bottom:8px;" onmouseover="this.style.background='rgba(168,85,247,.28)'" onmouseout="this.style.background='rgba(168,85,247,.15)'">Login</button>
+      <button onclick="showScreen('screen-landing')" style="width:100%;background:transparent;color:var(--text3);border:1px solid var(--border);padding:10px;border-radius:6px;font-family:monospace;font-size:10px;font-weight:700;cursor:pointer;">Back</button>
+      <div style="font-size:9px;color:var(--text3);margin-top:12px;">Accounts created by admin</div>
+    </div>
+  </div>
+</div>
+
 <!-- DISPATCHER VIEW SCREEN -->
+<div class="screen" id="screen-dispatcher" style="display:none;background:var(--bg);">
+  <div style="padding:16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
+    <div>
+      <div style="font-size:13px;font-weight:700;letter-spacing:2px;color:var(--text);text-transform:uppercase;" id="dispatcher-header">📡 Dispatch</div>
+      <div style="font-size:10px;color:var(--text3);margin-top:2px;">View Only</div>
+    </div>
+    <button class="btn btn-secondary btn-sm" onclick="dispatcherLogout()" style="margin:0;">Logout</button>
+  </div>
+
+  <div style="padding:16px;overflow-y:auto;height:calc(100% - 60px);">
+    
+    <!-- Incident Selector -->
+    <div style="margin-bottom:16px;">
+      <label style="font-size:11px;color:var(--text2);display:block;margin-bottom:6px;">ACTIVE INCIDENT</label>
+      <select id="dispatcher-incident-select" onchange="dispatcherLoadIncident()" style="width:100%;background:var(--bg2);border:1px solid var(--border);color:var(--text);padding:10px;border-radius:6px;font-size:12px;font-family:monospace;">
+        <option>Loading incidents...</option>
+      </select>
+    </div>
+
+    <!-- Personnel List -->
+    <div>
+      <div style="font-size:11px;font-weight:700;color:var(--accent);margin-bottom:10px;">PERSONNEL ON SCENE</div>
+      <div id="dispatcher-officers-list" style="display:flex;flex-direction:column;gap:8px;">
+        <div style="color:var(--text3);font-size:11px;">Loading...</div>
+      </div>
+    </div>
+
+    <!-- Map View -->
+    <div style="margin-top:16px;border:1px solid var(--border);border-radius:6px;overflow:hidden;height:300px;">
+      <div id="dispatcher-map" style="width:100%;height:100%;"></div>
+    </div>
+
+  </div>
+</div>
+
 <!-- ADMIN LOGIN SCREEN -->
 <div class="screen" id="screen-admin-login" style="display:none;background:#07090f;overflow:hidden;align-items:center;justify-content:center;">
   <svg style="position:absolute;inset:0;width:100%;height:100%;opacity:.08;pointer-events:none;">
@@ -502,59 +554,6 @@ input,select,textarea{font-family:var(--font);}
     <button onclick="verifyPin()" style="width:100%;background:rgba(41,121,232,.15);color:#edf0fa;border:1px solid rgba(41,121,232,.5);padding:12px;border-radius:6px;font-family:monospace;font-size:11px;font-weight:700;letter-spacing:2px;cursor:pointer;text-transform:uppercase;" onmouseover="this.style.background='rgba(41,121,232,.28)'" onmouseout="this.style.background='rgba(41,121,232,.15)'">Unlock</button>
   </div>
 </div>
-
-<script>
-const MASTER_PIN = '5226';
-
-window.verifyPin = function() {
-  const input = document.getElementById('pin-input');
-  const error = document.getElementById('pin-error');
-  if (!input) return;
-  const pin = input.value.trim();
-  
-  console.log('[SPD] PIN verify: entered=' + pin + ', master=' + MASTER_PIN);
-  
-  if (pin === MASTER_PIN) {
-    console.log('[SPD] PIN correct!');
-    error.style.display = 'none';
-    document.getElementById('screen-pin-lock').style.display = 'none';
-    input.value = '';
-    // Show landing screen
-    const landing = document.getElementById('screen-landing');
-    if (landing) {
-      landing.style.display = 'flex';
-    }
-  } else {
-    console.log('[SPD] PIN incorrect');
-    error.textContent = '❌ Incorrect PIN';
-    error.style.display = 'block';
-    input.value = '';
-    input.focus();
-  }
-};
-
-// Focus PIN input immediately
-setTimeout(function() {
-  const pinInput = document.getElementById('pin-input');
-  if (pinInput) pinInput.focus();
-}, 100);
-
-// STUB FUNCTIONS - will be overridden by real implementations below
-// These exist so buttons don't throw errors before main script loads
-window.showScreen = window.showScreen || function(id) {
-  var screens = document.querySelectorAll('.screen');
-  for (var i = 0; i < screens.length; i++) {
-    screens[i].style.display = 'none';
-  }
-  var target = document.getElementById(id);
-  if (target) target.style.display = 'flex';
-};
-
-window.openCreateModal = window.openCreateModal || function() {};
-window.closeCreateModal = window.closeCreateModal || function() {};
-window.verifyAdminLogin = window.verifyAdminLogin || function() {};
-window.verifyICLogin = window.verifyICLogin || function() {};
-</script>
 
 <div class="screen landing" id="screen-landing" style="display:none;background:#07090f;overflow:hidden;">
 
@@ -601,6 +600,10 @@ window.verifyICLogin = window.verifyICLogin || function() {};
         <!-- 6-point star -->
         <path d="M45 26 L47.8 36 L58 36 L50 42 L52.8 52 L45 46 L37.2 52 L40 42 L32 36 L42.2 36 Z"
           fill="#2979e8" opacity="0.95"/>
+        <!-- SPD text -->
+        <text x="45" y="76" font-family="'Courier New',monospace" font-size="8.5" font-weight="700"
+          fill="rgba(41,121,232,0.85)" text-anchor="middle" letter-spacing="4">SPD</text>
+
       </svg>
     </div>
 
@@ -643,6 +646,14 @@ window.verifyICLogin = window.verifyICLogin || function() {};
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(41,121,232,.6)" stroke-width="2">
           <path d="M5 12h14M12 5l7 7-7 7"/>
         </svg>
+      </button>
+
+      <button onclick="showScreen('screen-dispatcher-login')"
+        style="width:100%;background:rgba(168,85,247,.15);color:#edf0fa;border:1px solid rgba(168,85,247,.5);padding:14px 20px;border-radius:6px;font-family:'Courier New',monospace;font-size:11px;font-weight:700;letter-spacing:2px;cursor:pointer;display:flex;align-items:center;gap:12px;text-transform:uppercase;transition:all .2s;"
+        onmouseover="this.style.background='rgba(168,85,247,.28)';this.style.borderColor='rgba(168,85,247,.9)'"
+        onmouseout="this.style.background='rgba(168,85,247,.15)';this.style.borderColor='rgba(168,85,247,.5)'">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="flex-shrink:0;"><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2z"/><path d="M12 6v6l4 2"/></svg>
+        <span style="flex:1;text-align:left;">Dispatcher</span>
       </button>
 
       <button onclick="showScreen('screen-checkin')"
@@ -731,7 +742,7 @@ window.verifyICLogin = window.verifyICLogin || function() {};
       <button class="tab-btn active" onclick="setSideTab('officers',this)">Officers</button>
       <button class="tab-btn" onclick="setSideTab('event',this)">Event</button>
     </div>
-    <button class="btn btn-secondary btn-sm" onclick="logoutIC()" style="margin-left:4px;">Exit</button>
+    <button class="btn btn-secondary btn-sm" onclick="showScreen('screen-landing')" style="margin-left:4px;">Exit</button>
   </div>
 
   <div class="cmd-body">
@@ -792,10 +803,6 @@ window.verifyICLogin = window.verifyICLogin || function() {};
       <div class="sidebar-tabs">
         <button class="stab active" id="stab-officers" onclick="setSideTab('officers',this)">Officers</button>
         <button class="stab" id="stab-event" onclick="setSideTab('event',this)">Event</button>
-        <button class="stab" id="stab-messages" onclick="setSideTab('messages',this)" style="position:relative;">
-          Messages
-          <span id="message-badge" style="display:none;position:absolute;top:-2px;right:2px;background:var(--red);color:#fff;border-radius:50%;width:18px;height:18px;font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center;">0</span>
-        </button>
       </div>
 
       <!-- OFFICERS PANE -->
@@ -876,42 +883,18 @@ window.verifyICLogin = window.verifyICLogin || function() {};
           <button class="btn btn-danger btn-full mt4" onclick="closeIncident()">Close Incident</button>
         </div>
       </div>
-
-      <!-- MESSAGES PANE -->
-      <div class="s-pane" id="pane-messages">
-        <div id="no-messages-pane" style="text-align:center;padding:20px;">
-          <div style="font-size:32px;margin-bottom:10px;">💬</div>
-          <div style="font-size:12px;color:var(--text2);margin-bottom:14px;line-height:1.6;">No active incident.<br>Create one to start messaging.</div>
-          <button class="btn btn-gold btn-full" onclick="openCreateModal()">+ Create Incident / Event</button>
-        </div>
-        <div id="messages-active" style="display:none;display:flex;flex-direction:column;height:100%;">
-          <!-- Message type filter -->
-          <div style="display:flex;gap:4px;margin-bottom:8px;padding:0 0 8px 0;border-bottom:1px solid var(--border);">
-            <button class="msg-filter active" onclick="filterMessages('all')" style="flex:1;padding:6px;font-size:10px;background:rgba(41,121,232,.2);border:1px solid var(--accent);color:var(--accent);border-radius:3px;font-weight:700;cursor:pointer;">All</button>
-            <button class="msg-filter" onclick="filterMessages('broadcast')" style="flex:1;padding:6px;font-size:10px;background:transparent;border:1px solid var(--border);color:var(--text2);border-radius:3px;font-weight:700;cursor:pointer;">Broadcast</button>
-            <button class="msg-filter" onclick="filterMessages('direct')" style="flex:1;padding:6px;font-size:10px;background:transparent;border:1px solid var(--border);color:var(--text2);border-radius:3px;font-weight:700;cursor:pointer;">Direct</button>
-          </div>
-          
-          <!-- Messages list -->
-          <div id="messages-list" style="flex:1;overflow-y:auto;margin-bottom:8px;display:flex;flex-direction:column;gap:6px;"></div>
-          
-          <!-- Message input -->
-          <div style="border-top:1px solid var(--border);padding-top:8px;">
-            <div style="display:flex;gap:6px;margin-bottom:6px;">
-              <select id="msg-recipient" style="flex:1;background:var(--bg2);border:1px solid var(--border);color:var(--text);padding:6px;border-radius:3px;font-size:11px;">
-                <option value="all">📢 All Officers</option>
-              </select>
-            </div>
-            <div style="display:flex;gap:6px;">
-              <input id="msg-input" placeholder="Type message…" type="text" 
-                style="flex:1;background:var(--bg2);border:1px solid var(--border);color:var(--text);padding:8px;border-radius:3px;font-size:12px;"
-                onkeypress="if(event.key==='Enter') sendMessage();">
-              <button onclick="sendMessage()" style="background:var(--accent);color:#fff;border:none;padding:8px 12px;border-radius:3px;font-weight:700;cursor:pointer;font-size:12px;">Send</button>
-            </div>
-          </div>
-        </div>
-      </div>
     
+    <!-- Dispatcher Accounts -->
+    <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border);">
+      <div style="font-size:12px;font-weight:700;color:var(--accent);margin-bottom:10px;">DISPATCHER ACCOUNTS</div>
+      <input id="new-dispatcher-username" placeholder="Username" style="width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:10px;border-radius:4px;font-size:12px;margin-bottom:8px;font-family:monospace;" />
+      <input id="new-dispatcher-password" type="password" placeholder="Password (min 6 chars)" style="width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:10px;border-radius:4px;font-size:12px;margin-bottom:8px;font-family:monospace;" />
+      <button onclick="addNewDispatcher()" style="width:100%;background:rgba(168,85,247,.15);color:rgba(168,85,247,.8);border:1px solid rgba(168,85,247,.3);padding:10px;border-radius:4px;font-size:11px;font-weight:700;cursor:pointer;text-transform:uppercase;margin-bottom:12px;">+ Add Dispatcher</button>
+      <div id="dispatcher-list-admin" style="display:flex;flex-direction:column;gap:8px;">
+        <!-- populated by loadDispatcherListAdmin() -->
+      </div>
+    </div>
+
     </div>
   </div>
 </div>
@@ -983,36 +966,29 @@ window.verifyICLogin = window.verifyICLogin || function() {};
 
         <div style="margin-bottom:14px;">
           <label style="font-size:10px;color:var(--text3);letter-spacing:1.5px;text-transform:uppercase;display:block;margin-bottom:6px;">Badge / Unit #</label>
-          <input id="ci-badge" placeholder="e.g. 412, A-26, Medic-1" style="width:100%;background:var(--bg2);border:1px solid var(--border2);color:var(--text);padding:14px;border-radius:6px;font-size:22px;font-weight:700;letter-spacing:2px;" type="text">
+          <input id="ci-badge" placeholder="e.g. 412" style="width:100%;background:var(--bg2);border:1px solid var(--border2);color:var(--text);padding:14px;border-radius:6px;font-size:22px;font-weight:700;letter-spacing:2px;" type="tel">
         </div>
 
         <div style="margin-bottom:14px;">
-          <label style="font-size:10px;color:var(--text3);letter-spacing:1.5px;text-transform:uppercase;display:block;margin-bottom:6px;">Department</label>
-          <input id="ci-department" placeholder="e.g. Shrewsbury PD, Boston Fire, Milton EMS" style="width:100%;background:var(--bg2);border:1px solid var(--border2);color:var(--text);padding:14px;border-radius:6px;font-size:15px;">
-        </div>
-
-        <div style="margin-bottom:14px;">
-          <label style="font-size:10px;color:var(--text3);letter-spacing:1.5px;text-transform:uppercase;display:block;margin-bottom:6px;">Agency</label>
-          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;">
-            <button class="agency-btn" onclick="selectAgency(this,'Police')" style="padding:12px 4px;background:var(--bg2);border:1px solid var(--border2);border-radius:6px;color:var(--text2);font-size:11px;font-weight:700;transition:all .15s;">Police</button>
-            <button class="agency-btn" onclick="selectAgency(this,'Fire')" style="padding:12px 4px;background:var(--bg2);border:1px solid var(--border2);border-radius:6px;color:var(--text2);font-size:11px;font-weight:700;transition:all .15s;">Fire</button>
-            <button class="agency-btn" onclick="selectAgency(this,'EMS')" style="padding:12px 4px;background:var(--bg2);border:1px solid var(--border2);border-radius:6px;color:var(--text2);font-size:11px;font-weight:700;transition:all .15s;">EMS</button>
-          </div>
-        </div>
-
-        <!-- Role (changes based on agency) -->
-        <div id="role-section" style="display:none;margin-bottom:14px;">
           <label style="font-size:10px;color:var(--text3);letter-spacing:1.5px;text-transform:uppercase;display:block;margin-bottom:6px;">Role</label>
           <div id="role-grid" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;">
-            <!-- Populated by selectAgency() -->
+            <button class="role-btn" onclick="selectRole(this,'Patrol')" style="padding:12px 4px;background:var(--bg2);border:1px solid var(--border2);border-radius:6px;color:var(--text2);font-size:11px;font-weight:700;transition:all .15s;">Patrol</button>
+            <button class="role-btn" onclick="selectRole(this,'Sergeant')" style="padding:12px 4px;background:var(--bg2);border:1px solid var(--border2);border-radius:6px;color:var(--text2);font-size:11px;font-weight:700;transition:all .15s;">Sergeant</button>
+            <button class="role-btn" onclick="selectRole(this,'Detective')" style="padding:12px 4px;background:var(--bg2);border:1px solid var(--border2);border-radius:6px;color:var(--text2);font-size:11px;font-weight:700;transition:all .15s;">Detective</button>
+            <button class="role-btn" onclick="selectRole(this,'K-9')" style="padding:12px 4px;background:var(--bg2);border:1px solid var(--border2);border-radius:6px;color:var(--text2);font-size:11px;font-weight:700;transition:all .15s;">K-9</button>
+            <button class="role-btn" onclick="selectRole(this,'Traffic')" style="padding:12px 4px;background:var(--bg2);border:1px solid var(--border2);border-radius:6px;color:var(--text2);font-size:11px;font-weight:700;transition:all .15s;">Traffic</button>
+            <button class="role-btn" onclick="selectRole(this,'Supervisor')" style="padding:12px 4px;background:var(--bg2);border:1px solid var(--border2);border-radius:6px;color:var(--text2);font-size:11px;font-weight:700;transition:all .15s;">Supervisor</button>
+            <button class="role-btn" onclick="selectRole(this,'SWAT')" style="padding:12px 4px;background:var(--bg2);border:1px solid var(--border2);border-radius:6px;color:var(--text2);font-size:11px;font-weight:700;transition:all .15s;">SWAT</button>
+            <button class="role-btn" onclick="selectRole(this,'Bike')" style="padding:12px 4px;background:var(--bg2);border:1px solid var(--border2);border-radius:6px;color:var(--text2);font-size:11px;font-weight:700;transition:all .15s;">Bike</button>
+            <button class="role-btn" onclick="selectRole(this,'Other')" style="padding:12px 4px;background:var(--bg2);border:1px solid var(--border2);border-radius:6px;color:var(--text2);font-size:11px;font-weight:700;transition:all .15s;">Other</button>
           </div>
         </div>
 
         <!-- Optional fields — collapsed by default -->
         <div id="optional-fields" style="display:none;">
           <div style="margin-bottom:10px;">
-            <label style="font-size:10px;color:var(--text3);letter-spacing:1.5px;text-transform:uppercase;display:block;margin-bottom:6px;">Agency</label>
-            <input id="ci-agency" placeholder="e.g. Shrewsbury PD, Fire, EMS" style="width:100%;background:var(--bg2);border:1px solid var(--border2);color:var(--text);padding:12px 14px;border-radius:6px;font-size:15px;">
+            <label style="font-size:10px;color:var(--text3);letter-spacing:1.5px;text-transform:uppercase;display:block;margin-bottom:6px;">Radio Channel</label>
+            <input id="ci-radio" placeholder="e.g. CH1, TAC-2" style="width:100%;background:var(--bg2);border:1px solid var(--border2);color:var(--text);padding:12px 14px;border-radius:6px;font-size:15px;">
           </div>
           <div style="margin-bottom:10px;">
             <label style="font-size:10px;color:var(--text3);letter-spacing:1.5px;text-transform:uppercase;display:block;margin-bottom:6px;">Assigned Sector / Zone</label>
@@ -1028,9 +1004,9 @@ window.verifyICLogin = window.verifyICLogin || function() {};
           </div>
         </div>
 
-        <button onclick="document.getElementById('optional-fields').style.display=document.getElementById('optional-fields').style.display==='none'?'block':'none';this.textContent=this.textContent.includes('+')?'− Less options':'+ More options (agency, sector, phone, vehicle)'"
+        <button onclick="document.getElementById('optional-fields').style.display=document.getElementById('optional-fields').style.display==='none'?'block':'none';this.textContent=this.textContent.includes('+')?'− Less options':'+ More options (radio, sector, phone)'"
           style="width:100%;background:transparent;border:1px solid var(--border2);color:var(--text3);padding:10px;border-radius:6px;font-size:11px;margin-bottom:14px;cursor:pointer;">
-          + More options (agency, sector, phone, vehicle)
+          + More options (radio, sector, phone)
         </button>
 
         <!-- BIG CHECK IN BUTTON -->
@@ -1060,14 +1036,26 @@ window.verifyICLogin = window.verifyICLogin || function() {};
           <strong style="color:var(--text2);">iPhone:</strong> Add to Home Screen for best results.<br>
           <strong style="color:var(--text2);">Android:</strong> Menu → Add to Home Screen.
         </div>
-        <button onclick="checkoutOfficer()" style="width:100%;background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.5);color:var(--red);padding:14px;border-radius:6px;font-size:13px;font-weight:700;cursor:pointer;margin-bottom:8px;text-transform:uppercase;letter-spacing:1px;">
-          🚪 CHECK OUT
+        <button onclick="showUpdateScreen()" style="width:100%;background:transparent;border:1px solid var(--border2);color:var(--text2);padding:12px;border-radius:6px;font-size:13px;font-weight:700;cursor:pointer;margin-bottom:8px;">
+          ✏️  Update My Info
         </button>
         <button onclick="showScreen('screen-shortcut')" style="width:100%;background:transparent;border:1px solid rgba(34,197,94,.3);color:var(--green);padding:10px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;margin-bottom:6px;">
           📲 Save Check-In Shortcut (do this once)
         </button>
         <button class="btn btn-secondary btn-full" onclick="showScreen('screen-landing')">Done</button>
       </div>
+
+    
+    <!-- Dispatcher Accounts -->
+    <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border);">
+      <div style="font-size:12px;font-weight:700;color:var(--accent);margin-bottom:10px;">DISPATCHER ACCOUNTS</div>
+      <input id="new-dispatcher-username" placeholder="Username" style="width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:10px;border-radius:4px;font-size:12px;margin-bottom:8px;font-family:monospace;" />
+      <input id="new-dispatcher-password" type="password" placeholder="Password (min 6 chars)" style="width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:10px;border-radius:4px;font-size:12px;margin-bottom:8px;font-family:monospace;" />
+      <button onclick="addNewDispatcher()" style="width:100%;background:rgba(168,85,247,.15);color:rgba(168,85,247,.8);border:1px solid rgba(168,85,247,.3);padding:10px;border-radius:4px;font-size:11px;font-weight:700;cursor:pointer;text-transform:uppercase;margin-bottom:12px;">+ Add Dispatcher</button>
+      <div id="dispatcher-list-admin" style="display:flex;flex-direction:column;gap:8px;">
+        <!-- populated by loadDispatcherListAdmin() -->
+      </div>
+    </div>
 
     </div>
   </div>
@@ -1097,8 +1085,8 @@ window.verifyICLogin = window.verifyICLogin || function() {};
       <!-- The permanent URL — tap to open -->
       <div style="background:var(--bg2);border:1px solid var(--border2);border-radius:8px;padding:14px;margin-bottom:16px;text-align:center;">
         <div style="font-size:10px;color:var(--text3);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:8px;">Permanent Check-In Link</div>
-        <a href="https://aframe99.github.io/spd-tracker/?mode=checkin" style="color:var(--accent);font-size:12px;word-break:break-all;text-decoration:none;font-weight:700;">https://aframe99.github.io/spd-tracker/?mode=checkin</a>
-        <button onclick="navigator.clipboard?.writeText('https://aframe99.github.io/spd-tracker/?mode=checkin').then(()=>toast('Link copied','ok'))" style="display:block;width:100%;margin-top:10px;background:var(--bg3);border:1px solid var(--border2);color:var(--text2);padding:8px;border-radius:4px;font-size:11px;cursor:pointer;font-family:monospace;">
+        <a href="https://fascinating-toffee-a3ff45.netlify.app/?mode=checkin" style="color:var(--accent);font-size:12px;word-break:break-all;text-decoration:none;font-weight:700;">https://fascinating-toffee-a3ff45.netlify.app/?mode=checkin</a>
+        <button onclick="navigator.clipboard?.writeText( + PERMANENT_URL + ).then(()=>toast('Link copied','ok'))" style="display:block;width:100%;margin-top:10px;background:var(--bg3);border:1px solid var(--border2);color:var(--text2);padding:8px;border-radius:4px;font-size:11px;cursor:pointer;font-family:monospace;">
           Copy Link
         </button>
       </div>
@@ -1162,6 +1150,18 @@ window.verifyICLogin = window.verifyICLogin || function() {};
       <button onclick="showScreen('screen-landing')" style="width:100%;background:var(--accent);color:#fff;border:none;padding:14px;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;">
         Done
       </button>
+
+    
+    <!-- Dispatcher Accounts -->
+    <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border);">
+      <div style="font-size:12px;font-weight:700;color:var(--accent);margin-bottom:10px;">DISPATCHER ACCOUNTS</div>
+      <input id="new-dispatcher-username" placeholder="Username" style="width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:10px;border-radius:4px;font-size:12px;margin-bottom:8px;font-family:monospace;" />
+      <input id="new-dispatcher-password" type="password" placeholder="Password (min 6 chars)" style="width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:10px;border-radius:4px;font-size:12px;margin-bottom:8px;font-family:monospace;" />
+      <button onclick="addNewDispatcher()" style="width:100%;background:rgba(168,85,247,.15);color:rgba(168,85,247,.8);border:1px solid rgba(168,85,247,.3);padding:10px;border-radius:4px;font-size:11px;font-weight:700;cursor:pointer;text-transform:uppercase;margin-bottom:12px;">+ Add Dispatcher</button>
+      <div id="dispatcher-list-admin" style="display:flex;flex-direction:column;gap:8px;">
+        <!-- populated by loadDispatcherListAdmin() -->
+      </div>
+    </div>
 
     </div>
   </div>
@@ -1258,6 +1258,18 @@ window.verifyICLogin = window.verifyICLogin || function() {};
       <button onclick="checkOutSelf()" style="width:100%;background:transparent;border:1px solid rgba(239,68,68,.4);color:var(--red);padding:12px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;">
         Check Out of Incident
       </button>
+    
+    <!-- Dispatcher Accounts -->
+    <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border);">
+      <div style="font-size:12px;font-weight:700;color:var(--accent);margin-bottom:10px;">DISPATCHER ACCOUNTS</div>
+      <input id="new-dispatcher-username" placeholder="Username" style="width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:10px;border-radius:4px;font-size:12px;margin-bottom:8px;font-family:monospace;" />
+      <input id="new-dispatcher-password" type="password" placeholder="Password (min 6 chars)" style="width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:10px;border-radius:4px;font-size:12px;margin-bottom:8px;font-family:monospace;" />
+      <button onclick="addNewDispatcher()" style="width:100%;background:rgba(168,85,247,.15);color:rgba(168,85,247,.8);border:1px solid rgba(168,85,247,.3);padding:10px;border-radius:4px;font-size:11px;font-weight:700;cursor:pointer;text-transform:uppercase;margin-bottom:12px;">+ Add Dispatcher</button>
+      <div id="dispatcher-list-admin" style="display:flex;flex-direction:column;gap:8px;">
+        <!-- populated by loadDispatcherListAdmin() -->
+      </div>
+    </div>
+
     </div>
   </div>
 </div>
@@ -1272,7 +1284,6 @@ window.verifyICLogin = window.verifyICLogin || function() {};
 <!-- Firebase compat (works in regular scripts, no module scope issues) -->
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script>
 /* shim so existing code works unchanged */
 const initializeApp = (cfg) => firebase.initializeApp(cfg);
@@ -1304,20 +1315,6 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const db  = getDatabase(app);
-const auth = firebase.auth();
-
-// Set up auth state listener
-auth.onAuthStateChanged(user => {
-  console.log('[SPD] Auth state changed:', user ? user.email : 'logged out');
-  if (user) {
-    S.currentUser = user;
-    S.userEmail = user.email;
-    console.log('[SPD] User authenticated:', user.email);
-  } else {
-    S.currentUser = null;
-    S.userEmail = null;
-  }
-});
 
 /* Connection status */
 onValue(ref(db, '.info/connected'), snap => {
@@ -1391,7 +1388,7 @@ setInterval(tick, 1000); tick();
 
 // Master admin credentials
 const ADMIN_CREDENTIALS = {
-  'admin': '5226',
+  'admin': 'SPDAdmin2024!',
 };
 
 let adminLoggedIn = false;
@@ -1528,18 +1525,12 @@ window.deleteIC = function(username) {
 
 window.loadDispatcherListAdmin = function() {
   const list = document.getElementById('dispatcher-list-admin');
-  if (!list) {
-    console.log('[SPD] dispatcher-list-admin element not found');
-    return;
-  }
-  
   firebase.database().ref('admin/dispatcher-credentials').once('value', snap => {
     const creds = snap.val() || {};
     list.innerHTML = '';
     
-    // If no dispatchers in Firebase, show the hardcoded default
     if (Object.keys(creds).length === 0) {
-      list.innerHTML = '<div style="background:var(--bg3);border:1px solid var(--border);padding:10px;border-radius:4px;display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;"><div style="font-size:11px;font-weight:700;color:var(--text);">dispatch (default)</div><div style="display:flex;gap:4px;"><button onclick="alert(\'Username: dispatch\\nPassword: ViewOnly2024!\')" style="background:rgba(41,121,232,.15);color:var(--accent);border:none;padding:4px 8px;border-radius:3px;font-size:9px;font-weight:700;cursor:pointer;">View</button></div></div>';
+      list.innerHTML = '<div style="color:var(--text3);font-size:10px;">No dispatcher accounts yet</div>';
       return;
     }
     
@@ -1556,60 +1547,29 @@ window.loadDispatcherListAdmin = function() {
       `;
       list.appendChild(row);
     });
-  }).catch(err => {
-    console.error('[SPD] Firebase error loading dispatchers:', err);
-    const list = document.getElementById('dispatcher-list-admin');
-    if (list) {
-      list.innerHTML = '<div style="color:var(--red);font-size:10px;">Firebase error - showing default dispatcher</div><div style="background:var(--bg3);border:1px solid var(--border);padding:10px;border-radius:4px;display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-top:8px;"><div style="font-size:11px;font-weight:700;color:var(--text);">dispatch</div><div style="display:flex;gap:4px;"><button onclick="alert(\'Username: dispatch\\nPassword: ViewOnly2024!\')" style="background:rgba(41,121,232,.15);color:var(--accent);border:none;padding:4px 8px;border-radius:3px;font-size:9px;font-weight:700;cursor:pointer;">View</button></div></div>';
-    }
   });
 };
 
 window.addNewDispatcher = function() {
-  try {
-    const userEl = document.getElementById('new-dispatcher-username');
-    const passEl = document.getElementById('new-dispatcher-password');
-    
-    if (!userEl || !passEl) {
-      toast('Error: Input fields not found', 'err');
-      console.error('[SPD] dispatcher input elements not found');
-      return;
-    }
-    
-    const username = userEl.value ? userEl.value.trim() : '';
-    const password = passEl.value ? passEl.value.trim() : '';
-    
-    console.log('[SPD] addNewDispatcher:', {username, passwordLength: password.length});
-    
-    if (!username || username.length === 0) { 
-      toast('❌ Enter dispatcher username', 'err'); 
-      userEl.focus();
-      return; 
-    }
-    if (password.length < 6) { 
-      toast('❌ Password must be at least 6 characters', 'err'); 
-      passEl.focus();
-      return; 
-    }
+  const username = document.getElementById('new-dispatcher-username').value.trim();
+  const password = document.getElementById('new-dispatcher-password').value.trim();
 
-    firebase.database().ref('admin/dispatcher-credentials/' + username).set({
-      password: password,
-      created: Date.now(),
-    }, err => {
-      if (err) {
-        toast('❌ Failed to create dispatcher: ' + err.message, 'err');
-        console.error('[SPD] Firebase error:', err);
-      } else {
-        toast('✓ Dispatcher "' + username + '" created', 'ok');
-        userEl.value = '';
-        passEl.value = '';
-        setTimeout(() => loadDispatcherListAdmin(), 500);
-      }
-    });
-  } catch(e) {
-    console.error('[SPD] Exception in addNewDispatcher:', e);
-    toast('Error: ' + e.message, 'err');
-  }
+  if (!username) { toast('Enter dispatcher username', 'err'); return; }
+  if (password.length < 6) { toast('Password must be at least 6 characters', 'err'); return; }
+
+  firebase.database().ref('admin/dispatcher-credentials/' + username).set({
+    password: password,
+    created: Date.now(),
+  }, err => {
+    if (err) {
+      toast('Failed to create dispatcher', 'err');
+    } else {
+      toast('✓ Dispatcher "' + username + '" created', 'ok');
+      document.getElementById('new-dispatcher-username').value = '';
+      document.getElementById('new-dispatcher-password').value = '';
+      loadDispatcherListAdmin();
+    }
+  });
 };
 
 window.showDispatcherPassword = function(username) {
@@ -1695,10 +1655,6 @@ window.verifyICLogin = function() {
         S.icRank = 'Commander';
         document.getElementById('ic-username').value = '';
         document.getElementById('ic-password').value = '';
-        
-        // START SESSION TIMEOUT - 30 minutes
-        startSessionTimeout();
-        
         showScreen('screen-command');
         listenToFirebase();
         toast('✓ Welcome, ' + username + ' — Command Access Granted', 'ok');
@@ -1713,10 +1669,6 @@ window.verifyICLogin = function() {
         S.icRank = 'Commander';
         document.getElementById('ic-username').value = '';
         document.getElementById('ic-password').value = '';
-        
-        // START SESSION TIMEOUT - 30 minutes
-        startSessionTimeout();
-        
         showScreen('screen-command');
         listenToFirebase();
         toast('✓ Welcome, ' + username + ' — Command Access Granted', 'ok');
@@ -1740,10 +1692,6 @@ window.verifyICLogin = function() {
       S.icRank = 'Commander';
       document.getElementById('ic-username').value = '';
       document.getElementById('ic-password').value = '';
-      
-      // START SESSION TIMEOUT - 30 minutes
-      startSessionTimeout();
-      
       showScreen('screen-command');
       listenToFirebase();
       toast('✓ Welcome, ' + username + ' — Command Access Granted', 'ok');
@@ -1754,71 +1702,6 @@ window.verifyICLogin = function() {
     }
   }
 };
-
-/* ══════════════════════
-   SESSION MANAGEMENT
-   ══════════════════════ */
-let sessionTimeoutId = null;
-const SESSION_TIMEOUT_MS = 30 * 60 * 1000; // 30 minutes
-
-window.startSessionTimeout = function() {
-  // Clear any existing timeout
-  if (sessionTimeoutId) clearTimeout(sessionTimeoutId);
-  
-  // Set new timeout
-  sessionTimeoutId = setTimeout(() => {
-    console.log('[SPD] Session timeout - logging out');
-    toast('⏱️ Session expired due to inactivity. Please log in again.', 'warn');
-    logoutIC();
-  }, SESSION_TIMEOUT_MS);
-  
-  // Store session start time
-  localStorage.setItem('spd-session-start', Date.now().toString());
-  localStorage.setItem('spd-session-username', S.icName);
-  
-  console.log('[SPD] Session started - will timeout in 30 minutes');
-};
-
-window.resetSessionTimeout = function() {
-  // Reset the timeout on any activity
-  if (sessionTimeoutId) {
-    clearTimeout(sessionTimeoutId);
-    startSessionTimeout();
-    console.log('[SPD] Session timeout reset due to activity');
-  }
-};
-
-window.logoutIC = function() {
-  // Clear session data
-  if (sessionTimeoutId) clearTimeout(sessionTimeoutId);
-  localStorage.removeItem('spd-session-start');
-  localStorage.removeItem('spd-session-username');
-  
-  // Clear global state
-  S.icName = null;
-  S.icRank = null;
-  S.activeIncident = null;
-  S.officers = {};
-  S.markers = {};
-  
-  // Close map and return to landing
-  if (S.map) {
-    Object.values(S.markers).forEach(m => S.map?.removeLayer(m));
-    S.markers = {};
-  }
-  
-  toast('✓ Logged out', 'ok');
-  showScreen('screen-landing');
-};
-
-// Add activity listeners to reset session timeout on IC screen
-document.addEventListener('click', () => {
-  if (S.icName) resetSessionTimeout();
-}, true);
-
-document.addEventListener('keydown', () => {
-  if (S.icName) resetSessionTimeout();
-}, true);
 
 /* ══════════════════════
    MAP INIT
@@ -1848,9 +1731,6 @@ function initMap() {
   S.map.on(L.Draw.Event.CREATED, e => {
     S.drawnItems.clearLayers();
     S.drawnItems.addLayer(e.layer);
-
-    // Re-enable map dragging
-    S.map.dragging.enable();
 
     // Hide instruction bar
     const instrBar = document.getElementById('draw-instruction-bar');
@@ -1983,9 +1863,6 @@ window.startDrawing = function() {
   // Remove any existing draw control
   if (S.drawControl) { S.map.removeControl(S.drawControl); S.drawControl = null; }
 
-  // DISABLE map dragging/panning during drawing
-  S.map.dragging.disable();
-
   // Show instruction bar
   const bar = document.getElementById('draw-instruction-bar');
   if (bar) {
@@ -2016,7 +1893,6 @@ window.startDrawing = function() {
   const escHandler = (e) => {
     if (e.key === 'Escape') {
       handler.disable();
-      S.map.dragging.enable();  // RE-ENABLE dragging when canceling
       if (bar) bar.style.display = 'none';
       document.getElementById('modal-create').classList.add('visible');
       document.removeEventListener('keydown', escHandler);
@@ -2126,17 +2002,8 @@ function activateIncident(inc) {
 
 window.closeIncident = function() {
   if (!S.activeIncident) return;
-  if (!confirm('Close incident ' + S.activeIncident.id + '? This will clear all officers from tracking.')) return;
-  
-  const incId = S.activeIncident.id;
-  
-  // Update incident status to closed
-  update(ref(db, 'incidents/' + incId), { status: 'closed' });
-  
-  // Delete all officers associated with this incident
-  const officerrRef = ref(db, 'officers/' + incId);
-  set(officerrRef, null);
-  
+  if (!confirm('Close incident ' + S.activeIncident.id + '? This will end tracking.')) return;
+  update(ref(db, 'incidents/' + S.activeIncident.id), { status: 'closed' });
   S.activeIncident = null;
   document.getElementById('cmd-title').textContent = 'No Active Incident';
   const liveDot = document.getElementById('live-dot-small');
@@ -2148,7 +2015,7 @@ window.closeIncident = function() {
   S.markers = {}; S.officers = {};
   if (S.incidentLayer) { S.drawnItems.clearLayers(); S.incidentLayer = null; }
   refreshOfficerList();
-  toast('Incident closed and all officers cleared.', 'ok');
+  toast('Incident closed.', 'ok');
 };
 
 /* ══════════════════════
@@ -2227,36 +2094,11 @@ function updateOfficerMarker(o) {
   if (!S.map || !o.lat || !o.lng) return;
   const color = officerColor(o);
   const isMulti = S.selected.has(o.id);
-  
-  // Create icon based on agency
-  let icon;
-  const agency = (o.agency || '').toLowerCase();
-  
-  // Badge/unit text for display
-  const badgeText = o.badge || o.lastName?.charAt(0) || '?';
-  
-  if (agency.includes('fire')) {
-    // Fire icon with badge below
-    const html = `<div style="text-align:center;width:50px;">
-      <div style="font-size:28px;filter:drop-shadow(0 0 2px rgba(0,0,0,.5));${isMulti?'drop-shadow(0 0 8px rgba(239,68,68,1))':''};">🚒</div>
-      <div style="font-size:10px;font-weight:700;color:#fff;text-shadow:0 0 3px rgba(0,0,0,1);line-height:1.1;word-break:break-all;">${badgeText}</div>
-    </div>`;
-    icon = L.divIcon({ className:'', html, iconSize:[50,50], iconAnchor:[25,25] });
-  } else if (agency.includes('ems') || agency.includes('ambulance') || agency.includes('medical')) {
-    // Ambulance/Medical cross with badge below
-    const html = `<div style="text-align:center;width:50px;">
-      <div style="font-size:26px;filter:drop-shadow(0 0 2px rgba(0,0,0,.5));${isMulti?'drop-shadow(0 0 8px rgba(34,197,94,1))':''};">⚕️</div>
-      <div style="font-size:10px;font-weight:700;color:#fff;text-shadow:0 0 3px rgba(0,0,0,1);line-height:1.1;word-break:break-all;">${badgeText}</div>
-    </div>`;
-    icon = L.divIcon({ className:'', html, iconSize:[50,50], iconAnchor:[25,25] });
-  } else {
-    // Police badge with badge below
-    const html = `<div style="text-align:center;width:50px;">
-      <div style="font-size:24px;filter:drop-shadow(0 0 2px rgba(0,0,0,.5));${isMulti?'drop-shadow(0 0 8px rgba(41,121,232,1))':''};">🛡️</div>
-      <div style="font-size:10px;font-weight:700;color:#fff;text-shadow:0 0 3px rgba(0,0,0,1);line-height:1.1;word-break:break-all;">${badgeText}</div>
-    </div>`;
-    icon = L.divIcon({ className:'', html, iconSize:[50,50], iconAnchor:[25,25] });
-  }
+  const html = `<div class="o-marker${isMulti?' multi':''}" style="background:${color}22;border-color:${color};color:${color};">
+    <div class="o-marker-lbl" style="color:${color};">${o.badge||o.lastName?.charAt(0)||'?'}</div>
+    ${(o.firstName||'?').charAt(0)}${(o.lastName||'').charAt(0)||''}
+  </div>`;
+  const icon = L.divIcon({ className:'', html, iconSize:[34,34], iconAnchor:[17,17] });
 
   if (S.markers[o.id]) {
     S.markers[o.id].setLatLng([o.lat, o.lng]);
@@ -2284,12 +2126,11 @@ function buildPopup(o) {
       <div class="pop-av" style="background:${color}22;color:${color};border-color:${color};">${(o.firstName||'?').charAt(0)}${(o.lastName||'').charAt(0)||''}</div>
       <div>
         <div class="pop-name">${o.lastName||''}, ${o.firstName||''}</div>
-        <div class="pop-unit">${o.role||''} · Badge ${o.badge||'—'} · ${o.department||o.agency||'SPD'}</div>
+        <div class="pop-unit">${o.role||''} · Badge ${o.badge||'—'} · ${o.agency||'SPD'}</div>
       </div>
     </div>
     <div style="font-size:11px;margin-bottom:8px;">
       <div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid var(--border);"><span style="color:var(--text2);">Status</span><span style="color:${color};font-weight:600;">${o.status||'On Scene'}</span></div>
-      <div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid var(--border);"><span style="color:var(--text2);">Department</span><span style="color:var(--text);font-weight:600;">${o.department||'—'}</span></div>
       <div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid var(--border);"><span style="color:var(--text2);">Sector</span><span style="color:var(--text);font-weight:600;">${o.sector||'—'}</span></div>
       <div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid var(--border);"><span style="color:var(--text2);">Radio</span><span style="color:var(--text);font-weight:600;">${o.radio||'—'}</span></div>
       <div style="display:flex;justify-content:space-between;padding:3px 0;"><span style="color:var(--text2);">Phone</span><span style="color:var(--cyan);font-weight:600;">${o.phone||'—'}</span></div>
@@ -2519,7 +2360,114 @@ window.clearSelection = function() {
   Object.values(S.officers).forEach(o => updateOfficerMarker(o));
 };
 
+/* ══════════════════════
+   PIN LOCK & ACCESS CONTROL
+   ══════════════════════ */
+
+// Current incident PIN (fetched from Firebase)
+let currentIncidentPIN = null;
+
+window.verifyPin = function() {
+  const input = document.getElementById('pin-input');
+  const error = document.getElementById('pin-error');
+  if (!input) return;
+  const pin = input.value.trim();
+  
+  console.log('[SPD] PIN verify: entered=', pin, 'expected=', currentIncidentPIN);
+  
+  if (!currentIncidentPIN) {
+    error.textContent = '⚠ PIN still loading, please try again...';
+    error.style.display = 'block';
+    // Try loading again
+    setTimeout(loadIncidentPIN, 300);
+    return;
+  }
+  
+  if (pin === currentIncidentPIN) {
+    console.log('[SPD] PIN correct!');
+    error.style.display = 'none';
+    document.getElementById('screen-pin-lock').style.display = 'none';
+    input.value = '';
+    // Show the appropriate screen based on initial params
+    setTimeout(showLandingOrCheckin, 100);
+  } else {
+    console.log('[SPD] PIN incorrect');
+    error.textContent = '❌ Incorrect PIN';
+    error.style.display = 'block';
+    input.value = '';
+    input.focus();
+  }
 };
+
+// Master PIN for when there are no active incidents
+const MASTER_PIN = '5226';
+
+// Fetch active incident PIN on page load
+window.loadIncidentPIN = function() {
+  console.log('[SPD] Loading incident PIN...');
+  
+  // Set default immediately
+  if (!currentIncidentPIN) {
+    currentIncidentPIN = MASTER_PIN;
+  }
+  
+  // Try to load from Firebase if available
+  if (!firebase || !firebase.database) {
+    console.log('[SPD] Firebase not available, using master PIN');
+    return;
+  }
+  
+  try {
+    firebase.database().ref('incidents').orderByChild('status').equalTo('active').once('value', snap => {
+    const data = snap.val();
+    console.log('[SPD] Firebase incidents data:', data);
+    if (!data || Object.keys(data).length === 0) {
+      console.log('[SPD] No active incidents - using master PIN');
+      currentIncidentPIN = MASTER_PIN;
+      const err = document.getElementById('pin-error');
+      if (err) { err.textContent = 'No active incidents - use master PIN'; err.style.display = 'block'; }
+      return;
+    }
+    try {
+      const incidentsArray = Object.values(data).sort((a,b) => (b.startTime||0) - (a.startTime||0));
+      if (incidentsArray && incidentsArray.length > 0) {
+        const activeInc = incidentsArray[0];
+        currentIncidentPIN = (activeInc.accessPin || MASTER_PIN).toString();
+        console.log('[SPD] PIN loaded from incident:', activeInc.id, 'PIN:', currentIncidentPIN);
+      } else {
+        currentIncidentPIN = MASTER_PIN;
+      }
+    } catch(e) {
+      console.error('[SPD] Error loading PIN:', e);
+      currentIncidentPIN = MASTER_PIN;
+    }
+  }).catch(err => {
+    console.error('[SPD] Firebase error:', err);
+    currentIncidentPIN = MASTER_PIN;
+  });
+  } catch(e) {
+    console.error('[SPD] Exception loading PIN:', e);
+    currentIncidentPIN = MASTER_PIN;
+  }
+};
+
+// Load PIN when page loads
+window.addEventListener('load', () => {
+  setTimeout(() => {
+    console.log('[SPD] Page loaded, loading incident PIN');
+    loadIncidentPIN();
+    const pinInput = document.getElementById('pin-input');
+    if (pinInput) {
+      pinInput.focus();
+      pinInput.select();
+    }
+  }, 800);
+});
+
+setTimeout(() => {
+  const el = document.getElementById('pin-input');
+  if (el) el.focus();
+}, 300);
 
 function updateSelUI() {
   const n = S.selected.size;
@@ -2562,117 +2510,13 @@ window.setSideTab = function(tab, btn) {
     pane.style.display = 'block';
     pane.classList.add('active');
     if (tab === 'officers') refreshOfficerList();
-    if (tab === 'messages') loadIncidentMessages();
   }
 };
 
 /* ══════════════════════
-   MESSAGING SYSTEM
+   MESSAGING
    ══════════════════════ */
-window.loadIncidentMessages = function() {
-  if (!S.activeIncident) {
-    document.getElementById('no-messages-pane').style.display = 'block';
-    document.getElementById('messages-active').style.display = 'none';
-    return;
-  }
-  
-  document.getElementById('no-messages-pane').style.display = 'none';
-  document.getElementById('messages-active').style.display = 'flex';
-  
-  // Update recipient dropdown with officer list
-  const recipientSelect = document.getElementById('msg-recipient');
-  recipientSelect.innerHTML = '<option value="all">📢 All Officers</option>';
-  Object.values(S.officers).forEach(o => {
-    const opt = document.createElement('option');
-    opt.value = o.id;
-    opt.textContent = `${o.badge} — ${o.lastName}`;
-    recipientSelect.appendChild(opt);
-  });
-  
-  // Load messages from Firebase
-  const msgRef = ref(db, 'messages/' + S.activeIncident.id);
-  onValue(msgRef, snap => {
-    const messages = [];
-    snap.forEach(child => {
-      messages.push({id: child.key, ...child.val()});
-    });
-    // Sort by timestamp
-    messages.sort((a,b) => (a.timestamp||0) - (b.timestamp||0));
-    renderMessages(messages);
-  });
-};
-
-window.renderMessages = function(messages) {
-  const list = document.getElementById('messages-list');
-  list.innerHTML = '';
-  
-  messages.forEach(msg => {
-    const div = document.createElement('div');
-    const time = new Date(msg.timestamp);
-    const timeStr = time.toLocaleTimeString('en-US', {hour: '2-digit', minute:'2-digit'});
-    const isIC = msg.senderId === S.icId || msg.senderRole === 'IC';
-    
-    div.style.cssText = `
-      background:${isIC ? 'rgba(41,121,232,.1)' : 'rgba(139,92,246,.08)'};
-      border-left:3px solid ${isIC ? 'var(--accent)' : 'var(--purple)'};
-      padding:8px;
-      border-radius:3px;
-      margin-bottom:4px;
-    `;
-    
-    div.innerHTML = `
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
-        <div style="font-weight:700;font-size:11px;color:var(--text);">${msg.senderBadge||'IC'} — ${msg.senderName||'Command'}</div>
-        <div style="font-size:9px;color:var(--text3);">${timeStr}</div>
-      </div>
-      <div style="font-size:12px;color:var(--text);line-height:1.4;">${msg.text}</div>
-    `;
-    list.appendChild(div);
-  });
-  
-  // Auto-scroll to bottom
-  list.scrollTop = list.scrollHeight;
-};
-
-window.filterMessages = function(type) {
-  document.querySelectorAll('.msg-filter').forEach(b => b.style.background = 'transparent');
-  document.querySelectorAll('.msg-filter').forEach(b => b.style.borderColor = 'var(--border)');
-  document.querySelectorAll('.msg-filter').forEach(b => b.style.color = 'var(--text2)');
-  
-  event.target.style.background = 'rgba(41,121,232,.2)';
-  event.target.style.borderColor = 'var(--accent)';
-  event.target.style.color = 'var(--accent)';
-  
-  // TODO: Filter messages by type
-  toast('Filter: ' + type, 'ok');
-};
-
 window.sendMessage = function() {
-  const input = document.getElementById('msg-input');
-  const text = input?.value.trim();
-  if (!text) { toast('Type a message first.', 'err'); return; }
-  if (!S.activeIncident) { toast('No active incident.', 'err'); return; }
-  
-  const recipient = document.getElementById('msg-recipient')?.value || 'all';
-  const msgData = {
-    text: text,
-    senderId: S.icId,
-    senderName: S.icRank + ' ' + S.icName,
-    senderBadge: 'IC',
-    senderRole: 'IC',
-    timestamp: Date.now(),
-    recipients: recipient === 'all' ? 'all' : [recipient],
-  };
-  
-  // Save to Firebase
-  const msgRef = ref(db, 'messages/' + S.activeIncident.id);
-  push(msgRef, msgData).then(() => {
-    input.value = '';
-    toast('Message sent', 'ok');
-  }).catch(err => {
-    toast('Failed to send: ' + err.message, 'err');
-  });
-};
   const ta = document.getElementById('msg-text');
   const text = ta?.value.trim();
   if (!text) { toast('Type a message first.', 'err'); return; }
@@ -2834,43 +2678,6 @@ window.selectIncidentFromPicker = function(inc) {
 };
 
 window.selectedRole = 'Patrol';
-window.selectAgency = function(btn, agency) {
-  window.selectedAgency = agency;
-  
-  // Highlight selected agency button
-  document.querySelectorAll('.agency-btn').forEach(b => {
-    b.style.background = 'var(--bg2)';
-    b.style.borderColor = 'var(--border2)';
-    b.style.color = 'var(--text2)';
-  });
-  btn.style.background = 'rgba(41,121,232,.2)';
-  btn.style.borderColor = 'var(--accent)';
-  btn.style.color = '#fff';
-  
-  // Show role section and populate based on agency
-  document.getElementById('role-section').style.display = 'block';
-  const roleGrid = document.getElementById('role-grid');
-  roleGrid.innerHTML = '';
-  
-  let roles = [];
-  if (agency === 'Police') {
-    roles = ['Patrol', 'Supervisor', 'K-9', 'Drone', 'Other'];
-  } else if (agency === 'Fire') {
-    roles = ['Firefighter', 'Captain', 'Chief', 'Medic', 'Other'];
-  } else if (agency === 'EMS') {
-    roles = ['Paramedic', 'EMT', 'Supervisor', 'Chief', 'Other'];
-  }
-  
-  roles.forEach(role => {
-    const btn = document.createElement('button');
-    btn.className = 'role-btn';
-    btn.textContent = role;
-    btn.style.cssText = 'padding:12px 4px;background:var(--bg2);border:1px solid var(--border2);border-radius:6px;color:var(--text2);font-size:11px;font-weight:700;transition:all .15s;cursor:pointer;';
-    btn.onclick = () => selectRole(btn, role);
-    roleGrid.appendChild(btn);
-  });
-};
-
 window.selectRole = function(btn, role) {
   window.selectedRole = role;
   document.querySelectorAll('.role-btn').forEach(b => {
@@ -2927,41 +2734,6 @@ window.submitCheckin = async function() {
   if (!badge) { toast('Enter your badge number.', 'err'); return; }
   if (!incId) { toast('Scan the QR code or enter the incident ID.', 'err'); return; }
 
-  // Check if this device is already checked in
-  const deviceId = localStorage.getItem('spd-device-id');
-  const currentCheckIn = localStorage.getItem('spd-current-checkin');
-  
-  if (deviceId && currentCheckIn) {
-    const checkin = JSON.parse(currentCheckIn);
-    if (checkin.incidentId === incId) {
-      // Show option to checkout
-      const msg = '⚠️ Already checked into ' + incId + '. Force clear and check in again?';
-      if (confirm(msg)) {
-        // Force clear
-        localStorage.removeItem('spd-current-checkin');
-        // Continue with check-in
-      } else {
-        return;
-      }
-    } else {
-      // Different incident - force clear old one
-      const msg = '⚠️ You\'re checked into ' + checkin.incidentId + '. Clear that checkout and switch to ' + incId + '?';
-      if (confirm(msg)) {
-        // Force clear old incident
-        localStorage.removeItem('spd-current-checkin');
-        // Continue with new check-in
-      } else {
-        return;
-      }
-    }
-  }
-  
-  // Generate device ID if doesn't exist
-  if (!deviceId) {
-    const newDeviceId = 'dev-' + Date.now().toString(36) + '-' + Math.random().toString(36).substr(2, 9);
-    localStorage.setItem('spd-device-id', newDeviceId);
-  }
-
   const now = new Date();
   const timeStr = now.toLocaleTimeString('en-US', { hour12:false, timeZone:'America/New_York' }) + ' ET';
   myOfficerId = 'off-' + Date.now().toString(36);
@@ -2970,28 +2742,19 @@ window.submitCheckin = async function() {
     id: myOfficerId,
     lastName: last, firstName: first || '',
     badge,
-    department: (document.getElementById('ci-department')?.value||'').trim() || 'Shrewsbury',
-    agency: (document.getElementById('ci-agency')?.value||'').trim() || window.selectedAgency || 'Police',
     role: window.selectedRole || 'Patrol',
+    radio: (document.getElementById('ci-radio')?.value||'').trim(),
     phone: (document.getElementById('ci-phone')?.value||'').trim(),
     sector: (document.getElementById('ci-sector')?.value||'').trim(),
     vehicle: (document.getElementById('ci-vehicle')?.value||'').trim(),
     caps: [],
+    agency: 'Shrewsbury Police Department',
     status: 'On Scene',
     incidentId: incId,
     checkinTime: timeStr,
     connectionStatus: 'online',
     lat: null, lng: null,
-    deviceId: localStorage.getItem('spd-device-id'),
   };
-  
-  // Save check-in to localStorage so device can only check in once
-  localStorage.setItem('spd-current-checkin', JSON.stringify({
-    incidentId: incId,
-    officerId: myOfficerId,
-    badge: badge,
-    checkinTime: now.getTime(),
-  }));
 
   // Write to Firebase
   await set(ref(db, 'officers/' + incId + '/' + myOfficerId), officer);
@@ -3080,61 +2843,6 @@ window.submitCheckin = async function() {
   toast('Checked in! GPS tracking active.', 'ok');
 };
 
-window.checkoutOfficer = function() {
-  const currentCheckIn = localStorage.getItem('spd-current-checkin');
-  if (!currentCheckIn) {
-    toast('No active check-in found.', 'warn');
-    return;
-  }
-  
-  const checkin = JSON.parse(currentCheckIn);
-  const incId = checkin.incidentId;
-  const officerId = checkin.officerId;
-  
-  // Mark as offline in Firebase
-  firebase.database().ref('officers/' + incId + '/' + officerId).update({
-    status: 'Checked Out',
-    connectionStatus: 'offline',
-    lastSeen: Date.now(),
-  }).then(() => {
-    // Clear localStorage
-    localStorage.removeItem('spd-current-checkin');
-    
-    // Stop GPS tracking
-    if (gpsWatchId !== null) {
-      navigator.geolocation.clearWatch(gpsWatchId);
-      gpsWatchId = null;
-    }
-    
-    // Log activity
-    firebase.database().ref('incidents/' + incId + '/activity').push({
-      type: 'check-out',
-      officerId: officerId,
-      badge: checkin.badge,
-      timestamp: Date.now(),
-    });
-    
-    // Show checkout screen
-    document.getElementById('ci-form-wrap').style.display = 'none';
-    document.getElementById('ci-success').style.display = 'none';
-    
-    const msg = document.createElement('div');
-    msg.style.cssText = 'text-align:center;padding:60px 20px;';
-    msg.innerHTML = `
-      <div style="font-size:64px;margin-bottom:12px;">👋</div>
-      <div style="font-size:22px;font-weight:700;color:var(--text);margin-bottom:8px;letter-spacing:1px;">CHECKED OUT</div>
-      <div style="font-size:13px;color:var(--text2);line-height:1.8;margin-bottom:20px;">
-        Your GPS has been deactivated.<br>
-        You can now check in to another incident.
-      </div>
-      <button onclick="showScreen('screen-landing')" style="width:100%;max-width:300px;background:var(--accent);color:#fff;border:none;padding:14px;border-radius:6px;font-size:14px;font-weight:700;cursor:pointer;">Return to Home</button>
-    `;
-    document.querySelector('#screen-checkin > div:last-child').appendChild(msg);
-    
-    toast('✓ Checked out', 'ok');
-  });
-};
-
 /* ══════════════════════
    QR CODE
    ══════════════════════ */
@@ -3145,7 +2853,7 @@ function drawQR() {
   container.innerHTML = '';
 
   // Build the check-in URL — same file, with incident ID as query param
-  const url = 'https://aframe99.github.io/spd-tracker/?mode=checkin';
+  const url = 'https://fascinating-toffee-a3ff45.netlify.app/?mode=checkin';
 
   try {
     new QRCode(container, {
@@ -3420,124 +3128,6 @@ window.exportLog = function() {
   });
 };
 
-
-/* ══════════════════════
-   EXCEL EXPORT
-   ══════════════════════ */
-
-window.exportLogExcel = function() {
-  const inc = S.activeIncident;
-  if (!inc) { toast('No active incident', 'err'); return; }
-  
-  const incId = inc.id;
-  
-  // Helper function to escape CSV values and remove problematic characters
-  const escapeCSV = (val) => {
-    if (!val) return '';
-    let str = String(val);
-    // Remove emojis and special Unicode characters
-    str = str.replace(/[\u{1F300}-\u{1F9FF}]/gu, ''); // Remove emojis
-    str = str.replace(/[^\x20-\x7E\n]/g, ''); // Keep only ASCII printable + newline
-    str = str.trim();
-    // Escape quotes and wrap if needed
-    if (str.includes(',') || str.includes('"') || str.includes('\n')) {
-      return '"' + str.replace(/"/g, '""') + '"';
-    }
-    return str;
-  };
-  
-  // Create CSV with proper formatting
-  let csv = '';
-  
-  // Header
-  csv += 'SHREWSBURY POLICE DEPARTMENT - INCIDENT TRACKER\n';
-  csv += 'INCIDENT REPORT\n';
-  csv += '\n';
-  
-  // Summary section
-  csv += 'INCIDENT SUMMARY\n';
-  csv += 'Field,Value\n';
-  csv += escapeCSV('Incident ID') + ',' + escapeCSV(incId) + '\n';
-  csv += escapeCSV('Name') + ',' + escapeCSV(inc.name || '') + '\n';
-  csv += escapeCSV('Type') + ',' + escapeCSV(inc.type || '') + '\n';
-  csv += escapeCSV('Status') + ',' + escapeCSV(inc.status || '') + '\n';
-  csv += escapeCSV('Priority') + ',' + escapeCSV(inc.priority || '') + '\n';
-  csv += escapeCSV('Officer in Charge') + ',' + escapeCSV(inc.oic || '') + '\n';
-  csv += escapeCSV('Start Time') + ',' + escapeCSV(new Date(inc.startTime || 0).toLocaleString()) + '\n';
-  csv += escapeCSV('Duration (minutes)') + ',' + escapeCSV(Math.round((Date.now() - (inc.startTime || Date.now())) / 60000)) + '\n';
-  csv += escapeCSV('Location') + ',' + escapeCSV(inc.location || '') + '\n';
-  csv += escapeCSV('Radio Channel') + ',' + escapeCSV(inc.radioChannel || '') + '\n';
-  csv += escapeCSV('Notes') + ',' + escapeCSV(inc.notes || '') + '\n';
-  
-  csv += '\n';
-  
-  // Personnel section
-  csv += 'PERSONNEL ON SCENE\n';
-  csv += 'Last Name,First Name,Badge,Role,Status,Radio,Sector,Vehicle,Phone,Agency\n';
-  
-  if (S.officers && Array.isArray(S.officers)) {
-    S.officers.forEach(o => {
-      csv += escapeCSV(o.lastName || '') + ',';
-      csv += escapeCSV(o.firstName || '') + ',';
-      csv += escapeCSV(o.badge || '') + ',';
-      csv += escapeCSV(o.role || '') + ',';
-      csv += escapeCSV(o.status || '') + ',';
-      csv += escapeCSV(o.radio || '') + ',';
-      csv += escapeCSV(o.sector || '') + ',';
-      csv += escapeCSV(o.vehicle || '') + ',';
-      csv += escapeCSV(o.phone || '') + ',';
-      csv += escapeCSV(o.agency || '') + '\n';
-    });
-  }
-  
-  csv += '\n';
-  csv += 'ACTIVITY TIMELINE\n';
-  csv += 'Time,Type,Officer,Badge,Role,Details\n';
-  
-  firebase.database().ref('incidents/' + incId + '/activity').orderByChild('timestamp').once('value', snap => {
-    snap.forEach(child => {
-      const act = child.val();
-      const time = new Date(act.timestamp || 0).toLocaleString();
-      const type = act.type || '';
-      const officer = act.officer || '';
-      const badge = act.badge || '';
-      const role = act.role || '';
-      
-      let details = '';
-      if (act.type === 'gps-update') {
-        details = `GPS: ${act.lat?.toFixed(5) || ''}N ${act.lng?.toFixed(5) || ''}W (±${act.accuracy || ''}m)`;
-      } else if (act.type === 'status-change') {
-        details = `Status: ${act.newStatus || ''}`;
-      } else if (act.type === 'check-in') {
-        details = 'Checked in to incident';
-      } else if (act.type === 'check-out') {
-        details = 'Checked out of incident';
-      }
-      
-      csv += escapeCSV(time) + ',' + escapeCSV(type) + ',' + escapeCSV(officer) + ',';
-      csv += escapeCSV(badge) + ',' + escapeCSV(role) + ',' + escapeCSV(details) + '\n';
-    });
-    
-    // Download as CSV
-    const filename = incId + '_' + new Date().toISOString().split('T')[0] + '.csv';
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    const url = URL.createObjectURL(blob);
-    link.setAttribute('href', url);
-    link.setAttribute('download', filename);
-    link.style.visibility = 'hidden';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    
-    toast('✓ Report exported: ' + filename, 'ok');
-    console.log('[SPD] Exported: ' + filename);
-  }).catch(err => {
-    toast('Failed to export', 'err');
-    console.error('[SPD] Export error:', err);
-  });
-};
-
 /* ══════════════════════
    TOAST
    ══════════════════════ */
@@ -3690,7 +3280,8 @@ window.showLandingOrCheckin = function() {
 };
 </script>
 </body>
-</html>
+</html><!-- ADMIN MANAGEMENT SCREEN -->
+<!-- ADMIN MANAGEMENT SCREEN -->
 <div class="screen" id="screen-admin" style="display:none;background:var(--bg);">
   <div style="padding:16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
     <div style="font-size:13px;font-weight:700;letter-spacing:2px;color:var(--accent);text-transform:uppercase;">🔐 IC Admin</div>
@@ -3711,12 +3302,127 @@ window.showLandingOrCheckin = function() {
     <div style="font-size:12px;font-weight:700;color:var(--accent);margin-bottom:10px;">INCIDENT COMMANDERS</div>
     <div id="ic-list" style="display:flex;flex-direction:column;gap:8px;">
       <!-- populated by loadICList() -->
+    
+    <!-- Dispatcher Accounts -->
+    <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border);">
+      <div style="font-size:12px;font-weight:700;color:var(--accent);margin-bottom:10px;">DISPATCHER ACCOUNTS</div>
+      <input id="new-dispatcher-username" placeholder="Username" style="width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:10px;border-radius:4px;font-size:12px;margin-bottom:8px;font-family:monospace;" />
+      <input id="new-dispatcher-password" type="password" placeholder="Password (min 6 chars)" style="width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:10px;border-radius:4px;font-size:12px;margin-bottom:8px;font-family:monospace;" />
+      <button onclick="addNewDispatcher()" style="width:100%;background:rgba(168,85,247,.15);color:rgba(168,85,247,.8);border:1px solid rgba(168,85,247,.3);padding:10px;border-radius:4px;font-size:11px;font-weight:700;cursor:pointer;text-transform:uppercase;margin-bottom:12px;">+ Add Dispatcher</button>
+      <div id="dispatcher-list-admin" style="display:flex;flex-direction:column;gap:8px;">
+        <!-- populated by loadDispatcherListAdmin() -->
+      </div>
     </div>
 
     </div>
   </div>
 </div>
 
+
+window.verifyDispatcherLogin = function() {
+  const username = document.getElementById('dispatcher-username').value.trim();
+  const password = document.getElementById('dispatcher-password').value.trim();
+  const errorEl = document.getElementById('dispatcher-error');
+
+  if (!username || !password) {
+    errorEl.textContent = '❌ Enter dispatcher credentials';
+    errorEl.style.display = 'block';
+    return;
+  }
+
+  // Check Firebase first, then hardcoded
+  const allCreds = window.DISPATCHER_CREDENTIALS_FIREBASE || DISPATCHER_CREDENTIALS;
+  if (allCreds[username] === password) {
+    errorEl.style.display = 'none';
+    dispatcherLoggedIn = true;
+    dispatcherUsername = username;
+    document.getElementById('dispatcher-username').value = '';
+    document.getElementById('dispatcher-password').value = '';
+    
+    // Load dispatcher view
+    showScreen('screen-dispatcher');
+    loadDispatcherIncidents();
+    toast('✓ Dispatcher access granted', 'ok');
+    console.log('[SPD] Dispatcher login: ' + username);
+  } else {
+    errorEl.textContent = '❌ Invalid credentials';
+    errorEl.style.display = 'block';
+    document.getElementById('dispatcher-password').value = '';
+  }
+};
+
+window.dispatcherLogout = function() {
+  dispatcherLoggedIn = false;
+  dispatcherUsername = '';
+  showScreen('screen-landing');
+  toast('Dispatcher session ended', 'ok');
+};
+
+window.loadDispatcherIncidents = function() {
+  const select = document.getElementById('dispatcher-incident-select');
+  firebase.database().ref('incidents').orderByChild('status').equalTo('active').once('value', snap => {
+    const incidents = [];
+    snap.forEach(child => {
+      incidents.push({id: child.key, ...child.val()});
+    });
+    incidents.sort((a,b) => (b.startTime||0) - (a.startTime||0));
+    
+    select.innerHTML = '';
+    if (incidents.length === 0) {
+      select.innerHTML = '<option>No active incidents</option>';
+    } else {
+      incidents.forEach(inc => {
+        const opt = document.createElement('option');
+        opt.value = inc.id;
+        opt.textContent = inc.id + ' — ' + inc.name;
+        select.appendChild(opt);
+      });
+      dispatcherLoadIncident();
+    }
+  });
+};
+
+window.dispatcherLoadIncident = function() {
+  const select = document.getElementById('dispatcher-incident-select');
+  const incId = select.value;
+  if (!incId) return;
+  
+  firebase.database().ref('incidents/' + incId).once('value', snap => {
+    const inc = snap.val();
+    if (!inc) return;
+    
+    // Update header
+    document.getElementById('dispatcher-header').textContent = '📡 ' + inc.id + ' — ' + inc.name;
+  });
+  
+  // Load officers
+  firebase.database().ref('officers/' + incId).once('value', snap => {
+    const list = document.getElementById('dispatcher-officers-list');
+    const officers = [];
+    snap.forEach(child => {
+      officers.push(child.val());
+    });
+    
+    list.innerHTML = '';
+    if (officers.length === 0) {
+      list.innerHTML = '<div style="color:var(--text3);font-size:11px;">No personnel checked in</div>';
+    } else {
+      officers.forEach(o => {
+        const row = document.createElement('div');
+        row.style.cssText = 'background:var(--bg2);border:1px solid var(--border);padding:10px;border-radius:4px;font-size:11px;';
+        row.innerHTML = `
+          <div style="font-weight:700;color:var(--text);">${o.lastName}, ${o.firstName}</div>
+          <div style="color:var(--text2);margin-top:2px;">Badge ${o.badge} • ${o.role} • ${o.status}</div>
+          <div style="color:var(--text3);font-size:10px;margin-top:4px;">
+            Radio: ${o.radio || '—'} | Sector: ${o.sector || '—'} | Vehicle: ${o.vehicle || '—'}
+          </div>
+          ${o.lat ? '<div style="color:var(--accent);font-size:10px;margin-top:2px;">📍 ' + o.lat.toFixed(5) + '°N ' + o.lng.toFixed(5) + '°W</div>' : ''}
+        `;
+        list.appendChild(row);
+      });
+    }
+  });
+};
 
 // Load dispatcher credentials from Firebase on startup
 setTimeout(() => {
@@ -3726,20 +3432,4 @@ setTimeout(() => {
   });
 }, 1200);
 
-// Focus PIN input on page load
-window.addEventListener('load', () => {
-  setTimeout(() => {
-    const pinInput = document.getElementById('pin-input');
-    if (pinInput) {
-      pinInput.focus();
-    }
-  }, 500);
-});
 
-setTimeout(() => {
-  const pinInput = document.getElementById('pin-input');
-  if (pinInput) pinInput.focus();
-}, 300);
-</script>
-</body>
-</html>

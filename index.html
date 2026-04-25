@@ -972,22 +972,17 @@ window.showScreen = window.showScreen || function(id) {
         </div>
 
         <div style="margin-bottom:14px;">
-          <label style="font-size:10px;color:var(--text3);letter-spacing:1.5px;text-transform:uppercase;display:block;margin-bottom:6px;">Agency</label>
-          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;">
-            <button class="agency-btn" onclick="selectAgency(this,'Police')" style="padding:12px 4px;background:var(--bg2);border:1px solid var(--border2);border-radius:6px;color:var(--text2);font-size:11px;font-weight:700;transition:all .15s;cursor:pointer;">🛡️ Police</button>
-            <button class="agency-btn" onclick="selectAgency(this,'Fire')" style="padding:12px 4px;background:var(--bg2);border:1px solid var(--border2);border-radius:6px;color:var(--text2);font-size:11px;font-weight:700;transition:all .15s;cursor:pointer;">🚒 Fire</button>
-            <button class="agency-btn" onclick="selectAgency(this,'EMS')" style="padding:12px 4px;background:var(--bg2);border:1px solid var(--border2);border-radius:6px;color:var(--text2);font-size:11px;font-weight:700;transition:all .15s;cursor:pointer;">⚕️ EMS</button>
-          </div>
-        </div>
-
-        <div style="margin-bottom:14px;">
-          <label style="font-size:10px;color:var(--text3);letter-spacing:1.5px;text-transform:uppercase;display:block;margin-bottom:6px;">Department</label>
-          <input id="ci-department" placeholder="e.g. Shrewsbury Police, Marlborough Fire" style="width:100%;background:var(--bg2);border:1px solid var(--border2);color:var(--text);padding:14px;border-radius:6px;font-size:15px;">
-        </div>
-
-        <div style="margin-bottom:14px;">
           <label style="font-size:10px;color:var(--text3);letter-spacing:1.5px;text-transform:uppercase;display:block;margin-bottom:6px;">Role</label>
           <div id="role-grid" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;">
+            <button class="role-btn" onclick="selectRole(this,'Patrol')" style="padding:12px 4px;background:var(--bg2);border:1px solid var(--border2);border-radius:6px;color:var(--text2);font-size:11px;font-weight:700;transition:all .15s;">Patrol</button>
+            <button class="role-btn" onclick="selectRole(this,'Sergeant')" style="padding:12px 4px;background:var(--bg2);border:1px solid var(--border2);border-radius:6px;color:var(--text2);font-size:11px;font-weight:700;transition:all .15s;">Sergeant</button>
+            <button class="role-btn" onclick="selectRole(this,'Detective')" style="padding:12px 4px;background:var(--bg2);border:1px solid var(--border2);border-radius:6px;color:var(--text2);font-size:11px;font-weight:700;transition:all .15s;">Detective</button>
+            <button class="role-btn" onclick="selectRole(this,'K-9')" style="padding:12px 4px;background:var(--bg2);border:1px solid var(--border2);border-radius:6px;color:var(--text2);font-size:11px;font-weight:700;transition:all .15s;">K-9</button>
+            <button class="role-btn" onclick="selectRole(this,'Traffic')" style="padding:12px 4px;background:var(--bg2);border:1px solid var(--border2);border-radius:6px;color:var(--text2);font-size:11px;font-weight:700;transition:all .15s;">Traffic</button>
+            <button class="role-btn" onclick="selectRole(this,'Supervisor')" style="padding:12px 4px;background:var(--bg2);border:1px solid var(--border2);border-radius:6px;color:var(--text2);font-size:11px;font-weight:700;transition:all .15s;">Supervisor</button>
+            <button class="role-btn" onclick="selectRole(this,'SWAT')" style="padding:12px 4px;background:var(--bg2);border:1px solid var(--border2);border-radius:6px;color:var(--text2);font-size:11px;font-weight:700;transition:all .15s;">SWAT</button>
+            <button class="role-btn" onclick="selectRole(this,'Bike')" style="padding:12px 4px;background:var(--bg2);border:1px solid var(--border2);border-radius:6px;color:var(--text2);font-size:11px;font-weight:700;transition:all .15s;">Bike</button>
+            <button class="role-btn" onclick="selectRole(this,'Other')" style="padding:12px 4px;background:var(--bg2);border:1px solid var(--border2);border-radius:6px;color:var(--text2);font-size:11px;font-weight:700;transition:all .15s;">Other</button>
           </div>
         </div>
 
@@ -2101,20 +2096,11 @@ function updateOfficerMarker(o) {
   if (!S.map || !o.lat || !o.lng) return;
   const color = officerColor(o);
   const isMulti = S.selected.has(o.id);
-  
-  // Icon based on agency
-  const agencyIcons = {
-    'Police': '🛡️',
-    'Fire': '🚒',
-    'EMS': '⚕️'
-  };
-  const icon_emoji = agencyIcons[o.agency] || '📍';
-  
-  const html = `<div class="o-marker${isMulti?' multi':''}" style="background:transparent;border:none;color:${color};position:relative;font-size:28px;">
-    ${icon_emoji}
-    <div class="o-marker-lbl" style="color:${color};font-size:10px;position:absolute;bottom:-16px;left:50%;transform:translateX(-50%);white-space:nowrap;font-weight:700;">${o.badge||'?'}</div>
+  const html = `<div class="o-marker${isMulti?' multi':''}" style="background:${color}22;border-color:${color};color:${color};">
+    <div class="o-marker-lbl" style="color:${color};">${o.badge||o.lastName?.charAt(0)||'?'}</div>
+    ${(o.firstName||'?').charAt(0)}${(o.lastName||'').charAt(0)||''}
   </div>`;
-  const icon = L.divIcon({ className:'', html, iconSize:[40,50], iconAnchor:[20,50] });
+  const icon = L.divIcon({ className:'', html, iconSize:[34,34], iconAnchor:[17,17] });
 
   if (S.markers[o.id]) {
     S.markers[o.id].setLatLng([o.lat, o.lng]);
@@ -2694,30 +2680,6 @@ window.selectIncidentFromPicker = function(inc) {
 };
 
 window.selectedRole = 'Patrol';
-window.selectAgency = function(btn, agency) {
-  window.selectedAgency = agency;
-  document.querySelectorAll('.agency-btn').forEach(b => {
-    b.style.background = 'var(--bg2)';
-    b.style.borderColor = 'var(--border2)';
-    b.style.color = 'var(--text2)';
-  });
-  btn.style.background = 'rgba(41,121,232,.2)';
-  btn.style.borderColor = 'var(--accent)';
-  btn.style.color = '#fff';
-  
-  const roleGrid = document.getElementById('role-grid');
-  const roleOptions = {
-    'Police': ['Patrol', 'Supervisor', 'K9', 'Drone', 'Other'],
-    'Fire': ['Firefighter', 'Officer', 'Chief', 'Other'],
-    'EMS': ['Paramedic', 'EMT', 'Supervisor', 'Other']
-  };
-  
-  const roles = roleOptions[agency] || [];
-  roleGrid.innerHTML = roles.map(role => 
-    `<button class="role-btn" onclick="selectRole(this,'${role}')" style="padding:12px 4px;background:var(--bg2);border:1px solid var(--border2);border-radius:6px;color:var(--text2);font-size:11px;font-weight:700;transition:all .15s;cursor:pointer;">${role}</button>`
-  ).join('');
-};
-
 window.selectRole = function(btn, role) {
   window.selectedRole = role;
   document.querySelectorAll('.role-btn').forEach(b => {
@@ -2770,42 +2732,9 @@ window.submitCheckin = async function() {
   const first = document.getElementById('ci-first').value.trim();
   const badge = document.getElementById('ci-badge').value.trim();
   const incId = document.getElementById('ci-inc-id').value.trim();
-  const department = document.getElementById('ci-department').value.trim() || 'Unknown';
-  
   if (!last)  { toast('Enter your last name.', 'err'); return; }
   if (!badge) { toast('Enter your badge number.', 'err'); return; }
   if (!incId) { toast('Scan the QR code or enter the incident ID.', 'err'); return; }
-  if (!window.selectedAgency) { toast('Select your agency.', 'err'); return; }
-
-  // Create or get device ID
-  let deviceId = localStorage.getItem('spd-device-id');
-  if (!deviceId) {
-    deviceId = 'dev-' + Date.now().toString(36) + '-' + Math.random().toString(36).substr(2, 9);
-    localStorage.setItem('spd-device-id', deviceId);
-  }
-  
-  // Check if this device is already checked in
-  const existingOfficer = await new Promise((resolve) => {
-    let found = null;
-    onValue(ref(db, 'officers/' + incId), (snap) => {
-      const officers = snap.val() || {};
-      for (const [id, officer] of Object.entries(officers)) {
-        if (officer.deviceId === deviceId) {
-          found = { id, ...officer };
-          break;
-        }
-      }
-      resolve(found);
-    }, { onlyOnce: true });
-  });
-  
-  if (existingOfficer) {
-    if (confirm('Already checked in as ' + existingOfficer.firstName + ' ' + existingOfficer.lastName + '.\n\nCheck in as someone else?')) {
-      await set(ref(db, 'officers/' + incId + '/' + existingOfficer.id), null);
-    } else {
-      return;
-    }
-  }
 
   const now = new Date();
   const timeStr = now.toLocaleTimeString('en-US', { hour12:false, timeZone:'America/New_York' }) + ' ET';
@@ -2815,19 +2744,17 @@ window.submitCheckin = async function() {
     id: myOfficerId,
     lastName: last, firstName: first || '',
     badge,
-    agency: window.selectedAgency,
-    department: department,
-    role: window.selectedRole || 'Other',
+    role: window.selectedRole || 'Patrol',
     radio: (document.getElementById('ci-radio')?.value||'').trim(),
     phone: (document.getElementById('ci-phone')?.value||'').trim(),
     sector: (document.getElementById('ci-sector')?.value||'').trim(),
     vehicle: (document.getElementById('ci-vehicle')?.value||'').trim(),
     caps: [],
+    agency: 'Shrewsbury Police Department',
     status: 'On Scene',
     incidentId: incId,
     checkinTime: timeStr,
     connectionStatus: 'online',
-    deviceId: deviceId,
     lat: null, lng: null,
   };
 

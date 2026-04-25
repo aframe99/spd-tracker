@@ -2096,11 +2096,22 @@ function updateOfficerMarker(o) {
   if (!S.map || !o.lat || !o.lng) return;
   const color = officerColor(o);
   const isMulti = S.selected.has(o.id);
-  const html = `<div class="o-marker${isMulti?' multi':''}" style="background:${color}22;border-color:${color};color:${color};">
-    <div class="o-marker-lbl" style="color:${color};">${o.badge||o.lastName?.charAt(0)||'?'}</div>
-    ${(o.firstName||'?').charAt(0)}${(o.lastName||'').charAt(0)||''}
+  
+  // Icon based on agency - default to badge initials if no agency
+  const agencyIcons = {
+    'Police': '🛡️',
+    'Fire': '🚒',
+    'EMS': '⚕️'
+  };
+  const icon_emoji = agencyIcons[o.agency] || ((o.firstName||'?').charAt(0) + (o.lastName||'').charAt(0) || '?');
+  
+  const html = `<div class="o-marker${isMulti?' multi':''}" style="background:${color}22;border-color:${color};color:${color};font-size:${o.agency ? '24px' : '12px'};display:flex;align-items:center;justify-content:center;position:relative;">
+    ${icon_emoji}
+    ${o.badge ? `<div class="o-marker-lbl" style="color:${color};font-size:10px;position:absolute;bottom:-14px;left:50%;transform:translateX(-50%);white-space:nowrap;font-weight:700;">${o.badge}</div>` : ''}
   </div>`;
-  const icon = L.divIcon({ className:'', html, iconSize:[34,34], iconAnchor:[17,17] });
+  const iconSize = o.agency ? [40,50] : [34,34];
+  const iconAnchor = o.agency ? [20,50] : [17,17];
+  const icon = L.divIcon({ className:'', html, iconSize, iconAnchor });
 
   if (S.markers[o.id]) {
     S.markers[o.id].setLatLng([o.lat, o.lng]);

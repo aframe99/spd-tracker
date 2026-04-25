@@ -1800,17 +1800,26 @@ window.openCreateModal = function() {
   const idEl = document.getElementById('inc-id-preview');
   if (idEl) {
     // Count incidents this year from Firebase to get next number
-    import('https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js').catch(()=>{});
     try {
-      firebase.database().ref('incidents').orderByChild('startTime').once('value', snap => {
+      firebase.database().ref('incidents').once('value', snap => {
         const data = snap.val() || {};
-        const thisYear = Object.values(data).filter(i => {
-          const d = new Date(i.startTime||0);
-          return d.getFullYear() === year;
-        }).length;
-        idEl.value = year + '-' + (thisYear + 1);
+        let maxNum = 0;
+        Object.keys(data).forEach(key => {
+          // Parse IDs like "2026-1", "2026-2", etc
+          const match = key.match(new RegExp('^' + year + '-(\\d+)$'));
+          if (match) {
+            const num = parseInt(match[1], 10);
+            if (num > maxNum) maxNum = num;
+          }
+        });
+        idEl.value = year + '-' + (maxNum + 1);
+      }).catch(err => {
+        // Firebase error - just use a default
+        console.log('Firebase error getting incident count:', err);
+        idEl.value = year + '-1';
       });
     } catch(e) {
+      console.log('Error generating incident ID:', e);
       idEl.value = year + '-1';
     }
   }
@@ -2854,8 +2863,8 @@ function drawQR() {
   if (!container) return;
   container.innerHTML = '';
 
-  // Build the check-in URL — same file, with incident ID as query param
-  const url = 'https://fascinating-toffee-a3ff45.netlify.app/?mode=checkin';
+  // Build the check-in URL — GitHub Pages URL
+  const url = 'https://aframe99.github.io/spd-tracker/?mode=checkin';
 
   try {
     new QRCode(container, {

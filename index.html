@@ -1,0 +1,961 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SPD IC Dashboard</title>
+  
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+
+  <style>
+    :root {
+      --bg-primary: #0a0e1a;
+      --bg-secondary: #0f1419;
+      --bg-tertiary: #151d2b;
+      --bg-hover: #1a2437;
+      --text-primary: #e4e9f1;
+      --text-secondary: #9da8be;
+      --text-tertiary: #6b7a8f;
+      --border-color: rgba(255, 255, 255, 0.08);
+      --accent-primary: #2979e8;
+      --accent-light: #4fa3ff;
+      --success: #10b981;
+      --danger: #ef4444;
+      --warning: #f59e0b;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      overflow: hidden;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    .screen {
+      display: none !important;
+      width: 100%;
+      height: 100vh;
+      position: fixed;
+      top: 0;
+      left: 0;
+      z-index: 1;
+    }
+
+    .screen.active {
+      display: flex !important;
+      z-index: 10;
+    }
+
+    .login-container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-tertiary) 100%);
+    }
+
+    .login-box {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 40px;
+      width: 100%;
+      max-width: 450px;
+    }
+
+    .login-header {
+      text-align: center;
+      margin-bottom: 35px;
+    }
+
+    .login-icon {
+      font-size: 48px;
+      margin-bottom: 15px;
+    }
+
+    .login-title {
+      font-size: 28px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-tertiary);
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+
+    .form-input {
+      width: 100%;
+      padding: 12px 14px;
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      color: var(--text-primary);
+      font-size: 14px;
+      font-family: inherit;
+    }
+
+    .form-input:focus {
+      outline: none;
+      border-color: var(--accent-primary);
+    }
+
+    .btn {
+      padding: 12px 16px;
+      border: 1px solid var(--border-color);
+      background: var(--bg-tertiary);
+      color: var(--text-secondary);
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-family: inherit;
+    }
+
+    .btn:hover {
+      background: var(--bg-hover);
+      border-color: var(--accent-primary);
+      color: var(--text-primary);
+    }
+
+    .btn.primary {
+      background: var(--accent-primary);
+      border-color: var(--accent-primary);
+      color: white;
+    }
+
+    .btn.danger {
+      color: var(--danger);
+    }
+
+    .form-select {
+      width: 100%;
+      padding: 12px 14px;
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      color: var(--text-primary);
+      font-size: 11px;
+      font-family: inherit;
+    }
+
+    #ic-dashboard {
+      display: none !important;
+      grid-template-columns: 280px 1fr 320px;
+      background: var(--bg-primary);
+    }
+
+    #ic-dashboard.active {
+      display: grid !important;
+    }
+
+    .sidebar {
+      background: var(--bg-secondary);
+      border-right: 1px solid var(--border-color);
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+    }
+
+    .sidebar-header {
+      padding: 20px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .sidebar-section {
+      padding: 15px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .sidebar-section-title {
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--text-tertiary);
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+
+    .unit-item {
+      padding: 10px 12px;
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      margin-bottom: 8px;
+      cursor: pointer;
+      font-size: 11px;
+    }
+
+    .unit-item:hover {
+      background: var(--bg-hover);
+      border-color: var(--accent-primary);
+    }
+
+    .unit-badge {
+      font-weight: 700;
+      color: var(--accent-primary);
+      margin-bottom: 3px;
+    }
+
+    .unit-time {
+      font-size: 9px;
+      color: var(--text-tertiary);
+      margin-top: 4px;
+    }
+
+    .test-badge {
+      display: inline-block;
+      background: var(--warning);
+      color: var(--bg-primary);
+      padding: 2px 6px;
+      border-radius: 2px;
+      font-size: 8px;
+      font-weight: 700;
+      margin-left: 6px;
+    }
+
+    #map-container {
+      display: flex;
+      flex-direction: column;
+      background: var(--bg-primary);
+    }
+
+    #ic-map {
+      flex: 1;
+    }
+
+    .right-panel {
+      background: var(--bg-secondary);
+      border-left: 1px solid var(--border-color);
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+    }
+
+    .panel-header {
+      padding: 15px;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .panel-tabs {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr 1fr;
+      border-bottom: 1px solid var(--border-color);
+      margin: 0 15px;
+    }
+
+    .panel-tab {
+      padding: 12px;
+      text-align: center;
+      font-size: 8px;
+      font-weight: 600;
+      text-transform: uppercase;
+      color: var(--text-tertiary);
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+    }
+
+    .panel-tab.active {
+      color: var(--accent-primary);
+      border-bottom-color: var(--accent-primary);
+    }
+
+    .panel-content {
+      padding: 15px;
+      flex: 1;
+      overflow-y: auto;
+    }
+
+    .panel-section {
+      margin-bottom: 18px;
+    }
+
+    .panel-label {
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--text-tertiary);
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+
+    .panel-input {
+      width: 100%;
+      padding: 10px 12px;
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      color: var(--text-primary);
+      font-size: 12px;
+      font-family: inherit;
+    }
+
+    .panel-textarea {
+      width: 100%;
+      padding: 10px 12px;
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      color: var(--text-primary);
+      font-size: 11px;
+      font-family: inherit;
+      min-height: 60px;
+      resize: vertical;
+    }
+
+    .message-box {
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      padding: 10px;
+      margin-bottom: 10px;
+      font-size: 10px;
+    }
+
+    .message-from {
+      font-weight: 600;
+      color: var(--accent-primary);
+      margin-bottom: 4px;
+    }
+
+    .message-text {
+      color: var(--text-primary);
+      margin-bottom: 4px;
+    }
+
+    .message-time {
+      font-size: 9px;
+      color: var(--text-tertiary);
+    }
+
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.6);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal.open {
+      display: flex;
+    }
+
+    .modal-content {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 30px;
+      width: 100%;
+      max-width: 400px;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+
+    .modal-title {
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 20px;
+    }
+
+    .button-group {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-top: 20px;
+    }
+
+    .button-group.full {
+      grid-template-columns: 1fr;
+    }
+
+    ::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: var(--border-color);
+      border-radius: 3px;
+    }
+  </style>
+</head>
+
+<body>
+
+<!-- HOME SCREEN -->
+<div class="screen active" id="home-screen">
+  <div class="login-container">
+    <div class="login-box">
+      <div class="login-header">
+        <div class="login-icon">🛡️</div>
+        <div class="login-title">SPD IC Dashboard</div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Username</label>
+        <input type="text" id="login-username" class="form-input" placeholder="Enter username">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Password</label>
+        <input type="password" id="login-password" class="form-input" placeholder="Enter password" onkeypress="if(event.key==='Enter') app.loginAs('ic')">
+      </div>
+
+      <button class="btn primary" onclick="app.loginAs('ic')" style="padding: 16px; font-size: 13px; width: 100%;">LOGIN</button>
+    </div>
+  </div>
+</div>
+
+<!-- IC DASHBOARD -->
+<div class="screen" id="ic-dashboard">
+  <div class="sidebar">
+    <div class="sidebar-header">
+      <div style="font-size: 14px; font-weight: 700; margin-bottom: 15px;">IC COMMAND</div>
+      <button class="btn" onclick="app.logout()" style="width: 100%; font-size: 11px; padding: 8px;">LOGOUT</button>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">Active Incident</div>
+      <select id="incident-selector" class="form-select" onchange="app.switchIncident()" style="font-size: 11px;">
+        <option value="">-- SELECT INCIDENT --</option>
+      </select>
+    </div>
+
+    <div class="sidebar-section">
+      <button class="btn primary" onclick="app.toggleCreateIncident()" style="width: 100%; font-size: 11px; padding: 10px;">+ NEW</button>
+    </div>
+
+    <div id="create-incident-form" style="display: none; padding: 15px; border-bottom: 1px solid var(--border-color);">
+      <div class="form-group">
+        <label class="form-label">Name</label>
+        <input type="text" id="incident-name-input" class="form-input" placeholder="Name" style="font-size: 11px;">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Type</label>
+        <select id="incident-type" class="form-select" style="font-size: 11px;">
+          <option value="Training">Training</option>
+          <option value="Parade">Parade</option>
+          <option value="Event">Event</option>
+          <option value="Emergency">Emergency</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Location</label>
+        <input type="text" id="incident-location" class="form-input" placeholder="Address" style="font-size: 11px;">
+      </div>
+      <div class="button-group" style="gap: 8px;">
+        <button class="btn primary" onclick="app.createIncident()" style="font-size: 10px; padding: 8px;">CREATE</button>
+        <button class="btn" onclick="app.toggleCreateIncident()" style="font-size: 10px; padding: 8px;">CANCEL</button>
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">Checked In Units</div>
+      <div id="units-list" style="flex: 1; overflow-y: auto;">
+        <div style="text-align: center; color: var(--text-tertiary); padding: 15px; font-size: 11px;">No units</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="map-container">
+    <div id="ic-map"></div>
+  </div>
+
+  <div class="right-panel">
+    <div class="panel-header">
+      <div style="font-size: 13px; font-weight: 700;">INCIDENT</div>
+      <button class="btn" onclick="app.logout()" style="padding: 6px 10px; font-size: 10px;">LOGOUT</button>
+    </div>
+
+    <div class="panel-tabs">
+      <div class="panel-tab active" onclick="app.switchPanel('incident')">Info</div>
+      <div class="panel-tab" onclick="app.switchPanel('unit')">Unit</div>
+      <div class="panel-tab" onclick="app.switchPanel('messages')">Msg</div>
+      <div class="panel-tab" onclick="app.switchPanel('tracking')">Track</div>
+    </div>
+
+    <div class="panel-content">
+      <div id="incident-panel" class="panel-tab-content active">
+        <div class="panel-section">
+          <div class="panel-label">Incident ID</div>
+          <input type="text" id="panel-incident-id" class="panel-input" readonly>
+        </div>
+
+        <div class="panel-section">
+          <div class="panel-label">Location</div>
+          <input type="text" id="panel-incident-location" class="panel-input">
+        </div>
+
+        <div class="panel-section">
+          <div class="panel-label">OIC</div>
+          <input type="text" id="panel-incident-oic" class="panel-input">
+        </div>
+
+        <div class="panel-section">
+          <div class="panel-label">Status</div>
+          <input type="text" id="panel-incident-status" class="panel-input" readonly>
+        </div>
+
+        <div class="panel-section">
+          <button class="btn danger" onclick="app.closeIncident()" style="width: 100%; padding: 10px; font-size: 10px;">CLOSE</button>
+        </div>
+      </div>
+
+      <div id="unit-panel" class="panel-tab-content" style="display: none;">
+        <div style="text-align: center; color: var(--text-tertiary); padding: 40px 0; font-size: 11px;">Select a unit</div>
+      </div>
+
+      <div id="messages-panel" class="panel-tab-content" style="display: none;">
+        <div class="panel-section">
+          <div class="panel-label">Send Message to Units</div>
+          <textarea id="message-text" class="panel-textarea" placeholder="Type message..." style="margin-bottom: 10px;"></textarea>
+          <button class="btn primary" onclick="app.sendMessage()" style="width: 100%; padding: 10px; font-size: 10px;">SEND</button>
+        </div>
+
+        <div class="panel-section">
+          <div class="panel-label">Recent Messages</div>
+          <div id="messages-log"></div>
+        </div>
+      </div>
+
+      <div id="tracking-panel" class="panel-tab-content" style="display: none;">
+        <div class="panel-section">
+          <div class="panel-label">Tracking Status</div>
+          <div id="tracking-info" style="font-size: 11px; color: var(--text-secondary);">No incident selected</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyC-56rq9DEw2U0XJ3708ruje0604zAphXE",
+  authDomain: "shrewsbury-pd-track.firebaseapp.com",
+  databaseURL: "https://shrewsbury-pd-track-default-rtdb.firebaseio.com",
+  projectId: "shrewsbury-pd-track",
+  storageBucket: "shrewsbury-pd-track.firebasestorage.app",
+  messagingSenderId: "1833033387326",
+  appId: "1:1833033387326:web:09b8659a1004aa42bbc6ef"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+const app = {
+  currentUser: null,
+  currentIncident: null,
+  selectedUnit: null,
+  map: null,
+  unitMarkers: {},
+
+  async init() {
+    this.showScreen('home-screen');
+  },
+
+  showScreen(screenId) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById(screenId).classList.add('active');
+  },
+
+  async loginAs(role) {
+    const username = document.getElementById('login-username').value.trim();
+    const password = document.getElementById('login-password').value.trim();
+
+    if (!username || !password) {
+      alert('Enter credentials');
+      return;
+    }
+
+    try {
+      if (username === 'admin' && password === '1234') {
+        this.currentUser = username;
+        this.showScreen('ic-dashboard');
+        this.initICDashboard();
+        return;
+      }
+
+      const snap = await db.ref(`ics/${username}`).once('value');
+      const account = snap.val();
+
+      if (account && account.password === password) {
+        this.currentUser = username;
+        this.showScreen('ic-dashboard');
+        this.initICDashboard();
+      } else {
+        alert('Invalid credentials');
+      }
+    } catch (err) {
+      alert('Error: ' + err.message);
+    }
+  },
+
+  logout() {
+    if (confirm('Logout?')) {
+      this.currentUser = null;
+      this.currentIncident = null;
+      if (this.map) this.map.remove();
+      this.showScreen('home-screen');
+      document.getElementById('login-username').value = '';
+      document.getElementById('login-password').value = '';
+    }
+  },
+
+  async initICDashboard() {
+    this.loadIncidents();
+    setTimeout(() => {
+      if (this.map) this.map.remove();
+      this.map = L.map('ic-map').setView([42.3601, -71.0589], 12);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(this.map);
+    }, 100);
+  },
+
+  toggleCreateIncident() {
+    document.getElementById('create-incident-form').style.display =
+      document.getElementById('create-incident-form').style.display === 'none' ? 'block' : 'none';
+  },
+
+  async createIncident() {
+    const name = document.getElementById('incident-name-input').value.trim();
+    const type = document.getElementById('incident-type').value;
+    const location = document.getElementById('incident-location').value.trim();
+
+    if (!name || !location) {
+      alert('Fill in all fields');
+      return;
+    }
+
+    const pin = prompt('Enter 4-digit PIN:');
+    if (!pin || pin.length !== 4 || !/^\d+$/.test(pin)) {
+      alert('PIN must be 4 digits');
+      return;
+    }
+
+    try {
+      const year = new Date().getFullYear();
+      const snap = await db.ref('incidents').once('value');
+      const incidents = snap.val() || {};
+
+      const usedNumbers = new Set();
+      Object.values(incidents).forEach(inc => {
+        if (inc.id && inc.id.startsWith(year + '-')) {
+          const num = parseInt(inc.id.split('-')[1]);
+          if (!isNaN(num)) usedNumbers.add(num);
+        }
+      });
+
+      let nextNumber = 1;
+      while (usedNumbers.has(nextNumber)) nextNumber++;
+      const incidentId = `${year}-${nextNumber}`;
+
+      const fullLocation = `${location}, Shrewsbury, MA`;
+
+      const incidentData = {
+        id: incidentId, name, type, location: fullLocation, pin,
+        status: 'active',
+        createdAt: new Date().toISOString(),
+        createdBy: this.currentUser,
+        gps: { lat: 42.3601, lng: -71.0589 },
+        units: {},
+        messages: {}
+      };
+
+      await db.ref(`incidents/${incidentId}`).set(incidentData);
+
+      document.getElementById('incident-name-input').value = '';
+      document.getElementById('incident-location').value = '';
+      document.getElementById('create-incident-form').style.display = 'none';
+
+      this.loadIncidents();
+      setTimeout(() => {
+        document.getElementById('incident-selector').value = incidentId;
+        this.switchIncident();
+      }, 500);
+    } catch (err) {
+      alert('Error: ' + err.message);
+    }
+  },
+
+  async loadIncidents() {
+    try {
+      const snap = await db.ref('incidents').once('value');
+      const incidents = snap.val() || {};
+      const selector = document.getElementById('incident-selector');
+
+      selector.innerHTML = '<option value="">-- SELECT INCIDENT --</option>';
+
+      Object.entries(incidents)
+        .filter(([_, inc]) => inc.status === 'active')
+        .forEach(([id, inc]) => {
+          const opt = document.createElement('option');
+          opt.value = id;
+          opt.textContent = `${inc.id} - ${inc.name}`;
+          selector.appendChild(opt);
+        });
+    } catch (err) {
+      console.error('Error:', err);
+    }
+  },
+
+  async switchIncident() {
+    const incidentId = document.getElementById('incident-selector').value;
+    if (!incidentId) {
+      this.currentIncident = null;
+      return;
+    }
+
+    this.currentIncident = incidentId;
+    this.selectedUnit = null;
+    this.loadIncidentDetails(incidentId);
+    this.monitorUnits(incidentId);
+    this.monitorMessages(incidentId);
+  },
+
+  async loadIncidentDetails(incidentId) {
+    try {
+      const snap = await db.ref(`incidents/${incidentId}`).once('value');
+      const incident = snap.val();
+
+      if (incident) {
+        document.getElementById('panel-incident-id').value = incident.id;
+        document.getElementById('panel-incident-location').value = incident.location;
+        document.getElementById('panel-incident-oic').value = incident.oic || '';
+        document.getElementById('panel-incident-status').value = incident.status;
+
+        if (incident.gps && this.map) {
+          this.map.setView([incident.gps.lat, incident.gps.lng], 14);
+        }
+      }
+    } catch (err) {
+      console.error('Error:', err);
+    }
+  },
+
+  monitorUnits(incidentId) {
+    db.ref(`incidents/${incidentId}/units`).on('value', (snap) => {
+      const units = snap.val() || {};
+      this.renderUnitsList(units);
+      this.updateMapMarkers(units);
+    });
+  },
+
+  renderUnitsList(units) {
+    const list = document.getElementById('units-list');
+    if (Object.keys(units).length === 0) {
+      list.innerHTML = '<div style="text-align: center; color: var(--text-tertiary); padding: 15px; font-size: 11px;">No units</div>';
+      return;
+    }
+
+    const now = Date.now();
+    const fiveMinutes = 5 * 60 * 1000;
+
+    list.innerHTML = Object.entries(units)
+      .map(([id, unit]) => {
+        const lastUpdate = new Date(unit.lastUpdatedAt);
+        const isStale = (now - lastUpdate.getTime()) > fiveMinutes;
+        const timeString = lastUpdate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        const dateString = lastUpdate.toLocaleDateString([], { month: '2-digit', day: '2-digit' });
+        const testBadge = unit.isTestMode ? '<span class="test-badge">Test</span>' : '';
+
+        return `
+          <div class="unit-item" onclick="app.selectUnit('${id}')">
+            <div class="unit-badge">${unit.badge} ${testBadge}</div>
+            <div style="font-size: 10px; color: var(--text-tertiary); margin-bottom: 4px;">${unit.firstName} ${unit.lastName}</div>
+            <div class="unit-time">● ${dateString} ${timeString}</div>
+          </div>
+        `;
+      })
+      .join('');
+  },
+
+  selectUnit(unitId) {
+    this.selectedUnit = unitId;
+    document.querySelectorAll('.unit-item').forEach(el => el.classList.remove('active'));
+    event.currentTarget.classList.add('active');
+
+    if (this.currentIncident) {
+      db.ref(`incidents/${this.currentIncident}/units/${unitId}`).once('value', (snap) => {
+        const unit = snap.val();
+        if (unit && unit.gps && this.map) {
+          this.map.setView([unit.gps.lat, unit.gps.lng], 16);
+        }
+      });
+    }
+  },
+
+  updateMapMarkers(units) {
+    Object.values(this.unitMarkers).forEach(m => this.map.removeLayer(m));
+    this.unitMarkers = {};
+
+    Object.entries(units).forEach(([id, unit]) => {
+      if (unit.gps && unit.status === 'checkedIn') {
+        const icon = this.getUnitIcon(unit.category, unit.badge);
+        const marker = L.marker([unit.gps.lat, unit.gps.lng], { icon }).addTo(this.map);
+        marker.on('click', () => this.map.setView([unit.gps.lat, unit.gps.lng], 16));
+        this.unitMarkers[id] = marker;
+      }
+    });
+  },
+
+  getUnitIcon(category, badge) {
+    let html;
+    if (category === 'police') {
+      html = `<div style="text-align: center;"><div style="font-size: 18px; margin-bottom: -2px;">🛡️</div><div style="font-size: 11px; font-weight: 900; color: white; text-shadow: 0 1px 3px rgba(0,0,0,0.5); background: rgba(0,0,0,0.3); padding: 2px 4px; border-radius: 2px; min-width: 28px; animation: pulse 1.5s ease-in-out infinite;">${badge}</div></div>`;
+    } else if (category === 'fire') {
+      html = '<div style="font-size: 20px;">🔥</div>';
+    } else if (category === 'ems') {
+      html = '<div style="font-size: 26px; font-weight: 900; color: #ef4444;">+</div>';
+    } else {
+      html = '<div style="font-size: 16px;">📍</div>';
+    }
+
+    return L.divIcon({
+      html: html,
+      className: 'custom-marker',
+      iconSize: [40, 48],
+      iconAnchor: [20, 48],
+      popupAnchor: [0, -48]
+    });
+  },
+
+  switchPanel(panel) {
+    document.querySelectorAll('.panel-tab').forEach(tab => tab.classList.remove('active'));
+    document.querySelectorAll('.panel-tab-content').forEach(content => content.style.display = 'none');
+    event.target.classList.add('active');
+    document.getElementById(`${panel}-panel`).style.display = 'block';
+
+    if (panel === 'messages') {
+      this.loadMessagesLog();
+    }
+  },
+
+  async sendMessage() {
+    if (!this.currentIncident) {
+      alert('Select an incident first');
+      return;
+    }
+
+    const messageText = document.getElementById('message-text').value.trim();
+    if (!messageText) {
+      alert('Enter a message');
+      return;
+    }
+
+    try {
+      const messageId = db.ref(`incidents/${this.currentIncident}/messages`).push().key;
+      
+      await db.ref(`incidents/${this.currentIncident}/messages/${messageId}`).set({
+        from: this.currentUser,
+        text: messageText,
+        timestamp: new Date().toISOString(),
+        type: 'broadcast'
+      });
+
+      document.getElementById('message-text').value = '';
+      this.loadMessagesLog();
+      alert('Message sent to all units');
+    } catch (err) {
+      alert('Error: ' + err.message);
+    }
+  },
+
+  monitorMessages(incidentId) {
+    db.ref(`incidents/${incidentId}/messages`).on('child_added', (snap) => {
+      // Auto-load messages
+    });
+  },
+
+  async loadMessagesLog() {
+    if (!this.currentIncident) return;
+
+    try {
+      const snap = await db.ref(`incidents/${this.currentIncident}/messages`).once('value');
+      const messages = snap.val() || {};
+      const log = document.getElementById('messages-log');
+
+      if (Object.keys(messages).length === 0) {
+        log.innerHTML = '<div style="color: var(--text-tertiary); font-size: 10px;">No messages sent</div>';
+        return;
+      }
+
+      log.innerHTML = Object.entries(messages)
+        .reverse()
+        .slice(0, 10)
+        .map(([id, msg]) => {
+          const time = new Date(msg.timestamp).toLocaleTimeString();
+          return `
+            <div class="message-box">
+              <div class="message-from">${msg.from}</div>
+              <div class="message-text">${msg.text}</div>
+              <div class="message-time">${time}</div>
+            </div>
+          `;
+        })
+        .join('');
+    } catch (err) {
+      console.error('Error:', err);
+    }
+  },
+
+  async closeIncident() {
+    if (!confirm('Close incident?')) return;
+
+    try {
+      const snap = await db.ref(`incidents/${this.currentIncident}/units`).once('value');
+      const units = snap.val() || {};
+
+      const updates = {};
+      Object.keys(units).forEach(unitId => {
+        updates[`incidents/${this.currentIncident}/units/${unitId}/status`] = 'checkedOut';
+      });
+      updates[`incidents/${this.currentIncident}/status`] = 'closed';
+
+      await db.ref().update(updates);
+      this.currentIncident = null;
+      document.getElementById('incident-selector').value = '';
+      this.loadIncidents();
+      alert('Closed');
+    } catch (err) {
+      alert('Error: ' + err.message);
+    }
+  }
+};
+
+window.addEventListener('load', () => app.init());
+</script>
+
+</body>
+</html>

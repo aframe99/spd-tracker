@@ -1,0 +1,1849 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SPD Incident Tracker v7</title>
+  
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+  <style>
+    :root {
+      --bg-primary: #0a0e1a;
+      --bg-secondary: #0f1419;
+      --bg-tertiary: #151d2b;
+      --bg-hover: #1a2437;
+      --text-primary: #e4e9f1;
+      --text-secondary: #9da8be;
+      --text-tertiary: #6b7a8f;
+      --border-color: rgba(255, 255, 255, 0.08);
+      --accent-primary: #2979e8;
+      --accent-light: #4fa3ff;
+      --danger: #ef4444;
+      --warning: #f59e0b;
+      --success: #10b981;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+    }
+
+    body {
+      overflow: hidden;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    @keyframes badgePulse {
+      0%, 100% { opacity: 1; text-shadow: 0 0 8px rgba(0, 0, 0, 0.5); }
+      50% { opacity: 0.6; text-shadow: 0 0 15px rgba(41, 121, 232, 0.8); }
+    }
+
+    .screen {
+      display: none !important;
+      width: 100%;
+      height: 100vh;
+      position: fixed;
+      top: 0;
+      left: 0;
+      z-index: 1;
+    }
+
+    .screen.active {
+      display: flex !important;
+      z-index: 10;
+    }
+
+    /* LOGIN */
+    .login-container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-tertiary) 100%);
+    }
+
+    .login-box {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 40px;
+      width: 100%;
+      max-width: 500px;
+    }
+
+    .login-header {
+      text-align: center;
+      margin-bottom: 35px;
+    }
+
+    .login-icon {
+      font-size: 48px;
+      margin-bottom: 15px;
+    }
+
+    .login-title {
+      font-size: 28px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .login-subtitle {
+      font-size: 12px;
+      color: var(--text-tertiary);
+      text-transform: uppercase;
+    }
+
+    .btn {
+      padding: 12px 16px;
+      border: 1px solid var(--border-color);
+      background: var(--bg-tertiary);
+      color: var(--text-secondary);
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-family: inherit;
+    }
+
+    .btn:hover {
+      background: var(--bg-hover);
+      border-color: var(--accent-primary);
+      color: var(--text-primary);
+    }
+
+    .btn.primary {
+      background: var(--accent-primary);
+      border-color: var(--accent-primary);
+      color: white;
+    }
+
+    .btn.primary:hover {
+      background: var(--accent-light);
+    }
+
+    .btn.danger {
+      color: var(--danger);
+    }
+
+    .btn.danger:hover {
+      background: rgba(239, 68, 68, 0.1);
+    }
+
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-tertiary);
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+
+    .form-input, .form-select {
+      width: 100%;
+      padding: 12px 14px;
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      color: var(--text-primary);
+      font-size: 14px;
+      font-family: inherit;
+    }
+
+    .form-input:focus, .form-select:focus {
+      outline: none;
+      border-color: var(--accent-primary);
+      background: var(--bg-hover);
+    }
+
+    /* CHECKIN SCREEN */
+    #checkin-screen {
+      background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-tertiary) 100%);
+      flex-direction: column;
+    }
+
+    .checkin-container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      flex: 1;
+      gap: 20px;
+      padding: 20px;
+    }
+
+    .checkin-content {
+      width: 100%;
+      max-width: 500px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 40px;
+      overflow-y: auto;
+      max-height: 95vh;
+    }
+
+    .checkin-map-container {
+      width: 100%;
+      max-width: 500px;
+      height: 600px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      overflow: hidden;
+      display: none;
+    }
+
+    .checkin-map-container.active {
+      display: block;
+    }
+
+    .checkin-map-controls {
+      text-align: center;
+      padding: 12px;
+      background: var(--bg-tertiary);
+      border-top: 1px solid var(--border-color);
+      gap: 8px;
+      display: flex;
+      justify-content: center;
+    }
+
+    .police-type-btn {
+      padding: 10px 16px !important;
+      font-size: 12px !important;
+      font-weight: 600 !important;
+      text-transform: uppercase !important;
+      background: var(--bg-tertiary) !important;
+      border: 1px solid var(--border-color) !important;
+      color: var(--text-secondary) !important;
+      cursor: pointer !important;
+      transition: all 0.2s !important;
+      border-radius: 6px !important;
+      margin-bottom: 8px;
+      margin-right: 8px;
+    }
+
+    .police-type-btn.active {
+      background: var(--accent-primary) !important;
+      border-color: var(--accent-primary) !important;
+      color: white !important;
+    }
+
+    .expandable-section {
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      margin-bottom: 20px;
+      background: var(--bg-tertiary);
+      overflow: hidden;
+    }
+
+    .expandable-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 16px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .expandable-header:hover {
+      background: var(--bg-hover);
+    }
+
+    .expandable-toggle {
+      color: var(--accent-primary);
+      transition: transform 0.2s;
+    }
+
+    .expandable-toggle.open {
+      transform: rotate(180deg);
+    }
+
+    .expandable-content {
+      display: none;
+      padding: 16px;
+      border-top: 1px solid var(--border-color);
+    }
+
+    .expandable-content.open {
+      display: block;
+    }
+
+    /* IC DASHBOARD */
+    #ic-dashboard {
+      display: none !important;
+      grid-template-columns: 280px 1fr 320px;
+      gap: 0;
+    }
+
+    #ic-dashboard.active {
+      display: grid !important;
+    }
+
+    .sidebar {
+      background: var(--bg-secondary);
+      border-right: 1px solid var(--border-color);
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+    }
+
+    .sidebar-header {
+      padding: 20px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .sidebar-title {
+      font-size: 14px;
+      font-weight: 700;
+      margin-bottom: 15px;
+    }
+
+    .sidebar-section {
+      padding: 15px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .sidebar-section-title {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-tertiary);
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+
+    .sidebar-item {
+      padding: 8px 12px;
+      margin-bottom: 6px;
+      background: var(--bg-tertiary);
+      border-radius: 4px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .sidebar-item:hover {
+      background: var(--bg-hover);
+      color: var(--text-primary);
+    }
+
+    #incident-selector {
+      width: 100%;
+      padding: 10px;
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      color: var(--text-primary);
+      font-size: 12px;
+      margin-bottom: 10px;
+    }
+
+    #incident-selector option {
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+    }
+
+    .map-container {
+      flex: 1;
+      background: #e8f4f8;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+    }
+
+    #map {
+      flex: 1;
+    }
+
+    .map-controls {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      padding: 20px;
+      background: var(--bg-secondary);
+      border-top: 1px solid var(--border-color);
+    }
+
+    .right-panel {
+      background: var(--bg-secondary);
+      border-left: 1px solid var(--border-color);
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+    }
+
+    .panel-header {
+      padding: 20px;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .panel-tabs {
+      display: flex;
+      gap: 0;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .panel-tab {
+      flex: 1;
+      padding: 12px;
+      background: var(--bg-secondary);
+      color: var(--text-secondary);
+      border: none;
+      cursor: pointer;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      transition: all 0.2s;
+      border-bottom: 2px solid transparent;
+    }
+
+    .panel-tab.active {
+      color: var(--accent-primary);
+      border-bottom-color: var(--accent-primary);
+    }
+
+    .panel-tab-content {
+      display: none;
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+    }
+
+    .panel-tab-content.active {
+      display: block;
+    }
+
+    .panel-section {
+      margin-bottom: 16px;
+    }
+
+    .panel-label {
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--text-tertiary);
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+
+    .barricade-item {
+      background: var(--bg-tertiary);
+      padding: 12px;
+      border-radius: 6px;
+      margin-bottom: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+      border: 1px solid var(--border-color);
+      transition: all 0.2s;
+    }
+
+    .barricade-item:hover {
+      background: var(--bg-hover);
+    }
+
+    .barricade-item-info {
+      flex: 1;
+    }
+
+    .barricade-item-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .barricade-delete-btn {
+      padding: 6px 10px;
+      background: var(--danger);
+      color: white;
+      border: none;
+      border-radius: 4px;
+      font-size: 10px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .barricade-delete-btn:hover {
+      opacity: 0.8;
+    }
+
+    .tracking-checkbox {
+      display: flex;
+      align-items: center;
+      margin-bottom: 8px;
+      font-size: 12px;
+    }
+
+    .tracking-checkbox input {
+      margin-right: 8px;
+      cursor: pointer;
+    }
+
+    .badge-pulse {
+      animation: badgePulse 2s ease-in-out infinite;
+      color: #000;
+      font-weight: 700;
+    }
+
+    .export-modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .export-modal.active {
+      display: flex;
+    }
+
+    .export-modal-content {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 40px;
+      max-width: 600px;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+
+    .export-modal-close {
+      float: right;
+      font-size: 24px;
+      font-weight: bold;
+      cursor: pointer;
+      color: var(--text-secondary);
+    }
+
+    .export-modal-close:hover {
+      color: var(--text-primary);
+    }
+
+    .export-report {
+      margin-top: 20px;
+    }
+
+    .export-report h3 {
+      font-size: 14px;
+      margin-bottom: 10px;
+      color: var(--text-primary);
+    }
+
+    .export-report-section {
+      margin-bottom: 15px;
+      padding-bottom: 15px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .export-report-section:last-child {
+      border-bottom: none;
+    }
+
+    .closed-incidents-container {
+      padding: 20px;
+    }
+
+    .closed-incident-item {
+      background: var(--bg-tertiary);
+      padding: 15px;
+      border-radius: 6px;
+      margin-bottom: 10px;
+      border: 1px solid var(--border-color);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .closed-incident-info {
+      flex: 1;
+    }
+
+    .closed-incident-id {
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 4px;
+    }
+
+    .closed-incident-time {
+      font-size: 11px;
+      color: var(--text-tertiary);
+    }
+
+    .closed-incident-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .icon-larger {
+      font-size: 32px;
+    }
+  </style>
+</head>
+<body>
+
+<!-- LOGIN SCREEN -->
+<div id="login-screen" class="screen active">
+  <div class="login-container">
+    <div class="login-box">
+      <div class="login-header">
+        <div class="login-icon">🛡️</div>
+        <div class="login-title">SPD Incident Tracker</div>
+        <div class="login-subtitle">v7.0</div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">User Role</label>
+        <select class="form-select" id="role-select">
+          <option value="">Select Role</option>
+          <option value="ic">Incident Commander (IC)</option>
+          <option value="officer">Police Officer</option>
+          <option value="fire">Fire Captain</option>
+          <option value="ems">EMS Coordinator</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Name</label>
+        <input type="text" class="form-input" id="user-name" placeholder="Enter your name">
+      </div>
+
+      <button class="btn primary" onclick="app.login()" style="width: 100%;">Login</button>
+    </div>
+  </div>
+</div>
+
+<!-- CHECKIN SCREEN -->
+<div id="checkin-screen" class="screen">
+  <div class="checkin-container">
+    <div class="checkin-content" id="checkin-form">
+      <div style="text-align: center; margin-bottom: 20px;">
+        <div style="font-size: 32px; margin-bottom: 10px;">📋</div>
+        <h2 style="font-size: 18px; margin-bottom: 5px;">Officer Check-In</h2>
+        <p style="font-size: 12px; color: var(--text-tertiary);">Select your details</p>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">First Name</label>
+        <input type="text" class="form-input" id="officer-first-name" placeholder="First name">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Last Name</label>
+        <input type="text" class="form-input" id="officer-last-name" placeholder="Last name">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Badge Number</label>
+        <input type="text" class="form-input" id="officer-badge" placeholder="Badge #">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Phone Number</label>
+        <input type="tel" class="form-input" id="officer-phone" placeholder="XXX-XXX-XXXX">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Police Type</label>
+        <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+          <button class="police-type-btn" onclick="app.selectPoliceType('Traffic')">Traffic</button>
+          <button class="police-type-btn" onclick="app.selectPoliceType('Patrol')">Patrol</button>
+          <button class="police-type-btn" onclick="app.selectPoliceType('Detective')">Detective</button>
+          <button class="police-type-btn" onclick="app.selectPoliceType('K-9')">K-9</button>
+          <button class="police-type-btn" onclick="app.selectPoliceType('SWAT')">SWAT</button>
+          <button class="police-type-btn" onclick="app.selectPoliceType('Tactical')">Tactical</button>
+          <button class="police-type-btn" onclick="app.selectPoliceType('Community')">Community</button>
+          <button class="police-type-btn" onclick="app.selectPoliceType('Other')">Other</button>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Home Department</label>
+        <input type="text" class="form-input" id="officer-home-dept" placeholder="Department">
+      </div>
+
+      <div class="expandable-section">
+        <div class="expandable-header" onclick="app.toggleExpand(this)">
+          <span>Additional Info</span>
+          <span class="expandable-toggle">▼</span>
+        </div>
+        <div class="expandable-content">
+          <div class="form-group" style="margin-bottom: 12px;">
+            <label class="form-label">Cell Number</label>
+            <input type="tel" class="form-input" id="officer-cell">
+          </div>
+          <div class="form-group" style="margin-bottom: 12px;">
+            <label class="form-label">Radio Channel</label>
+            <input type="text" class="form-input" id="officer-radio">
+          </div>
+          <div class="form-group" style="margin-bottom: 12px;">
+            <label class="form-label">Vehicle Info</label>
+            <input type="text" class="form-input" id="officer-vehicle" placeholder="Unit number, make, etc">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Notes</label>
+            <textarea class="form-input" id="officer-notes" placeholder="Any additional notes" style="min-height: 60px;"></textarea>
+          </div>
+        </div>
+      </div>
+
+      <button class="btn primary" onclick="app.submitCheckIn()" style="width: 100%; margin-bottom: 12px;">Check In</button>
+      <button class="btn" onclick="app.toggleMapView()" style="width: 100%; display: none;" id="toggle-map-btn">View Map</button>
+    </div>
+
+    <div class="checkin-map-container" id="checkin-map-container">
+      <div id="checkin-map" style="width: 100%; height: 100%;"></div>
+      <div class="checkin-map-controls">
+        <button class="btn" onclick="app.toggleMapView()">Back to Check-In</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- IC DASHBOARD -->
+<div id="ic-dashboard" class="screen">
+  <!-- Left Sidebar -->
+  <div class="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-title">Incidents</div>
+      <select id="incident-selector" onchange="app.selectIncident()">
+        <option value="">Active Incidents</option>
+      </select>
+      <button class="btn primary" onclick="app.createIncident()" style="width: 100%; margin-top: 8px;">+ New Incident</button>
+      <button class="btn" onclick="app.showClosedIncidents()" style="width: 100%; margin-top: 8px;">📁 Closed Incidents</button>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">Units Tracking</div>
+      <div id="tracking-list" style="font-size: 11px; color: var(--text-tertiary);">No units yet</div>
+    </div>
+
+    <div class="sidebar-section" style="flex: 1; overflow-y: auto;">
+      <div class="sidebar-section-title">Barricades</div>
+      <div id="barricades-list" style="font-size: 11px; color: var(--text-tertiary);">No barricades</div>
+    </div>
+  </div>
+
+  <!-- Map -->
+  <div class="map-container">
+    <div id="map"></div>
+    <div class="map-controls">
+      <button class="btn primary" onclick="app.startPlaceCP()">📍 Place CP</button>
+      <button class="btn primary" onclick="app.startPlaceStage()">🚩 Place Stage</button>
+      <button class="btn primary" onclick="app.startAddBarricade()">🚧 Add Barricade</button>
+    </div>
+  </div>
+
+  <!-- Right Panel -->
+  <div class="right-panel">
+    <div class="panel-header">
+      <div style="display: flex; gap: 10px; align-items: center;">
+        <span style="font-size: 14px; font-weight: 600;">Incident Details</span>
+        <button class="btn" onclick="app.logout()" style="padding: 6px 10px; font-size: 10px;">Logout</button>
+      </div>
+    </div>
+
+    <div class="panel-tabs">
+      <button class="panel-tab active" onclick="app.switchPanel('incident')">Incident</button>
+      <button class="panel-tab" onclick="app.switchPanel('units')">Units</button>
+      <button class="panel-tab" onclick="app.switchPanel('export')">Export</button>
+    </div>
+
+    <div id="incident-panel" class="panel-tab-content active">
+      <div class="panel-section">
+        <div class="panel-label">Incident ID</div>
+        <input type="text" class="form-input" id="panel-incident-id" style="font-size: 12px;">
+        <button class="btn" onclick="app.updateIncidentID()" style="width: 100%; margin-top: 6px;">Update</button>
+      </div>
+
+      <div class="panel-section">
+        <div class="panel-label">Type</div>
+        <select class="form-select" id="panel-incident-type" onchange="app.updateIncidentType()">
+          <option value="">Select Type</option>
+          <option value="traffic">Traffic Incident</option>
+          <option value="accident">Accident</option>
+          <option value="structure-fire">Structure Fire</option>
+          <option value="brush-fire">Brush Fire</option>
+          <option value="medical">Medical Emergency</option>
+          <option value="hazmat">Hazmat</option>
+          <option value="crime">Crime Scene</option>
+          <option value="crowd-control">Crowd Control</option>
+          <option value="protest">Protest</option>
+          <option value="other">Other</option>
+        </select>
+      </div>
+
+      <div class="panel-section">
+        <div class="panel-label">OIC</div>
+        <input type="text" class="form-input" id="panel-incident-oic" onblur="app.saveIncidentField('oic')">
+      </div>
+
+      <div class="panel-section">
+        <div class="panel-label">Radio Channel</div>
+        <input type="text" class="form-input" id="panel-incident-channel" onblur="app.saveIncidentField('radioChannel')">
+      </div>
+
+      <div class="panel-section">
+        <div class="panel-label">Notes</div>
+        <textarea class="form-input" id="panel-incident-notes" onblur="app.saveIncidentField('notes')" style="min-height: 80px; font-family: inherit;"></textarea>
+      </div>
+
+      <button class="btn danger" onclick="app.closeIncident()" style="width: 100%; margin-top: 16px;">Close Incident</button>
+    </div>
+
+    <div id="units-panel" class="panel-tab-content">
+      <div id="unit-details" style="font-size: 12px; color: var(--text-tertiary);">Select a unit to view details</div>
+    </div>
+
+    <div id="export-panel" class="panel-tab-content">
+      <button class="btn primary" onclick="app.showExportModal()" style="width: 100%;">📊 Generate Report</button>
+      <p style="font-size: 11px; color: var(--text-tertiary); margin-top: 12px;">Generate and download incident reports in PDF or JSON format.</p>
+    </div>
+  </div>
+</div>
+
+<!-- Export Modal -->
+<div id="export-modal" class="export-modal">
+  <div class="export-modal-content">
+    <span class="export-modal-close" onclick="app.hideExportModal()">&times;</span>
+    <h2 style="font-size: 18px; margin-bottom: 20px;">Export Incident Report</h2>
+    
+    <div id="export-report-content">
+      <!-- Generated by JavaScript -->
+    </div>
+
+    <div style="margin-top: 20px; display: flex; gap: 10px;">
+      <button class="btn primary" onclick="app.exportPDF()" style="flex: 1;">📄 Download PDF</button>
+      <button class="btn primary" onclick="app.exportJSON()" style="flex: 1;">📋 Download JSON</button>
+      <button class="btn" onclick="app.hideExportModal()" style="flex: 1;">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- Closed Incidents Modal -->
+<div id="closed-incidents-modal" class="export-modal">
+  <div class="export-modal-content" style="max-width: 700px;">
+    <span class="export-modal-close" onclick="app.hideClosedIncidents()">&times;</span>
+    <h2 style="font-size: 18px; margin-bottom: 20px;">Closed Incidents</h2>
+    <div id="closed-incidents-list" class="closed-incidents-container">
+      <!-- Generated by JavaScript -->
+    </div>
+  </div>
+</div>
+
+<script>
+  // Initialize Firebase
+  const firebaseConfig = {
+    apiKey: "AIzaSyAJjO_1mNi-UEd8xqTYYeYCNsZl97Z-w6Q",
+    authDomain: "spd-incident-tracking.firebaseapp.com",
+    databaseURL: "https://spd-incident-tracking-default-rtdb.firebaseio.com",
+    projectId: "spd-incident-tracking",
+    storageBucket: "spd-incident-tracking.appspot.com",
+    messagingSenderId: "568906935226",
+    appId: "1:568906935226:web:36c5f3dfe6e5a67c2b2355"
+  };
+
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
+
+  const app = {
+    currentUser: null,
+    currentRole: null,
+    currentIncident: null,
+    map: null,
+    unitMarkers: {},
+    cpMarker: null,
+    stageMarker: null,
+    barricades: {},
+    barricadeMarkers: {},
+    trackedUnits: new Set(),
+    pathData: {},
+    pathPolylines: {},
+    incidentMarkers: {},
+    mapState: null,
+    selectedPoliceType: null,
+    checkinMapView: false,
+
+    init() {
+      this.showScreen('login-screen');
+    },
+
+    login() {
+      const role = document.getElementById('role-select').value;
+      const name = document.getElementById('user-name').value.trim();
+
+      if (!role || !name) {
+        alert('Please select a role and enter your name');
+        return;
+      }
+
+      this.currentRole = role;
+      this.currentUser = name;
+
+      if (role === 'ic') {
+        this.showScreen('ic-dashboard');
+        this.loadIncidents();
+      } else {
+        this.showScreen('checkin-screen');
+      }
+    },
+
+    logout() {
+      this.currentUser = null;
+      this.currentRole = null;
+      this.currentIncident = null;
+      this.showScreen('login-screen');
+    },
+
+    showScreen(screenId) {
+      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+      document.getElementById(screenId).classList.add('active');
+    },
+
+    loadIncidents() {
+      db.ref('incidents').on('value', (snap) => {
+        const incidents = snap.val() || {};
+        const selector = document.getElementById('incident-selector');
+        selector.innerHTML = '<option value="">Active Incidents</option>';
+
+        Object.entries(incidents).forEach(([key, incident]) => {
+          if (incident.status !== 'closed') {
+            const option = document.createElement('option');
+            option.value = key;
+            option.textContent = `${incident.id} - ${incident.type}`;
+            selector.appendChild(option);
+          }
+        });
+      });
+    },
+
+    selectIncident() {
+      const incidentId = document.getElementById('incident-selector').value;
+
+      if (!incidentId) {
+        this.currentIncident = null;
+        if (this.map) {
+          this.map.remove();
+          this.map = null;
+        }
+        document.getElementById('incident-panel').innerHTML = '';
+        document.getElementById('units-panel').innerHTML = '<div id="unit-details" style="font-size: 12px; color: var(--text-tertiary);">Select a unit to view details</div>';
+        return;
+      }
+
+      this.currentIncident = incidentId;
+      this.unitMarkers = {};
+      this.barricadeMarkers = {};
+      this.incidentMarkers = {};
+
+      this.initMap();
+      this.loadIncidentData();
+      this.monitorUnits();
+      this.monitorBarricades();
+      this.monitorPathData();
+    },
+
+    loadIncidentData() {
+      db.ref(`incidents/${this.currentIncident}`).once('value', (snap) => {
+        const incident = snap.val();
+        if (!incident) return;
+
+        document.getElementById('panel-incident-id').value = incident.id || '';
+        document.getElementById('panel-incident-type').value = incident.type || '';
+        document.getElementById('panel-incident-oic').value = incident.oic || '';
+        document.getElementById('panel-incident-channel').value = incident.radioChannel || '';
+        document.getElementById('panel-incident-notes').value = incident.notes || '';
+
+        if (incident.cp && this.map) {
+          this.cpMarker = L.marker([incident.cp.lat, incident.cp.lng], {
+            icon: L.icon({
+              iconUrl: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-size="20">📍</text></svg>',
+              iconSize: [40, 40],
+              iconAnchor: [20, 40]
+            })
+          }).addTo(this.map);
+        }
+
+        if (incident.stage && this.map) {
+          this.stageMarker = L.marker([incident.stage.lat, incident.stage.lng], {
+            icon: L.icon({
+              iconUrl: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-size="20">🚩</text></svg>',
+              iconSize: [40, 40],
+              iconAnchor: [20, 40]
+            })
+          }).addTo(this.map);
+        }
+      });
+    },
+
+    initMap() {
+      if (this.map) {
+        this.map.remove();
+      }
+
+      this.map = L.map('map').setView([42.3601, -71.0589], 13);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap',
+        maxZoom: 20
+      }).addTo(this.map);
+
+      this.map.on('click', (e) => {
+        if (this.mapState === 'placing-cp') {
+          this.placeCP(e.latlng);
+        } else if (this.mapState === 'placing-stage') {
+          this.placeStage(e.latlng);
+        } else if (this.mapState === 'adding-barricade') {
+          this.addBarricade(e.latlng);
+        }
+      });
+    },
+
+    startPlaceCP() {
+      this.mapState = 'placing-cp';
+      alert('Click on the map to place Command Post');
+    },
+
+    placeCP(latlng) {
+      if (!this.currentIncident) return;
+
+      if (this.cpMarker) {
+        this.map.removeLayer(this.cpMarker);
+      }
+
+      const currentZoom = this.map.getZoom();
+      const currentCenter = this.map.getCenter();
+
+      db.ref(`incidents/${this.currentIncident}`).update({
+        cp: { lat: latlng.lat, lng: latlng.lng }
+      });
+
+      this.cpMarker = L.marker([latlng.lat, latlng.lng], {
+        icon: L.icon({
+          iconUrl: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-size="20">📍</text></svg>',
+          iconSize: [40, 40],
+          iconAnchor: [20, 40]
+        })
+      }).addTo(this.map);
+
+      this.map.setView([currentCenter.lat, currentCenter.lng], currentZoom);
+      this.mapState = null;
+      alert('Command Post placed');
+    },
+
+    startPlaceStage() {
+      this.mapState = 'placing-stage';
+      alert('Click on the map to place Stage');
+    },
+
+    placeStage(latlng) {
+      if (!this.currentIncident) return;
+
+      if (this.stageMarker) {
+        this.map.removeLayer(this.stageMarker);
+      }
+
+      const currentZoom = this.map.getZoom();
+      const currentCenter = this.map.getCenter();
+
+      db.ref(`incidents/${this.currentIncident}`).update({
+        stage: { lat: latlng.lat, lng: latlng.lng }
+      });
+
+      this.stageMarker = L.marker([latlng.lat, latlng.lng], {
+        icon: L.icon({
+          iconUrl: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-size="20">🚩</text></svg>',
+          iconSize: [40, 40],
+          iconAnchor: [20, 40]
+        })
+      }).addTo(this.map);
+
+      this.map.setView([currentCenter.lat, currentCenter.lng], currentZoom);
+      this.mapState = null;
+      alert('Stage placed');
+    },
+
+    startAddBarricade() {
+      this.mapState = 'adding-barricade';
+      alert('Click on the map to add a barricade');
+    },
+
+    addBarricade(latlng) {
+      if (!this.currentIncident) return;
+
+      const currentZoom = this.map.getZoom();
+      const currentCenter = this.map.getCenter();
+
+      const id = db.ref(`incidents/${this.currentIncident}/barricades`).push().key;
+      db.ref(`incidents/${this.currentIncident}/barricades/${id}`).set({
+        lat: latlng.lat,
+        lng: latlng.lng,
+        timestamp: new Date().toISOString()
+      });
+
+      this.map.setView([currentCenter.lat, currentCenter.lng], currentZoom);
+      this.mapState = null;
+    },
+
+    monitorBarricades() {
+      db.ref(`incidents/${this.currentIncident}/barricades`).on('value', (snap) => {
+        const barricades = snap.val() || {};
+        
+        Object.values(this.barricadeMarkers).forEach(m => this.map.removeLayer(m));
+        this.barricadeMarkers = {};
+
+        Object.entries(barricades).forEach(([id, barricade]) => {
+          const marker = L.marker([barricade.lat, barricade.lng], {
+            icon: L.icon({
+              iconUrl: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-size="24">🚧</text></svg>',
+              iconSize: [40, 40],
+              iconAnchor: [20, 40]
+            })
+          }).addTo(this.map);
+
+          marker.on('click', () => {
+            this.showBarricadeDetails(id, barricade);
+          });
+
+          this.barricadeMarkers[id] = marker;
+        });
+
+        this.updateBarricadesList(barricades);
+      });
+    },
+
+    showBarricadeDetails(id, barricade) {
+      alert(`Barricade at ${barricade.lat.toFixed(4)}, ${barricade.lng.toFixed(4)}`);
+    },
+
+    deleteBarricade(id) {
+      if (!confirm('Delete this barricade?')) return;
+
+      db.ref(`incidents/${this.currentIncident}/barricades/${id}`).remove();
+    },
+
+    updateBarricadesList(barricades) {
+      const list = document.getElementById('barricades-list');
+      if (Object.keys(barricades).length === 0) {
+        list.innerHTML = '<div style="font-size: 11px; color: var(--text-tertiary);">No barricades</div>';
+        return;
+      }
+
+      list.innerHTML = Object.entries(barricades).map(([id, b]) => `
+        <div class="barricade-item">
+          <div class="barricade-item-info">
+            <div style="font-size: 12px;">${b.lat.toFixed(4)}, ${b.lng.toFixed(4)}</div>
+            <div style="font-size: 10px; color: var(--text-tertiary);">${new Date(b.timestamp).toLocaleTimeString()}</div>
+          </div>
+          <div class="barricade-item-actions">
+            <button class="barricade-delete-btn" onclick="app.deleteBarricade('${id}')">Delete</button>
+          </div>
+        </div>
+      `).join('');
+    },
+
+    monitorUnits() {
+      db.ref(`incidents/${this.currentIncident}/units`).on('value', (snap) => {
+        const units = snap.val() || {};
+        this.updateMapMarkers(units);
+        this.updateTrackingPanel(units);
+      });
+    },
+
+    getUnitIcon(category, badge) {
+      let html;
+      if (category === 'police') {
+        html = `<div style="text-align: center;"><div style="font-size: 32px;">🛡️</div><div class="badge-pulse" style="font-size: 11px; color: #000;">${badge}</div></div>`;
+      } else if (category === 'fire') {
+        html = '<div style="font-size: 32px;">🔥</div>';
+      } else if (category === 'ems') {
+        html = '<div style="font-size: 32px; font-weight: 700; color: #ef4444;">+</div>';
+      } else {
+        html = '<div style="font-size: 28px;">📍</div>';
+      }
+
+      return L.divIcon({
+        html: html,
+        className: 'custom-marker',
+        iconSize: [50, 60],
+        iconAnchor: [25, 60]
+      });
+    },
+
+    updateMapMarkers(units) {
+      Object.values(this.unitMarkers).forEach(m => this.map.removeLayer(m));
+      this.unitMarkers = {};
+
+      Object.entries(units).forEach(([id, unit]) => {
+        if (unit.gps && unit.status === 'checkedIn') {
+          const icon = this.getUnitIcon(unit.category, unit.badge);
+          const marker = L.marker([unit.gps.lat, unit.gps.lng], { icon }).addTo(this.map);
+
+          marker.on('click', () => {
+            this.displayUnitInfo(unit, id);
+          });
+
+          this.unitMarkers[id] = marker;
+
+          if (this.trackedUnits.has(id)) {
+            db.ref(`incidents/${this.currentIncident}/pathTracking/${id}`).push({
+              lat: unit.gps.lat,
+              lng: unit.gps.lng,
+              timestamp: new Date().toISOString()
+            });
+          }
+        }
+      });
+    },
+
+    displayUnitInfo(unit, unitId) {
+      const html = `
+        <div class="panel-section">
+          <div class="panel-label">Badge</div>
+          <div style="font-size: 12px; color: var(--text-primary);">${unit.badge}</div>
+        </div>
+
+        <div class="panel-section">
+          <div class="panel-label">Name</div>
+          <div style="font-size: 12px; color: var(--text-primary);">${unit.firstName} ${unit.lastName}</div>
+        </div>
+
+        <div class="panel-section">
+          <div class="panel-label">Service</div>
+          <div style="font-size: 12px; color: var(--text-primary);">${unit.category}</div>
+        </div>
+
+        ${unit.policeSpecialty ? `
+          <div class="panel-section">
+            <div class="panel-label">Police Type</div>
+            <div style="font-size: 12px; color: var(--text-primary);">${unit.policeSpecialty}</div>
+          </div>
+        ` : ''}
+
+        <div class="panel-section">
+          <div class="panel-label">Home Dept</div>
+          <div style="font-size: 12px; color: var(--text-primary);">${unit.homeDept}</div>
+        </div>
+
+        <div class="panel-section">
+          <div class="panel-label">Phone</div>
+          <div style="font-size: 12px; color: var(--text-primary);">${unit.phoneNumber || 'N/A'}</div>
+        </div>
+
+        <div class="panel-section">
+          <div class="panel-label">Cell</div>
+          <div style="font-size: 12px; color: var(--text-primary);">${unit.cellNumber || 'N/A'}</div>
+        </div>
+
+        <div class="panel-section">
+          <div class="panel-label">Radio</div>
+          <div style="font-size: 12px; color: var(--text-primary);">${unit.radioChannel || 'N/A'}</div>
+        </div>
+
+        <div class="panel-section">
+          <div class="panel-label">Vehicle</div>
+          <div style="font-size: 12px; color: var(--text-primary);">${unit.vehicleInfo || 'N/A'}</div>
+        </div>
+
+        <div class="panel-section">
+          <div class="panel-label">Checked In</div>
+          <div style="font-size: 12px; color: var(--text-primary);">${new Date(unit.checkedInAt).toLocaleString()}</div>
+        </div>
+
+        ${unit.notes ? `
+          <div class="panel-section">
+            <div class="panel-label">Notes</div>
+            <div style="font-size: 12px; color: var(--text-primary);">${unit.notes}</div>
+          </div>
+        ` : ''}
+      `;
+
+      document.getElementById('unit-details').innerHTML = html;
+    },
+
+    updateTrackingPanel(units) {
+      const checkinsList = Object.entries(units).filter(([_, u]) => u.status === 'checkedIn');
+
+      if (checkinsList.length === 0) {
+        document.getElementById('tracking-list').innerHTML = '<div style="font-size: 11px; color: var(--text-tertiary);">No checked-in units</div>';
+        return;
+      }
+
+      const html = checkinsList.map(([id, unit]) => {
+        const isTracked = this.trackedUnits.has(id);
+        return `
+          <div class="tracking-checkbox">
+            <input type="checkbox" id="track-${id}" ${isTracked ? 'checked' : ''} onchange="app.toggleUnitTracking('${id}')">
+            <label for="track-${id}">${unit.badge} - ${unit.firstName} ${unit.lastName}</label>
+          </div>
+        `;
+      }).join('');
+
+      document.getElementById('tracking-list').innerHTML = html;
+    },
+
+    toggleUnitTracking(unitId) {
+      if (this.trackedUnits.has(unitId)) {
+        this.trackedUnits.delete(unitId);
+        if (this.pathPolylines[unitId]) {
+          this.map.removeLayer(this.pathPolylines[unitId]);
+          delete this.pathPolylines[unitId];
+        }
+      } else {
+        this.trackedUnits.add(unitId);
+        this.drawPathForUnit(unitId);
+      }
+    },
+
+    monitorPathData(incidentId) {
+      db.ref(`incidents/${incidentId}/pathTracking`).on('value', (snap) => {
+        const pathData = snap.val() || {};
+        this.pathData = pathData;
+
+        this.trackedUnits.forEach(unitId => {
+          this.drawPathForUnit(unitId);
+        });
+      });
+    },
+
+    drawPathForUnit(unitId) {
+      if (!this.map || !this.pathData[unitId]) return;
+
+      if (this.pathPolylines[unitId]) {
+        this.map.removeLayer(this.pathPolylines[unitId]);
+      }
+
+      const points = Object.values(this.pathData[unitId] || {})
+        .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp))
+        .map(p => [p.lat, p.lng]);
+
+      if (points.length > 1) {
+        this.pathPolylines[unitId] = L.polyline(points, {
+          color: '#2979e8',
+          weight: 3,
+          opacity: 0.7,
+          dashArray: '5, 5'
+        }).addTo(this.map);
+      }
+    },
+
+    switchPanel(panel) {
+      document.querySelectorAll('.panel-tab').forEach(tab => tab.classList.remove('active'));
+      document.querySelectorAll('.panel-tab-content').forEach(content => content.classList.remove('active'));
+      event.target.classList.add('active');
+      document.getElementById(`${panel}-panel`).classList.add('active');
+
+      if (panel === 'units') {
+        document.getElementById('unit-details').innerHTML = 'Select a unit to view details';
+      }
+    },
+
+    updateIncidentID() {
+      const newId = document.getElementById('panel-incident-id').value.trim();
+      if (!newId) return;
+
+      db.ref(`incidents/${this.currentIncident}`).update({ id: newId });
+    },
+
+    updateIncidentType() {
+      const type = document.getElementById('panel-incident-type').value;
+      if (!type) return;
+
+      db.ref(`incidents/${this.currentIncident}`).update({ type: type });
+    },
+
+    saveIncidentField(field) {
+      const fieldMap = {
+        'oic': 'panel-incident-oic',
+        'radioChannel': 'panel-incident-channel',
+        'notes': 'panel-incident-notes'
+      };
+
+      const value = document.getElementById(fieldMap[field]).value;
+      const updates = {};
+      updates[field] = value;
+
+      db.ref(`incidents/${this.currentIncident}`).update(updates);
+    },
+
+    createIncident() {
+      const incidentId = prompt('Enter Incident ID:');
+      if (!incidentId) return;
+
+      const incidentType = prompt('Select Type:\ntraffic\naccident\nstructure-fire\nbrush-fire\nmedical\nhazmat\ncrime\ncrowd-control\nprotest\nother');
+      if (!incidentType) return;
+
+      const key = db.ref('incidents').push().key;
+      db.ref(`incidents/${key}`).set({
+        id: incidentId,
+        type: incidentType,
+        status: 'active',
+        createdAt: new Date().toISOString(),
+        createdBy: this.currentUser,
+        units: {},
+        barricades: {},
+        pathTracking: {}
+      });
+
+      document.getElementById('incident-selector').value = key;
+      this.selectIncident();
+    },
+
+    closeIncident() {
+      if (!confirm('Close this incident?')) return;
+
+      db.ref(`incidents/${this.currentIncident}`).update({
+        status: 'closed',
+        closedAt: new Date().toISOString()
+      });
+
+      this.currentIncident = null;
+      document.getElementById('incident-selector').value = '';
+      this.loadIncidents();
+      alert('Incident closed');
+    },
+
+    showExportModal() {
+      if (!this.currentIncident) {
+        alert('Please select an incident first');
+        return;
+      }
+
+      db.ref(`incidents/${this.currentIncident}`).once('value', (snap) => {
+        const incident = snap.val();
+        if (!incident) return;
+
+        const reportHtml = this.generateReportHTML(incident);
+        document.getElementById('export-report-content').innerHTML = reportHtml;
+        document.getElementById('export-modal').classList.add('active');
+      });
+    },
+
+    generateReportHTML(incident) {
+      const units = incident.units || {};
+      const barricades = incident.barricades || {};
+      const unitCount = Object.keys(units).length;
+      const barricadeCount = Object.keys(barricades).length;
+
+      return `
+        <div class="export-report">
+          <h3>Incident Information</h3>
+          <div class="export-report-section">
+            <div><strong>Incident ID:</strong> ${incident.id || 'N/A'}</div>
+            <div><strong>Type:</strong> ${incident.type || 'N/A'}</div>
+            <div><strong>Status:</strong> ${incident.status || 'N/A'}</div>
+            <div><strong>Created:</strong> ${new Date(incident.createdAt).toLocaleString() || 'N/A'}</div>
+            <div><strong>Created By:</strong> ${incident.createdBy || 'N/A'}</div>
+            <div><strong>OIC:</strong> ${incident.oic || 'N/A'}</div>
+            <div><strong>Radio Channel:</strong> ${incident.radioChannel || 'N/A'}</div>
+          </div>
+
+          <h3 style="margin-top: 20px;">Units Deployed</h3>
+          <div class="export-report-section">
+            <div><strong>Total Units:</strong> ${unitCount}</div>
+            ${unitCount > 0 ? `
+              <table style="width: 100%; margin-top: 10px; border-collapse: collapse;">
+                <tr style="background: var(--bg-tertiary); font-weight: 600; font-size: 11px;">
+                  <td style="padding: 8px; border-bottom: 1px solid var(--border-color);">Badge</td>
+                  <td style="padding: 8px; border-bottom: 1px solid var(--border-color);">Name</td>
+                  <td style="padding: 8px; border-bottom: 1px solid var(--border-color);">Type</td>
+                </tr>
+                ${Object.values(units).map(u => `
+                  <tr style="font-size: 11px; border-bottom: 1px solid var(--border-color);">
+                    <td style="padding: 8px;">${u.badge || 'N/A'}</td>
+                    <td style="padding: 8px;">${u.firstName} ${u.lastName}</td>
+                    <td style="padding: 8px;">${u.category || 'N/A'}</td>
+                  </tr>
+                `).join('')}
+              </table>
+            ` : '<div style="font-size: 12px;">No units deployed</div>'}
+          </div>
+
+          <h3 style="margin-top: 20px;">Barricades</h3>
+          <div class="export-report-section">
+            <div><strong>Total Barricades:</strong> ${barricadeCount}</div>
+            ${barricadeCount > 0 ? `
+              <div style="font-size: 11px;">
+                ${Object.entries(barricades).map(([_, b]) => `
+                  <div style="margin-top: 8px;">Location: ${b.lat.toFixed(4)}, ${b.lng.toFixed(4)}</div>
+                `).join('')}
+              </div>
+            ` : '<div style="font-size: 12px;">No barricades placed</div>'}
+          </div>
+
+          ${incident.notes ? `
+            <h3 style="margin-top: 20px;">Notes</h3>
+            <div class="export-report-section">
+              <div style="font-size: 12px; white-space: pre-wrap;">${incident.notes}</div>
+            </div>
+          ` : ''}
+        </div>
+      `;
+    },
+
+    hideExportModal() {
+      document.getElementById('export-modal').classList.remove('active');
+    },
+
+    exportPDF() {
+      const element = document.getElementById('export-report-content');
+      const incident = this.currentIncident;
+
+      db.ref(`incidents/${incident}`).once('value', (snap) => {
+        const data = snap.val();
+        const opt = {
+          margin: 10,
+          filename: `incident-${data.id}.pdf`,
+          image: { type: 'jpeg', quality: 0.98 },
+          html2canvas: { scale: 2 },
+          jsPDF: { orientation: 'portrait', unit: 'mm', format: 'a4' }
+        };
+
+        const content = document.createElement('div');
+        content.style.padding = '20px';
+        content.style.backgroundColor = 'white';
+        content.style.color = 'black';
+        content.innerHTML = `
+          <h1 style="text-align: center; margin-bottom: 20px;">Incident Report</h1>
+          <div style="margin-bottom: 20px;">
+            <h2 style="font-size: 16px; border-bottom: 2px solid #333; padding-bottom: 10px;">Incident Information</h2>
+            <p><strong>Incident ID:</strong> ${data.id || 'N/A'}</p>
+            <p><strong>Type:</strong> ${data.type || 'N/A'}</p>
+            <p><strong>Status:</strong> ${data.status || 'N/A'}</p>
+            <p><strong>Created:</strong> ${new Date(data.createdAt).toLocaleString()}</p>
+            <p><strong>Created By:</strong> ${data.createdBy || 'N/A'}</p>
+            <p><strong>OIC:</strong> ${data.oic || 'N/A'}</p>
+            <p><strong>Radio Channel:</strong> ${data.radioChannel || 'N/A'}</p>
+          </div>
+
+          <div style="margin-bottom: 20px;">
+            <h2 style="font-size: 16px; border-bottom: 2px solid #333; padding-bottom: 10px;">Units Deployed</h2>
+            <p><strong>Total:</strong> ${Object.keys(data.units || {}).length}</p>
+            ${Object.keys(data.units || {}).length > 0 ? `
+              <table style="width: 100%; border-collapse: collapse; margin-top: 10px;">
+                <tr style="background: #f0f0f0;">
+                  <th style="padding: 8px; border: 1px solid #ddd; text-align: left;">Badge</th>
+                  <th style="padding: 8px; border: 1px solid #ddd; text-align: left;">Name</th>
+                  <th style="padding: 8px; border: 1px solid #ddd; text-align: left;">Type</th>
+                  <th style="padding: 8px; border: 1px solid #ddd; text-align: left;">Department</th>
+                </tr>
+                ${Object.values(data.units || {}).map(u => `
+                  <tr>
+                    <td style="padding: 8px; border: 1px solid #ddd;">${u.badge || 'N/A'}</td>
+                    <td style="padding: 8px; border: 1px solid #ddd;">${u.firstName} ${u.lastName}</td>
+                    <td style="padding: 8px; border: 1px solid #ddd;">${u.category || 'N/A'}</td>
+                    <td style="padding: 8px; border: 1px solid #ddd;">${u.homeDept || 'N/A'}</td>
+                  </tr>
+                `).join('')}
+              </table>
+            ` : '<p>No units deployed</p>'}
+          </div>
+
+          <div style="margin-bottom: 20px;">
+            <h2 style="font-size: 16px; border-bottom: 2px solid #333; padding-bottom: 10px;">Barricades</h2>
+            <p><strong>Total:</strong> ${Object.keys(data.barricades || {}).length}</p>
+            ${Object.keys(data.barricades || {}).length > 0 ? `
+              <ul>
+                ${Object.values(data.barricades || {}).map(b => `
+                  <li>Location: ${b.lat.toFixed(4)}, ${b.lng.toFixed(4)} - Placed: ${new Date(b.timestamp).toLocaleString()}</li>
+                `).join('')}
+              </ul>
+            ` : '<p>No barricades placed</p>'}
+          </div>
+
+          ${data.notes ? `
+            <div>
+              <h2 style="font-size: 16px; border-bottom: 2px solid #333; padding-bottom: 10px;">Notes</h2>
+              <p style="white-space: pre-wrap;">${data.notes}</p>
+            </div>
+          ` : ''}
+        `;
+
+        html2pdf().set(opt).from(content).save();
+        this.hideExportModal();
+      });
+    },
+
+    exportJSON() {
+      db.ref(`incidents/${this.currentIncident}`).once('value', (snap) => {
+        const incident = snap.val();
+
+        const dataStr = JSON.stringify(incident, null, 2);
+        const dataBlob = new Blob([dataStr], { type: 'application/json' });
+        const url = URL.createObjectURL(dataBlob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `incident-${incident.id}.json`;
+        link.click();
+
+        this.hideExportModal();
+      });
+    },
+
+    showClosedIncidents() {
+      db.ref('incidents').once('value', (snap) => {
+        const incidents = snap.val() || {};
+        const closedIncidents = Object.entries(incidents).filter(([_, i]) => i.status === 'closed');
+
+        if (closedIncidents.length === 0) {
+          document.getElementById('closed-incidents-list').innerHTML = '<div style="text-align: center; color: var(--text-tertiary); padding: 20px;">No closed incidents</div>';
+        } else {
+          document.getElementById('closed-incidents-list').innerHTML = closedIncidents.map(([key, incident]) => `
+            <div class="closed-incident-item">
+              <div class="closed-incident-info">
+                <div class="closed-incident-id">${incident.id}</div>
+                <div class="closed-incident-time">${new Date(incident.closedAt).toLocaleString()}</div>
+              </div>
+              <div class="closed-incident-actions">
+                <button class="btn primary" onclick="app.reopenIncident('${key}')" style="padding: 6px 12px; font-size: 10px;">Reopen</button>
+                <button class="btn" onclick="app.downloadClosedIncident('${key}')" style="padding: 6px 12px; font-size: 10px;">Export</button>
+              </div>
+            </div>
+          `).join('');
+        }
+
+        document.getElementById('closed-incidents-modal').classList.add('active');
+      });
+    },
+
+    hideClosedIncidents() {
+      document.getElementById('closed-incidents-modal').classList.remove('active');
+    },
+
+    reopenIncident(incidentKey) {
+      if (!confirm('Reopen this incident?')) return;
+
+      db.ref(`incidents/${incidentKey}`).update({
+        status: 'active',
+        reopenedAt: new Date().toISOString()
+      });
+
+      this.hideClosedIncidents();
+      this.loadIncidents();
+    },
+
+    downloadClosedIncident(incidentKey) {
+      db.ref(`incidents/${incidentKey}`).once('value', (snap) => {
+        const incident = snap.val();
+        const dataStr = JSON.stringify(incident, null, 2);
+        const dataBlob = new Blob([dataStr], { type: 'application/json' });
+        const url = URL.createObjectURL(dataBlob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `incident-${incident.id}.json`;
+        link.click();
+      });
+    },
+
+    /* CHECKIN SCREEN FUNCTIONS */
+    selectPoliceType(type) {
+      this.selectedPoliceType = type;
+      document.querySelectorAll('.police-type-btn').forEach(btn => btn.classList.remove('active'));
+      event.target.classList.add('active');
+    },
+
+    formatPhoneNumber(input) {
+      let value = input.value.replace(/\D/g, '');
+      if (value.length >= 6) {
+        value = value.slice(0, 3) + '-' + value.slice(3, 6) + '-' + value.slice(6, 10);
+      } else if (value.length >= 3) {
+        value = value.slice(0, 3) + '-' + value.slice(3);
+      }
+      input.value = value;
+    },
+
+    toggleExpand(header) {
+      const content = header.nextElementSibling;
+      const toggle = header.querySelector('.expandable-toggle');
+
+      content.classList.toggle('open');
+      toggle.classList.toggle('open');
+    },
+
+    submitCheckIn() {
+      const firstName = document.getElementById('officer-first-name').value.trim();
+      const lastName = document.getElementById('officer-last-name').value.trim();
+      const badge = document.getElementById('officer-badge').value.trim();
+      const phone = document.getElementById('officer-phone').value.trim();
+      const homeDept = document.getElementById('officer-home-dept').value.trim();
+
+      if (!firstName || !lastName || !badge || !phone || !homeDept || !this.selectedPoliceType) {
+        alert('Please fill in all required fields');
+        return;
+      }
+
+      const cellNumber = document.getElementById('officer-cell').value.trim();
+      const radioChannel = document.getElementById('officer-radio').value.trim();
+      const vehicleInfo = document.getElementById('officer-vehicle').value.trim();
+      const notes = document.getElementById('officer-notes').value.trim();
+
+      const incidentKey = Object.keys(firebase.database().ref('incidents').ref)[0];
+
+      db.ref('incidents').once('value', (snap) => {
+        const incidents = snap.val() || {};
+        const activeIncident = Object.entries(incidents).find(([_, i]) => i.status === 'active');
+
+        if (!activeIncident) {
+          alert('No active incident. Please create one first.');
+          return;
+        }
+
+        const [incidentId] = activeIncident;
+
+        const unitData = {
+          firstName,
+          lastName,
+          badge,
+          phoneNumber: phone,
+          policeSpecialty: this.selectedPoliceType,
+          category: 'police',
+          homeDept,
+          cellNumber,
+          radioChannel,
+          vehicleInfo,
+          notes,
+          status: 'checkedIn',
+          checkedInAt: new Date().toISOString(),
+          gps: null
+        };
+
+        const unitKey = db.ref(`incidents/${incidentId}/units`).push().key;
+        db.ref(`incidents/${incidentId}/units/${unitKey}`).set(unitData);
+
+        this.currentIncident = incidentId;
+        document.getElementById('checkin-form').style.display = 'block';
+        document.getElementById('toggle-map-btn').style.display = 'block';
+
+        alert('Checked in successfully! You can now view the map.');
+
+        document.getElementById('toggle-map-btn').style.display = 'block';
+      });
+    },
+
+    toggleMapView() {
+      this.checkinMapView = !this.checkinMapView;
+
+      if (this.checkinMapView) {
+        document.getElementById('checkin-form').style.display = 'none';
+        document.getElementById('checkin-map-container').classList.add('active');
+
+        if (!this.checkinMap) {
+          this.checkinMap = L.map('checkin-map').setView([42.3601, -71.0589], 13);
+          L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap',
+            maxZoom: 20
+          }).addTo(this.checkinMap);
+
+          this.loadCheckinMapData();
+        }
+      } else {
+        document.getElementById('checkin-form').style.display = 'block';
+        document.getElementById('checkin-map-container').classList.remove('active');
+      }
+    },
+
+    loadCheckinMapData() {
+      if (!this.currentIncident) return;
+
+      db.ref(`incidents/${this.currentIncident}`).on('value', (snap) => {
+        const incident = snap.val();
+        if (!incident) return;
+
+        // Clear existing markers
+        if (this.checkinMapMarkers) {
+          Object.values(this.checkinMapMarkers).forEach(m => this.checkinMap.removeLayer(m));
+        }
+        this.checkinMapMarkers = {};
+
+        // CP marker
+        if (incident.cp) {
+          this.checkinMapMarkers.cp = L.marker([incident.cp.lat, incident.cp.lng], {
+            icon: L.icon({
+              iconUrl: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-size="20">📍</text></svg>',
+              iconSize: [40, 40],
+              iconAnchor: [20, 40]
+            })
+          }).addTo(this.checkinMap);
+        }
+
+        // Stage marker
+        if (incident.stage) {
+          this.checkinMapMarkers.stage = L.marker([incident.stage.lat, incident.stage.lng], {
+            icon: L.icon({
+              iconUrl: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-size="20">🚩</text></svg>',
+              iconSize: [40, 40],
+              iconAnchor: [20, 40]
+            })
+          }).addTo(this.checkinMap);
+        }
+
+        // Unit markers
+        const units = incident.units || {};
+        Object.entries(units).forEach(([_, unit]) => {
+          if (unit.gps && unit.status === 'checkedIn') {
+            const icon = this.getUnitIcon(unit.category, unit.badge);
+            L.marker([unit.gps.lat, unit.gps.lng], { icon }).addTo(this.checkinMap);
+          }
+        });
+
+        // Barricade markers
+        const barricades = incident.barricades || {};
+        Object.entries(barricades).forEach(([_, barricade]) => {
+          L.marker([barricade.lat, barricade.lng], {
+            icon: L.icon({
+              iconUrl: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-size="24">🚧</text></svg>',
+              iconSize: [40, 40],
+              iconAnchor: [20, 40]
+            })
+          }).addTo(this.checkinMap);
+        });
+      });
+    }
+  };
+
+  // Format phone input
+  document.addEventListener('DOMContentLoaded', () => {
+    const phoneInput = document.getElementById('officer-phone');
+    if (phoneInput) {
+      phoneInput.addEventListener('input', (e) => app.formatPhoneNumber(e.target));
+    }
+  });
+
+  window.addEventListener('load', () => {
+    app.init();
+  });
+</script>
+
+</body>
+</html>

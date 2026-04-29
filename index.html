@@ -1303,7 +1303,6 @@ const app = {
     }
 
     const unitId = badge;
-    const policeType = this.selectedPoliceType;
     const radioChannel = document.getElementById('radio-channel')?.value.trim() || '';
     const cellNumber = document.getElementById('cell-number')?.value.trim() || '';
     const vehicleInfo = document.getElementById('vehicle-info')?.value.trim() || '';
@@ -1317,7 +1316,6 @@ const app = {
         badge,
         category: this.selectedService,
         homeDept,
-        policeType,
         radioChannel,
         cellNumber,
         vehicleInfo,
@@ -1331,6 +1329,11 @@ const app = {
           timestamp: now
         }
       };
+
+      // Only include policeType if police service and type selected
+      if (this.selectedService === 'police' && this.selectedPoliceType) {
+        unitData.policeType = this.selectedPoliceType;
+      }
 
       await db.ref(`incidents/${this.currentIncident}/units/${unitId}`).set(unitData);
 
@@ -1378,8 +1381,9 @@ const app = {
     this.selectedService = session.category;
     this.selectService(session.category);
 
-    if (session.policeSpecialty) {
-      document.getElementById('police-specialty').value = session.policeSpecialty;
+    if (session.policeType) {
+      this.selectedPoliceType = session.policeType;
+      this.selectPoliceType(session.policeType);
     }
 
     document.getElementById('existing-session').style.display = 'none';

@@ -517,13 +517,12 @@
 
     .map-controls {
       display: flex;
+      flex-direction: column;
       gap: 8px;
       padding: 12px;
       background: var(--bg-secondary);
       border-top: 1px solid var(--border-color);
       border-bottom: 1px solid var(--border-color);
-      flex-wrap: wrap;
-      justify-content: center;
     }
 
     .map-control-btn {
@@ -728,6 +727,35 @@
 
     ::-webkit-scrollbar-track {
       background: transparent;
+    }
+
+    input[type="range"] {
+      -webkit-appearance: none;
+      appearance: none;
+      height: 6px;
+      border-radius: 3px;
+      background: var(--bg-tertiary);
+      outline: none;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: var(--accent-primary);
+      cursor: pointer;
+      border: 2px solid var(--bg-secondary);
+    }
+
+    input[type="range"]::-moz-range-thumb {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: var(--accent-primary);
+      cursor: pointer;
+      border: 2px solid var(--bg-secondary);
     }
 
     .tracking-unit-item {
@@ -982,9 +1010,22 @@
   <div id="map-container">
     <div id="ic-map"></div>
     <div class="map-controls">
-      <button class="map-control-btn" onclick="app.startPlacingMarker('commandPost')">PLACE CP</button>
-      <button class="map-control-btn" onclick="app.startPlacingMarker('stagingArea')">PLACE STAGE</button>
-      <button class="map-control-btn" onclick="app.startPlacingMarker('barricade')">ADD BARRICADE</button>
+      <div style="display: flex; gap: 8px; width: 100%; justify-content: center; flex-wrap: wrap; margin-bottom: 8px;">
+        <button class="map-control-btn" onclick="app.setMapLayer('street')" id="btn-street" style="background: var(--accent-primary);">Street</button>
+        <button class="map-control-btn" onclick="app.setMapLayer('satellite')">Satellite</button>
+        <button class="map-control-btn" onclick="app.setMapLayer('topo')">Topo</button>
+        <button class="map-control-btn" onclick="app.setMapLayer('dark')">Dark</button>
+      </div>
+      <div style="display: flex; gap: 8px; align-items: center; justify-content: center; width: 100%; margin-bottom: 8px; padding: 0 12px; flex-wrap: wrap;">
+        <label for="map-opacity" style="font-size: 10px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase;">Map Opacity:</label>
+        <input type="range" id="map-opacity" min="0" max="100" value="100" style="width: 100px; cursor: pointer;" oninput="app.setMapOpacity(this.value)">
+        <span id="opacity-value" style="font-size: 10px; color: var(--text-secondary); min-width: 30px;">100%</span>
+      </div>
+      <div style="display: flex; gap: 8px; width: 100%; justify-content: center; flex-wrap: wrap;">
+        <button class="map-control-btn" onclick="app.startPlacingMarker('commandPost')">PLACE CP</button>
+        <button class="map-control-btn" onclick="app.startPlacingMarker('stagingArea')">PLACE STAGE</button>
+        <button class="map-control-btn" onclick="app.startPlacingMarker('barricade')">ADD BARRICADE</button>
+      </div>
     </div>
   </div>
 
@@ -1120,6 +1161,9 @@ const app = {
   selectedService: null,
   map: null,
   officerMap: null,
+  mapLayers: {},
+  mapTileLayer: null,
+  currentMapLayer: 'street',
   gpsWatchId: null,
   showingOfficerMap: false,
   unitMarkers: {},
@@ -1649,9 +1693,31 @@ const app = {
     setTimeout(() => {
       if (this.map) this.map.remove();
       this.map = L.map('ic-map').setView([42.3601, -71.0589], 12);
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© OpenStreetMap'
-      }).addTo(this.map);
+      
+      // Define map layers
+      this.mapLayers = {
+        street: L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          attribution: '© OpenStreetMap',
+          name: 'street'
+        }),
+        satellite: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+          attribution: '© Esri',
+          name: 'satellite'
+        }),
+        topo: L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
+          attribution: '© OpenStreetMap, OpenTopoMap',
+          name: 'topo'
+        }),
+        dark: L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+          attribution: '© CARTO',
+          name: 'dark'
+        })
+      };
+      
+      // Set default layer
+      this.currentMapLayer = 'street';
+      this.mapLayers.street.addTo(this.map);
+      this.mapTileLayer = this.mapLayers.street;
     }, 100);
 
     this.loadIncidents();
@@ -2087,6 +2153,41 @@ const app = {
       console.error('Geocoding error:', err);
       return 'Unknown Location';
     }
+  },
+
+  setMapLayer(layerName) {
+    // Remove current layer
+    if (this.mapTileLayer) {
+      this.map.removeLayer(this.mapTileLayer);
+    }
+    
+    // Add new layer
+    this.currentMapLayer = layerName;
+    this.mapTileLayer = this.mapLayers[layerName];
+    this.mapTileLayer.addTo(this.map);
+    
+    // Apply current opacity
+    const opacity = document.getElementById('map-opacity').value / 100;
+    this.mapTileLayer.setOpacity(opacity);
+    
+    // Update button states
+    document.querySelectorAll('.map-control-btn').forEach(btn => {
+      if (btn.id === `btn-${layerName}`) {
+        btn.style.background = 'var(--accent-primary)';
+        btn.style.color = 'white';
+      } else if (btn.id && btn.id.startsWith('btn-')) {
+        btn.style.background = 'var(--bg-tertiary)';
+        btn.style.color = 'var(--text-secondary)';
+      }
+    });
+  },
+
+  setMapOpacity(value) {
+    const opacity = value / 100;
+    if (this.mapTileLayer) {
+      this.mapTileLayer.setOpacity(opacity);
+    }
+    document.getElementById('opacity-value').textContent = value + '%';
   },
 
   async loadBarricades(incident) {

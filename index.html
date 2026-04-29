@@ -1047,8 +1047,22 @@
         </select>
       </div>
       <div class="form-group">
-        <label class="form-label">Location</label>
-        <input type="text" id="incident-location" class="form-input" placeholder="Address" style="font-size: 11px;">
+        <label class="form-label">Street Address</label>
+        <input type="text" id="incident-street" class="form-input" placeholder="Street address" style="font-size: 11px;">
+      </div>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 16px;">
+        <div>
+          <label class="form-label">Town</label>
+          <input type="text" id="incident-town" class="form-input" placeholder="Town" value="Shrewsbury" style="font-size: 11px;">
+        </div>
+        <div>
+          <label class="form-label">State</label>
+          <input type="text" id="incident-state" class="form-input" placeholder="State" value="MA" style="font-size: 11px;">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Incident PIN (4 digits)</label>
+        <input type="password" id="incident-pin-input" class="form-input" placeholder="4-digit PIN" maxlength="4" inputmode="numeric" style="font-size: 11px;">
       </div>
       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
         <button class="btn primary" onclick="app.createIncident()" style="font-size: 10px; padding: 8px;">CREATE</button>
@@ -1079,9 +1093,9 @@
         <span id="opacity-value" style="font-size: 10px; color: var(--text-secondary); min-width: 30px;">100%</span>
       </div>
       <div style="display: flex; gap: 8px; width: 100%; justify-content: center; flex-wrap: wrap;">
-        <button class="map-control-btn" onclick="app.startPlacingMarker('commandPost')">PLACE CP</button>
-        <button class="map-control-btn" onclick="app.startPlacingMarker('stagingArea')">PLACE STAGE</button>
-        <button class="map-control-btn" onclick="app.startPlacingMarker('barricade')">ADD BARRICADE</button>
+        <button class="map-control-btn" onclick="app.dropMarkerAtCenter('commandPost')" title="Drops CP at map center — drag to reposition">DROP CP</button>
+        <button class="map-control-btn" onclick="app.dropMarkerAtCenter('stagingArea')" title="Drops Stage at map center — drag to reposition">DROP STAGE</button>
+        <button class="map-control-btn" onclick="app.dropMarkerAtCenter('barricade')" title="Drops barricade at map center — drag to reposition">ADD BARRICADE</button>
       </div>
     </div>
   </div>
@@ -1935,25 +1949,22 @@ const app = {
   async createIncident() {
     const name = document.getElementById('incident-name-input').value.trim();
     const type = document.getElementById('incident-type').value;
-    let location = document.getElementById('incident-location').value.trim();
+    const street = document.getElementById('incident-street').value.trim();
+    const town = document.getElementById('incident-town').value.trim() || 'Shrewsbury';
+    const state = document.getElementById('incident-state').value.trim() || 'MA';
+    const pin = document.getElementById('incident-pin-input').value.trim();
 
-    if (!name || !location) {
-      alert('Please fill in all fields');
+    if (!name || !street) {
+      alert('Please fill in the incident name and street address');
       return;
     }
 
-    // Add Shrewsbury, MA if not already present
-    if (!location.toLowerCase().includes('shrewsbury') && !location.toLowerCase().includes('ma')) {
-      location = location + ', Shrewsbury, MA';
-    } else if (!location.toLowerCase().includes('ma')) {
-      location = location + ', MA';
-    }
-
-    const pin = prompt('Enter 4-digit PIN for this incident:');
     if (!pin || pin.length !== 4 || !/^\d+$/.test(pin)) {
-      alert('PIN must be 4 digits');
+      alert('PIN must be exactly 4 digits');
       return;
     }
+
+    const location = `${street}, ${town}, ${state}`;
 
     try {
       const year = new Date().getFullYear();
@@ -1974,9 +1985,10 @@ const app = {
       const incidentId = `${year}-${nextNumber}`;
 
       // Geocode location
-      let gps = { lat: 42.3601, lng: -71.0589 };
+      let gps = { lat: 42.2880, lng: -71.7190 };
       try {
-        gps = await this.geocodeAddress(location);
+        const geocoded = await this.geocodeAddress(location);
+        if (geocoded) gps = geocoded;
       } catch (e) {
         console.warn('Geocoding failed, using default:', e);
       }
@@ -2006,7 +2018,10 @@ const app = {
       await db.ref(`incidents/${incidentId}`).set(incidentData);
 
       document.getElementById('incident-name-input').value = '';
-      document.getElementById('incident-location').value = '';
+      document.getElementById('incident-street').value = '';
+      document.getElementById('incident-town').value = 'Shrewsbury';
+      document.getElementById('incident-state').value = 'MA';
+      document.getElementById('incident-pin-input').value = '';
       document.getElementById('create-incident-form').style.display = 'none';
 
       this.loadIncidents();
@@ -2059,7 +2074,9 @@ const app = {
     const incidentId = document.getElementById('incident-selector').value;
     if (!incidentId) {
       this.currentIncident = null;
+      this.clearMapMarkers();
       document.getElementById('unit-panel').innerHTML = '<div style="text-align: center; color: var(--text-tertiary); padding: 40px 0; font-size: 11px;">Select an incident</div>';
+      document.getElementById('units-list').innerHTML = '<div style="text-align: center; color: var(--text-tertiary); padding: 15px; font-size: 11px;">No units</div>';
       return;
     }
 
@@ -2111,10 +2128,11 @@ const app = {
         const qrUrl = `${window.location.origin}${window.location.pathname}?incident=${incidentId}`;
         new QRCode(qrContainer, qrUrl);
 
-        // Center map on incident
-        if (incident.gps && this.map) {
+        // Center map on incident only when first loading (not when refreshing after marker placement)
+        if (incident.gps && this.map && !this._preserveMapView) {
           this.map.setView([incident.gps.lat, incident.gps.lng], 14);
         }
+        this._preserveMapView = false;
 
         this.updateIncidentMarker(incident);
         this.updateLocationMarkers(incident);
@@ -2252,6 +2270,17 @@ const app = {
     }
   },
 
+  // Drop marker at current map center without any popup/click
+  async dropMarkerAtCenter(type) {
+    if (!this.map) { alert('Map not loaded'); return; }
+    if (!this.currentIncident) { alert('Select an incident first'); return; }
+    const center = this.map.getCenter();
+    const currentZoom = this.map.getZoom();
+    await this.placeMarker(center, type);
+    // Restore zoom level after placing (placeMarker calls loadIncidentDetails which resets view)
+    if (this.map) this.map.setZoom(currentZoom);
+  },
+
   startPlacingMarker(type) {
     if (!this.map) {
       alert('Map is not loaded');
@@ -2259,11 +2288,11 @@ const app = {
     }
 
     this.mapPinMode = type;
-    const typeName = type === 'commandPost' ? 'Command Post' : type === 'stagingArea' ? 'Staging Area' : type === 'incident' ? 'Incident' : 'Barricade';
-    alert(`Click on the map to place the ${typeName} marker`);
-
+    const currentZoom = this.map.getZoom();
     this.map.once('click', (e) => {
       this.placeMarker(e.latlng, type);
+      // Restore zoom after placement
+      setTimeout(() => { if (this.map) this.map.setZoom(currentZoom); }, 600);
     });
   },
 
@@ -2302,6 +2331,7 @@ const app = {
       }
 
       this.mapPinMode = null;
+      this._preserveMapView = true;
       this.loadIncidentDetails(this.currentIncident);
     } catch (err) {
       console.error('Error placing marker:', err);
@@ -2619,6 +2649,24 @@ const app = {
     }
   },
 
+  clearMapMarkers() {
+    if (!this.map) return;
+    // Remove all unit markers
+    Object.values(this.unitMarkers).forEach(m => this.map.removeLayer(m));
+    this.unitMarkers = {};
+    // Remove incident marker
+    if (this.incidentMarker) { this.map.removeLayer(this.incidentMarker); this.incidentMarker = null; }
+    // Remove CP marker
+    if (this.cpMarker) { this.map.removeLayer(this.cpMarker); this.cpMarker = null; }
+    // Remove staging area marker
+    if (this.saMarker) { this.map.removeLayer(this.saMarker); this.saMarker = null; }
+    // Remove barricade markers
+    this.barricadeMarkers.forEach(m => this.map.removeLayer(m));
+    this.barricadeMarkers = [];
+    // Reset map to default Shrewsbury view
+    this.map.setView([42.2880, -71.7190], 13);
+  },
+
   async closeIncident() {
     if (!confirm('Close this incident?')) return;
 
@@ -2636,6 +2684,8 @@ const app = {
       await db.ref().update(updates);
       this.currentIncident = null;
       document.getElementById('incident-selector').value = '';
+      this.clearMapMarkers();
+      document.getElementById('units-list').innerHTML = '<div style="text-align: center; color: var(--text-tertiary); padding: 15px; font-size: 11px;">No units</div>';
       this.loadIncidents();
       alert('Incident closed');
     } catch (err) {

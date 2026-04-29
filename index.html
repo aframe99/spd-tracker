@@ -1879,7 +1879,7 @@ const app = {
           attribution: '© OpenStreetMap, OpenTopoMap',
           name: 'topo'
         }),
-        dark: L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+        dark: L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png', {
           attribution: '© CARTO',
           name: 'dark'
         })
@@ -2801,9 +2801,9 @@ const app = {
             <h2>Locations</h2>
             <table>
               <tr><th>Location Type</th><th>Address</th><th>Coordinates</th></tr>
-              <tr><td>Incident</td><td>${incident.location || 'N/A'}</td><td>${incident.gps ? `${incident.gps.lat.toFixed(4)}, ${incident.gps.lng.toFixed(4)}` : 'N/A'}</td></tr>
-              ${incident.commandPost ? `<tr><td>Command Post</td><td>${incident.commandPost.address || 'N/A'}</td><td>${incident.commandPost.lat.toFixed(4)}, ${incident.commandPost.lng.toFixed(4)}</td></tr>` : ''}
-              ${incident.stagingArea ? `<tr><td>Staging Area</td><td>${incident.stagingArea.address || 'N/A'}</td><td>${incident.stagingArea.lat.toFixed(4)}, ${incident.stagingArea.lng.toFixed(4)}</td></tr>` : ''}
+              <tr><td>Incident</td><td>${incident.location || 'N/A'}</td><td>${incident.gps?.lat != null && incident.gps?.lng != null ? `${incident.gps.lat.toFixed(4)}, ${incident.gps.lng.toFixed(4)}` : 'N/A'}</td></tr>
+              ${incident.commandPost ? `<tr><td>Command Post</td><td>${incident.commandPost.address || 'N/A'}</td><td>${incident.commandPost.lat != null && incident.commandPost.lng != null ? `${incident.commandPost.lat.toFixed(4)}, ${incident.commandPost.lng.toFixed(4)}` : 'N/A'}</td></tr>` : ''}
+              ${incident.stagingArea ? `<tr><td>Staging Area</td><td>${incident.stagingArea.address || 'N/A'}</td><td>${incident.stagingArea.lat != null && incident.stagingArea.lng != null ? `${incident.stagingArea.lat.toFixed(4)}, ${incident.stagingArea.lng.toFixed(4)}` : 'N/A'}</td></tr>` : ''}
             </table>
           </div>
         </body>

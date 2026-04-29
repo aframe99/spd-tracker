@@ -1852,43 +1852,20 @@ const app = {
       if (incident) {
         document.getElementById('panel-incident-id').value = incident.id;
         document.getElementById('panel-incident-type').value = incident.type;
-        
-        // Parse location into separate fields
-        const locationParts = (incident.location || '').split(',').map(p => p.trim());
-        if (locationParts.length >= 3) {
-          document.getElementById('panel-incident-street').value = locationParts[0];
-          document.getElementById('panel-incident-town').value = locationParts[1];
-          document.getElementById('panel-incident-state').value = locationParts[2];
-        } else if (locationParts.length > 0) {
-          document.getElementById('panel-incident-street').value = locationParts[0];
-        }
         document.getElementById('panel-incident-location').value = incident.location;
-        
-        // Parse Command Post
-        if (incident.commandPost && incident.commandPost.address) {
-          const cpParts = incident.commandPost.address.split(',').map(p => p.trim());
-          if (cpParts.length >= 3) {
-            document.getElementById('panel-cp-street').value = cpParts[0];
-            document.getElementById('panel-cp-town').value = cpParts[1];
-            document.getElementById('panel-cp-state').value = cpParts[2];
-          }
-          document.getElementById('panel-cp-location').value = incident.commandPost.address;
-        }
-        
-        // Parse Staging Area
-        if (incident.stagingArea && incident.stagingArea.address) {
-          const saParts = incident.stagingArea.address.split(',').map(p => p.trim());
-          if (saParts.length >= 3) {
-            document.getElementById('panel-sa-street').value = saParts[0];
-            document.getElementById('panel-sa-town').value = saParts[1];
-            document.getElementById('panel-sa-state').value = saParts[2];
-          }
-          document.getElementById('panel-sa-location').value = incident.stagingArea.address;
-        }
-        
         document.getElementById('panel-incident-oic').value = incident.oic || '';
         document.getElementById('panel-incident-channel').value = incident.radioChannel || '';
         document.getElementById('panel-incident-notes').value = incident.notes || '';
+
+        // Parse Command Post
+        if (incident.commandPost) {
+          document.getElementById('panel-incident-cp').value = incident.commandPost;
+        }
+        
+        // Parse Staging Area
+        if (incident.stagingArea) {
+          document.getElementById('panel-incident-staging').value = incident.stagingArea;
+        }
 
         document.getElementById('incident-pin').textContent = incident.pin;
 
@@ -2467,72 +2444,6 @@ const app = {
     }
   },
 
-  async updateIncidentAddress() {
-    if (!this.currentIncident) return;
-    const street = document.getElementById('panel-incident-street').value.trim();
-    const town = document.getElementById('panel-incident-town').value.trim();
-    const state = document.getElementById('panel-incident-state').value.trim();
-    const fullAddress = `${street}, ${town}, ${state}`;
-    
-    document.getElementById('panel-incident-location').value = fullAddress;
-    
-    try {
-      await db.ref(`incidents/${this.currentIncident}`).update({ location: fullAddress });
-      const coords = await this.geocodeAddress(fullAddress);
-      if (coords) {
-        await db.ref(`incidents/${this.currentIncident}`).update({ gps: coords });
-      }
-    } catch (err) {
-      console.error('Error:', err);
-    }
-  },
-
-  async updateCommandPostAddress() {
-    if (!this.currentIncident) return;
-    const street = document.getElementById('panel-cp-street').value.trim();
-    const town = document.getElementById('panel-cp-town').value.trim();
-    const state = document.getElementById('panel-cp-state').value.trim();
-    
-    if (!street) return;
-    
-    const fullAddress = `${street}, ${town}, ${state}`;
-    document.getElementById('panel-cp-location').value = fullAddress;
-    
-    try {
-      const coords = await this.geocodeAddress(fullAddress);
-      if (coords) {
-        await db.ref(`incidents/${this.currentIncident}`).update({ 
-          commandPost: { ...coords, address: fullAddress }
-        });
-      }
-    } catch (err) {
-      console.error('Error:', err);
-    }
-  },
-
-  async updateStagingAreaAddress() {
-    if (!this.currentIncident) return;
-    const street = document.getElementById('panel-sa-street').value.trim();
-    const town = document.getElementById('panel-sa-town').value.trim();
-    const state = document.getElementById('panel-sa-state').value.trim();
-    
-    if (!street) return;
-    
-    const fullAddress = `${street}, ${town}, ${state}`;
-    document.getElementById('panel-sa-location').value = fullAddress;
-    
-    try {
-      const coords = await this.geocodeAddress(fullAddress);
-      if (coords) {
-        await db.ref(`incidents/${this.currentIncident}`).update({ 
-          stagingArea: { ...coords, address: fullAddress }
-        });
-      }
-    } catch (err) {
-      console.error('Error:', err);
-    }
-  },
-
   async exportIncident() {
     if (!this.currentIncident) {
       alert('Select an incident first');
@@ -2690,11 +2601,8 @@ const app = {
     if (!confirm('Delete Command Post?')) return;
     
     try {
-      await db.ref(`incidents/${this.currentIncident}`).update({ commandPost: null });
-      document.getElementById('panel-cp-street').value = '';
-      document.getElementById('panel-cp-town').value = 'Shrewsbury';
-      document.getElementById('panel-cp-state').value = 'MA';
-      document.getElementById('panel-cp-location').value = '';
+      await db.ref(`incidents/${this.currentIncident}`).update({ commandPost: null, commandPostGps: null });
+      document.getElementById('panel-incident-cp').value = '';
       
       if (this.cpMarker) {
         this.map.removeLayer(this.cpMarker);
@@ -2709,11 +2617,8 @@ const app = {
     if (!confirm('Delete Staging Area?')) return;
     
     try {
-      await db.ref(`incidents/${this.currentIncident}`).update({ stagingArea: null });
-      document.getElementById('panel-sa-street').value = '';
-      document.getElementById('panel-sa-town').value = 'Shrewsbury';
-      document.getElementById('panel-sa-state').value = 'MA';
-      document.getElementById('panel-sa-location').value = '';
+      await db.ref(`incidents/${this.currentIncident}`).update({ stagingArea: null, stagingAreaGps: null });
+      document.getElementById('panel-incident-staging').value = '';
       
       if (this.saMarker) {
         this.map.removeLayer(this.saMarker);

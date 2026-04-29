@@ -949,6 +949,63 @@
   <div id="officer-map" style="display: none; position: absolute; top: 0; left: 0; right: 0; bottom: 60px;"></div>
 </div>
 
+<!-- ADMIN DASHBOARD -->
+<div class="screen" id="admin-dashboard">
+  <div class="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-title">ADMIN PANEL</div>
+      <button class="btn" onclick="app.logout()" style="width: 100%; font-size: 11px; padding: 8px;">LOGOUT</button>
+    </div>
+
+    <div class="sidebar-section">
+      <button class="btn primary" onclick="app.showAdminPanel('list')" style="width: 100%; font-size: 11px; padding: 10px; margin-bottom: 8px;">IC ACCOUNTS</button>
+      <button class="btn primary" onclick="app.showAdminPanel('create')" style="width: 100%; font-size: 11px; padding: 10px;">+ NEW IC</button>
+    </div>
+  </div>
+
+  <div style="flex: 1; display: flex; flex-direction: column; background: var(--bg-primary); overflow: auto;">
+    <!-- IC Accounts List -->
+    <div id="admin-list-panel" style="flex: 1; overflow-y: auto; padding: 20px;">
+      <div style="font-size: 16px; font-weight: 700; margin-bottom: 20px; color: var(--text-primary);">IC Login Accounts</div>
+      <div id="ic-accounts-list" style="display: flex; flex-direction: column; gap: 12px;">
+        <div style="text-align: center; color: var(--text-tertiary); padding: 40px 20px;">Loading...</div>
+      </div>
+    </div>
+
+    <!-- Create/Edit IC Form -->
+    <div id="admin-create-panel" style="display: none; flex: 1; overflow-y: auto; padding: 20px;">
+      <div style="font-size: 16px; font-weight: 700; margin-bottom: 20px; color: var(--text-primary);">Create New IC Account</div>
+      
+      <div style="max-width: 400px;">
+        <div class="form-group">
+          <label class="form-label">Username</label>
+          <input type="text" id="admin-new-username" class="form-input" placeholder="Username">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Full Name</label>
+          <input type="text" id="admin-new-fullname" class="form-input" placeholder="Full Name">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Password</label>
+          <input type="password" id="admin-new-password" class="form-input" placeholder="Password">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Confirm Password</label>
+          <input type="password" id="admin-new-password-confirm" class="form-input" placeholder="Confirm Password">
+        </div>
+
+        <div class="button-group" style="margin-top: 20px;">
+          <button class="btn primary" onclick="app.createICAccount()" style="font-size: 11px; padding: 10px;">CREATE</button>
+          <button class="btn" onclick="app.showAdminPanel('list')" style="font-size: 11px; padding: 10px;">CANCEL</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- IC DASHBOARD -->
 <div class="screen" id="ic-dashboard">
   <div class="sidebar">
@@ -1207,8 +1264,8 @@ const app = {
       if (role === 'admin' && username === 'admin' && password === '1234') {
         this.currentUser = username;
         this.userRole = 'admin';
-        this.showScreen('ic-dashboard');
-        this.initICDashboard();
+        this.showScreen('admin-dashboard');
+        this.loadICAccounts();
         return;
       }
 
@@ -1219,8 +1276,13 @@ const app = {
       if (account && account.password === password) {
         this.currentUser = username;
         this.userRole = role;
-        this.showScreen('ic-dashboard');
-        this.initICDashboard();
+        if (role === 'admin') {
+          this.showScreen('admin-dashboard');
+          this.loadICAccounts();
+        } else {
+          this.showScreen('ic-dashboard');
+          this.initICDashboard();
+        }
       } else {
         alert('Invalid credentials');
       }
@@ -1244,6 +1306,115 @@ const app = {
       this.showScreen('home-screen');
       document.getElementById('login-username').value = '';
       document.getElementById('login-password').value = '';
+    }
+  },
+
+  // ========================================================================
+  // ADMIN PANEL
+  // ========================================================================
+  async loadICAccounts() {
+    try {
+      const snap = await db.ref('ics').once('value');
+      const ics = snap.val() || {};
+      const list = document.getElementById('ic-accounts-list');
+
+      if (Object.keys(ics).length === 0) {
+        list.innerHTML = '<div style="text-align: center; color: var(--text-tertiary); padding: 40px 20px;">No IC accounts yet</div>';
+        return;
+      }
+
+      list.innerHTML = Object.entries(ics)
+        .map(([username, ic]) => `
+          <div style="background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 6px; padding: 15px;">
+            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 10px;">
+              <div>
+                <div style="font-weight: 700; color: var(--text-primary); font-size: 13px;">${ic.fullName || username}</div>
+                <div style="color: var(--text-tertiary); font-size: 11px; margin-top: 4px;">Username: ${username}</div>
+              </div>
+              <div style="display: flex; gap: 8px;">
+                <button class="btn" onclick="app.editICAccount('${username}')" style="padding: 6px 10px; font-size: 10px;">EDIT</button>
+                <button class="btn danger" onclick="app.deleteICAccount('${username}')" style="padding: 6px 10px; font-size: 10px;">DELETE</button>
+              </div>
+            </div>
+            <div style="color: var(--text-secondary); font-size: 10px;">Created: ${new Date(ic.createdAt).toLocaleDateString()}</div>
+          </div>
+        `)
+        .join('');
+    } catch (err) {
+      console.error('Error loading IC accounts:', err);
+    }
+  },
+
+  showAdminPanel(panel) {
+    document.getElementById('admin-list-panel').style.display = panel === 'list' ? 'block' : 'none';
+    document.getElementById('admin-create-panel').style.display = panel === 'create' ? 'block' : 'none';
+    
+    if (panel === 'list') {
+      this.loadICAccounts();
+      document.getElementById('admin-new-username').value = '';
+      document.getElementById('admin-new-fullname').value = '';
+      document.getElementById('admin-new-password').value = '';
+      document.getElementById('admin-new-password-confirm').value = '';
+    }
+  },
+
+  async createICAccount() {
+    const username = document.getElementById('admin-new-username').value.trim();
+    const fullName = document.getElementById('admin-new-fullname').value.trim();
+    const password = document.getElementById('admin-new-password').value.trim();
+    const passwordConfirm = document.getElementById('admin-new-password-confirm').value.trim();
+
+    if (!username || !fullName || !password || !passwordConfirm) {
+      alert('Please fill in all fields');
+      return;
+    }
+
+    if (password !== passwordConfirm) {
+      alert('Passwords do not match');
+      return;
+    }
+
+    if (password.length < 4) {
+      alert('Password must be at least 4 characters');
+      return;
+    }
+
+    try {
+      const snap = await db.ref(`ics/${username}`).once('value');
+      if (snap.val()) {
+        alert('Username already exists');
+        return;
+      }
+
+      const icData = {
+        username,
+        fullName,
+        password,
+        createdAt: new Date().toISOString(),
+        createdBy: this.currentUser
+      };
+
+      await db.ref(`ics/${username}`).set(icData);
+      alert('IC account created successfully');
+      this.showAdminPanel('list');
+    } catch (err) {
+      alert('Error: ' + err.message);
+    }
+  },
+
+  editICAccount(username) {
+    alert('Edit feature coming soon. For now, delete and recreate the account.');
+  },
+
+  async deleteICAccount(username) {
+    if (!confirm(`Delete IC account for ${username}?`)) return;
+
+    try {
+      await db.ref(`ics/${username}`).remove();
+      alert('Account deleted');
+      this.loadICAccounts();
+    } catch (err) {
+      alert('Error: ' + err.message);
     }
   },
 

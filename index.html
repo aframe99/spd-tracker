@@ -2618,6 +2618,9 @@ const app = {
     if (panel === 'tracking') {
       this.updateTrackingList();
     }
+    if (panel === 'messages') {
+      this.loadMessagesLog();
+    }
   },
 
   async sendMessage() {

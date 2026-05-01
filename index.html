@@ -1011,8 +1011,14 @@ const app = {
   monitorUnits(incidentId) {
     db.ref(`incidents/${incidentId}/units`).on('value', (snap) => {
       const units = snap.val() || {};
-      this.renderUnitsList(units);
       this.updateMapMarkers(units);
+      const unitCount = Object.keys(units).length;
+      const checkedInCount = Object.values(units).filter(u => u.status === 'checkedIn').length;
+      if (unitCount !== this._lastUnitCount || checkedInCount !== this._lastCheckedInCount) {
+        this._lastUnitCount = unitCount;
+        this._lastCheckedInCount = checkedInCount;
+        this.renderUnitsList(units);
+      }
     });
   },
 

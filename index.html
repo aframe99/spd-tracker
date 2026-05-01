@@ -2883,11 +2883,16 @@ async loadMessagesLog() {
           })
           .join('');
       });
-    } catch (err) {
+  } catch (err) {
       console.error('Error loading messages:', err);
     }
   },
-      const messages = snap.val() || {};
+
+  async loadMessagesLog() {
+    if (!this.currentIncident) return;
+    try {
+      db.ref(`incidents/${this.currentIncident}/messages`).on('value', (snap) => {
+        const messages = snap.val() || {};
       const log = document.getElementById('messages-log');
 
       if (Object.keys(messages).length === 0) {

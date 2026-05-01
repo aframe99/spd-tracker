@@ -2888,37 +2888,39 @@ async loadMessagesLog() {
     }
   },
 
-  async loadMessagesLog() {
+ async loadMessagesLog() {
     if (!this.currentIncident) return;
     try {
       db.ref(`incidents/${this.currentIncident}/messages`).on('value', (snap) => {
         const messages = snap.val() || {};
-      const log = document.getElementById('messages-log');
-
-      if (Object.keys(messages).length === 0) {
-        log.innerHTML = '<div style="color: var(--text-tertiary);">No messages</div>';
-        return;
-      }
-
-      log.innerHTML = Object.entries(messages)
-        .sort((a, b) => new Date(b[1].timestamp) - new Date(a[1].timestamp))
-        .slice(0, 20)
-        .map(([id, msg]) => {
-          const time = new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-          const isUnit = msg.type === 'unit';
-          return `
-            <div style="background: ${isUnit ? 'rgba(41,121,232,0.1)' : 'var(--bg-tertiary)'}; border: 1px solid ${isUnit ? 'rgba(41,121,232,0.3)' : 'var(--border-color)'}; border-radius: 4px; padding: 8px; margin-bottom: 8px;">
-              <div style="font-weight: 700; color: ${isUnit ? '#4fa3ff' : 'var(--accent-primary)'}; font-size: 10px; margin-bottom: 3px;">${msg.from} ${isUnit ? '(UNIT)' : '(IC)'}</div>
-              <div style="font-size: 11px; color: var(--text-primary); margin-bottom: 3px;">${msg.text}</div>
-              <div style="font-size: 9px; color: var(--text-tertiary);">${time}</div>
-            </div>
-          `;
-        })
-        .join('');
+        const log = document.getElementById('messages-log');
+        if (!log) return;
+        if (Object.keys(messages).length === 0) {
+          log.innerHTML = '<div style="color: var(--text-tertiary);">No messages</div>';
+          return;
+        }
+        log.innerHTML = Object.entries(messages)
+          .sort((a, b) => new Date(b[1].timestamp) - new Date(a[1].timestamp))
+          .slice(0, 20)
+          .map(([id, msg]) => {
+            const time = new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            const isUnit = msg.type === 'unit';
+            return `
+              <div style="background: ${isUnit ? 'rgba(41,121,232,0.1)' : 'var(--bg-tertiary)'}; border: 1px solid ${isUnit ? 'rgba(41,121,232,0.3)' : 'var(--border-color)'}; border-radius: 4px; padding: 8px; margin-bottom: 8px;">
+                <div style="font-weight: 700; color: ${isUnit ? '#4fa3ff' : 'var(--accent-primary)'}; font-size: 10px; margin-bottom: 3px;">${msg.from} ${isUnit ? '(UNIT)' : '(IC)'}</div>
+                <div style="font-size: 11px; color: var(--text-primary); margin-bottom: 3px;">${msg.text}</div>
+                <div style="font-size: 9px; color: var(--text-tertiary);">${time}</div>
+              </div>
+            `;
+          })
+          .join('');
+      });
     } catch (err) {
       console.error('Error loading messages:', err);
     }
   },
+
+  async exportIncident() {
   async exportIncident() {
     if (!this.currentIncident) {
       alert('Select an incident first');

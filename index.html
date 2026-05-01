@@ -2206,7 +2206,7 @@ async loadOfficerAccounts() {
 
         const qrContainer = document.getElementById('incident-qr');
         qrContainer.innerHTML = '';
-        const qrUrl = `${window.location.origin}${window.location.pathname}?incident=${incidentId}`;
+       const qrUrl = `https://aframe99.github.io/spd-tracker/?incident=${incidentId}`;
         new QRCode(qrContainer, qrUrl);
 
         // Center map on incident only when first loading (not when refreshing after marker placement)

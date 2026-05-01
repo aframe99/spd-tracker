@@ -1,4 +1,3 @@
-[PROJECT.md](https://github.com/user-attachments/files/27279227/PROJECT.md)
 # SPD Incident Tracker - Long Term Project
 
 ## Project Overview

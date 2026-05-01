@@ -1365,9 +1365,10 @@ const app = {
     }
   },
 
-  showAdminPanel(panel) {
+showAdminPanel(panel) {
     document.getElementById('admin-list-panel').style.display = panel === 'list' ? 'block' : 'none';
     document.getElementById('admin-create-panel').style.display = panel === 'create' ? 'block' : 'none';
+    document.getElementById('admin-officers-panel').style.display = panel === 'officers' ? 'block' : 'none';
     
     if (panel === 'list') {
       this.loadICAccounts();
@@ -1375,6 +1376,9 @@ const app = {
       document.getElementById('admin-new-fullname').value = '';
       document.getElementById('admin-new-password').value = '';
       document.getElementById('admin-new-password-confirm').value = '';
+    }
+    if (panel === 'officers') {
+      this.loadOfficerAccounts();
     }
   },
 

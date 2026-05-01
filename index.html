@@ -2957,7 +2957,20 @@ async loadMessagesLog() {
       return null;
     }
   },
-
+async forceCheckOut(badge) {
+    if (!confirm(`Force check out unit ${badge}?`)) return;
+    try {
+      await db.ref(`incidents/${this.currentIncident}/units/${badge}`).update({
+        status: 'checkedOut',
+        checkedOutAt: new Date().toISOString(),
+        forcedCheckOut: true
+      });
+      alert(`Unit ${badge} has been checked out`);
+      this.displayUnitInfo(null);
+    } catch (err) {
+      alert('Error: ' + err.message);
+    }
+  },
   async deleteCommandPost() {
     if (!confirm('Delete Command Post?')) return;
     

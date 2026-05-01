@@ -2567,6 +2567,11 @@ const app = {
         <div class="panel-label">Status</div>
         <input type="text" class="panel-input" value="${unit.status}" readonly>
       </div>
+      ${unit.status === 'checkedIn' ? `
+      <div class="panel-section">
+        <button class="btn danger" onclick="app.forceCheckOut('${unit.badge}')" style="width: 100%; padding: 10px; font-size: 10px;">FORCE CHECK OUT</button>
+      </div>
+      ` : ''}
     `;
 
     document.getElementById('unit-panel').innerHTML = html;

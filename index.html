@@ -1296,6 +1296,53 @@ const app = {
     } catch (err) { alert('Error: ' + err.message); }
   },
 
+  async addDocument() {
+    if (!this.currentIncident) { alert('Select an incident first'); return; }
+    const name = document.getElementById('doc-name-input').value.trim();
+    const url = document.getElementById('doc-url-input').value.trim();
+    if (!name || !url) { alert('Please enter both a name and a URL'); return; }
+    if (!url.startsWith('http://') && !url.startsWith('https://')) { alert('URL must start with http:// or https://'); return; }
+    try {
+      const docId = 'doc_' + Date.now();
+      await db.ref(`incidents/${this.currentIncident}/documents/${docId}`).set({
+        id: docId, name, url, addedAt: new Date().toISOString(), addedBy: this.currentUser
+      });
+      document.getElementById('doc-name-input').value = '';
+      document.getElementById('doc-url-input').value = '';
+      this.loadDocuments();
+    } catch (err) { alert('Error: ' + err.message); }
+  },
+
+  loadDocuments() {
+    if (!this.currentIncident) return;
+    db.ref(`incidents/${this.currentIncident}/documents`).on('value', (snap) => {
+      const docs = snap.val() || {};
+      const list = document.getElementById('docs-list');
+      if (!list) return;
+      if (Object.keys(docs).length === 0) {
+        list.innerHTML = '<div style="color:var(--text-tertiary);">No documents added</div>';
+        return;
+      }
+      list.innerHTML = Object.entries(docs)
+        .sort((a, b) => new Date(a[1].addedAt) - new Date(b[1].addedAt))
+        .map(([id, doc]) => `
+          <div style="background:var(--bg-tertiary);border:1px solid var(--border-color);border-radius:4px;padding:10px;margin-bottom:8px;">
+            <div style="display:flex;justify-content:space-between;align-items:start;gap:8px;">
+              <a href="${doc.url}" target="_blank" style="color:var(--accent-light);font-weight:600;font-size:12px;text-decoration:none;flex:1;word-break:break-word;">📄 ${doc.name}</a>
+              <button class="btn danger" onclick="app.deleteDocument('${id}')" style="padding:4px 8px;font-size:10px;flex-shrink:0;">✕</button>
+            </div>
+            <div style="font-size:9px;color:var(--text-tertiary);margin-top:5px;">Added ${new Date(doc.addedAt).toLocaleString()} by ${doc.addedBy}</div>
+          </div>`).join('');
+    });
+  },
+
+  async deleteDocument(docId) {
+    if (!confirm('Remove this document?')) return;
+    try {
+      await db.ref(`incidents/${this.currentIncident}/documents/${docId}`).remove();
+    } catch (err) { alert('Error: ' + err.message); }
+  },
+
   async deleteCommandPost() {
     if (!confirm('Delete Command Post?')) return;
     try {

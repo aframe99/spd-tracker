@@ -1114,6 +1114,7 @@ const app = {
     document.getElementById(`${panel}-panel`).style.display = 'block';
     if (panel === 'tracking') this.updateTrackingList();
     if (panel === 'messages') this.loadMessagesLog();
+    if (panel === 'docs') this.loadDocuments();
   },
 
   async sendMessage() {

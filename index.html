@@ -366,6 +366,18 @@
           <div id="messages-log" style="font-size:10px;color:var(--text-tertiary);">No messages</div>
         </div>
       </div>
+      <div id="docs-panel" class="panel-tab-content" style="display:none;">
+        <div class="panel-section">
+          <div class="panel-label">Add Document Link</div>
+          <input type="text" id="doc-name-input" class="panel-input" placeholder="Document name" style="margin-bottom:8px;">
+          <input type="text" id="doc-url-input" class="panel-input" placeholder="https://..." style="margin-bottom:8px;">
+          <button class="btn primary" onclick="app.addDocument()" style="width:100%;padding:10px;font-size:10px;">ADD DOCUMENT</button>
+        </div>
+        <div class="panel-section">
+          <div class="panel-label">Incident Documents</div>
+          <div id="docs-list" style="font-size:11px;color:var(--text-tertiary);">No documents added</div>
+        </div>
+      </div>
       <div id="tracking-panel" class="panel-tab-content" style="display:none;">
         <div class="panel-section">
           <div class="panel-label">Unit Path Tracking</div>

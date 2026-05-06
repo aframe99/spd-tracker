@@ -1206,10 +1206,47 @@ const app = {
     this.updateTrackingList();
   },
 
-  toggleUnitTracking(unitId, enabled) {
+ toggleUnitTracking(unitId, enabled) {
     if (!this.pathTrackingEnabled) return;
-    if (enabled) this.pathTrackingUnits.add(unitId);
-    else this.pathTrackingUnits.delete(unitId);
+    if (enabled) {
+      this.pathTrackingUnits.add(unitId);
+      this.drawUnitPath(unitId);
+    } else {
+      this.pathTrackingUnits.delete(unitId);
+      this.clearUnitPath(unitId);
+    }
+  },
+
+  drawUnitPath(unitId) {
+    if (!this.map) return;
+    if (!this.pathLines) this.pathLines = {};
+    db.ref(`incidents/${this.currentIncident}/pathTracking/${unitId}`).on('value', (snap) => {
+      const data = snap.val() || {};
+      const points = Object.values(data)
+        .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp))
+        .map(p => [p.lat, p.lng])
+        .filter(p => p[0] !== 0 && p[1] !== 0);
+      if (this.pathLines[unitId]) {
+        this.map.removeLayer(this.pathLines[unitId]);
+      }
+      if (points.length > 1) {
+        this.pathLines[unitId] = L.polyline(points, {
+          color: '#2979e8',
+          weight: 3,
+          opacity: 0.8,
+          dashArray: '5, 5'
+        }).addTo(this.map);
+      }
+    });
+  },
+
+  clearUnitPath(unitId) {
+    if (!this.pathLines) return;
+    if (this.pathLines[unitId]) {
+      this.map.removeLayer(this.pathLines[unitId]);
+      delete this.pathLines[unitId];
+    }
+    db.ref(`incidents/${this.currentIncident}/pathTracking/${unitId}`).off();
   },
 
   updateTrackingList() {

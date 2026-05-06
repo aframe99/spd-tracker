@@ -444,9 +444,11 @@ const app = {
       this.currentUser = null; this.userRole = null; this.currentIncident = null;
       this.selectedService = null; this.pathTrackingEnabled = false;
       this.pathTrackingUnits.clear(); this.pathTrackingData = {};
-      if (this.map) this.map.remove();
-      if (this.officerMap) this.officerMap.remove();
+      if (this.map) { this.map.remove(); this.map = null; }
+      if (this.officerMap) { this.officerMap.remove(); this.officerMap = null; }
       if (this.gpsWatchId) navigator.geolocation.clearWatch(this.gpsWatchId);
+      document.getElementById('admin-dashboard').classList.remove('active');
+      document.getElementById('ic-dashboard').classList.remove('active');
       this.showScreen('home-screen');
       document.getElementById('login-username').value = '';
       document.getElementById('login-password').value = '';

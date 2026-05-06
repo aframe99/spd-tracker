@@ -726,6 +726,9 @@ const app = {
         const { latitude, longitude } = position.coords;
         const timestamp = new Date().toISOString();
         db.ref(`incidents/${this.currentIncident}/units/${unitId}`).update({ gps: { lat: latitude, lng: longitude, timestamp }, lastUpdatedAt: timestamp });
+        if (this.pathTrackingUnits && this.pathTrackingUnits.has(unitId)) {
+          db.ref(`incidents/${this.currentIncident}/pathTracking/${unitId}`).push({ lat: latitude, lng: longitude, timestamp });
+        }
         document.getElementById('gps-status').textContent = `GPS active - ${new Date().toLocaleTimeString()}`;
       },
       (error) => { document.getElementById('gps-status').textContent = `GPS error: ${error.message}`; },

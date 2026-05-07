@@ -849,8 +849,10 @@ const app = {
       db.ref(`incidents/${this.currentIncident}/units`).off();
       db.ref(`incidents/${this.currentIncident}/messages`).off();
     }
-    this.unreadMessages = 0;
+   this.unreadMessages = 0;
+    this.unreadMessageCount = 0;
     this.messagePanelOpen = false;
+    this.activeMessagePanel = false;
     const badge = document.getElementById('msg-badge');
     if (badge) badge.style.display = 'none';
 

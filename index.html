@@ -1135,13 +1135,32 @@ const app = {
 
  
 
-  loadMessagesLog() {
+ loadMessagesLog() {
     if (!this.currentIncident) return;
     db.ref(`incidents/${this.currentIncident}/messages`).on('value', (snap) => {
       const messages = snap.val() || {};
       const log = document.getElementById('messages-log');
       if (!log) return;
       if (Object.keys(messages).length === 0) { log.innerHTML = '<div style="color:var(--text-tertiary);">No messages</div>'; return; }
+
+      // Count unread unit messages (from officers) when not on message panel
+      if (!this.activeMessagePanel) {
+        const unread = Object.values(messages).filter(msg => {
+          return msg.type === 'unit' &&
+            (!this.lastReadMessageTimestamp || new Date(msg.timestamp) > new Date(this.lastReadMessageTimestamp));
+        }).length;
+        this.unreadMessageCount = unread;
+        const badge = document.getElementById('msg-badge');
+        if (badge) {
+          if (unread > 0) {
+            badge.style.display = 'block';
+            badge.textContent = unread > 9 ? '9+' : unread;
+          } else {
+            badge.style.display = 'none';
+          }
+        }
+      }
+
       log.innerHTML = Object.entries(messages)
         .sort((a, b) => new Date(b[1].timestamp) - new Date(a[1].timestamp))
         .slice(0, 50)

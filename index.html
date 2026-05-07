@@ -1134,6 +1134,28 @@ const app = {
     try {
       const snap = await db.ref(`incidents/${this.currentIncident}/units`).once('value');
       const units = snap.val() || {};
+      const tokens = Object.values(units)
+        .filter(u => u.status === 'checkedIn' && u.pushToken)
+        .map(u => u.pushToken);
+      if (tokens.length === 0) return;
+      await fetch('https://exp.host/--/api/v2/push/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(tokens.map(token => ({
+          to: token,
+          title: 'IC Message',
+          body: messageText,
+          sound: 'default',
+          priority: 'high'
+        })))
+      });
+    } catch (err) { console.error('Push notification error:', err); }
+  },
+
+  async sendPushNotifications(messageText) {
+    try {
+      const snap = await db.ref(`incidents/${this.currentIncident}/units`).once('value');
+      const units = snap.val() || {};
       const tokens = [];
       Object.values(units).forEach(unit => {
         if (unit.status === 'checkedIn' && unit.pushToken) {

@@ -1134,13 +1134,15 @@ const app = {
     if (panel === 'docs') this.loadDocuments();
     if (panel === 'messages') {
       this.activeMessagePanel = true;
+      this.messagePanelOpen = true;
       this.unreadMessageCount = 0;
-      this.lastReadMessageTimestamp = new Date().toISOString();
+      this.unreadMessages = 0;
       const badge = document.getElementById('msg-badge');
       if (badge) badge.style.display = 'none';
       this.loadMessagesLog();
     } else {
       this.activeMessagePanel = false;
+      this.messagePanelOpen = false;
     }
   },
 

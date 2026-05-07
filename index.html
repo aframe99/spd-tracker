@@ -1126,7 +1126,6 @@ const app = {
       await db.ref(`incidents/${this.currentIncident}/messages/${messageId}`).set({ from: this.currentUser, text: messageText, timestamp: new Date().toISOString(), type: 'broadcast' });
       document.getElementById('message-text').value = '';
       this.loadMessagesLog();
-      this.sendPushNotifications(messageText);
     } catch (err) { alert('Error: ' + err.message); }
   },
 

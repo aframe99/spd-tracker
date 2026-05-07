@@ -322,8 +322,11 @@
     <div class="panel-tabs">
       <div class="panel-tab active" onclick="app.switchPanel('incident')">Info</div>
       <div class="panel-tab" onclick="app.switchPanel('unit')">Unit</div>
-      <div class="panel-tab" onclick="app.switchPanel('messages')">Msg</div>
-     <div class="panel-tab" onclick="app.switchPanel('tracking')">Track</div>
+      <div class="panel-tab" onclick="app.switchPanel('messages')" style="position:relative;">
+        Msg
+        <span id="msg-badge" style="display:none;position:absolute;top:4px;right:4px;background:#ef4444;color:white;border-radius:50%;width:16px;height:16px;font-size:9px;font-weight:700;line-height:16px;text-align:center;"></span>
+      </div>
+      <div class="panel-tab" onclick="app.switchPanel('tracking')">Track</div>
       <div class="panel-tab" onclick="app.switchPanel('docs')">Docs</div>
     </div>
     <div class="panel-content">

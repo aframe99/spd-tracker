@@ -1172,10 +1172,10 @@ const app = {
       if (Object.keys(messages).length === 0) { log.innerHTML = '<div style="color:var(--text-tertiary);">No messages</div>'; return; }
 
       // Count unread unit messages (from officers) when not on message panel
-      if (!this.activeMessagePanel) {
+     if (!this.activeMessagePanel) {
         const unread = Object.values(messages).filter(msg => {
           return msg.type === 'unit' &&
-            (!this.lastReadMessageTimestamp || new Date(msg.timestamp) > new Date(this.lastReadMessageTimestamp));
+            (!this.lastMessageReadAt || new Date(msg.timestamp) > new Date(this.lastMessageReadAt));
         }).length;
         this.unreadMessageCount = unread;
         const badge = document.getElementById('msg-badge');

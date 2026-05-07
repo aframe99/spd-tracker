@@ -419,6 +419,7 @@ const app = {
   showingOfficerMap: false, unitMarkers: {}, incidentMarker: null, cpMarker: null,
   saMarker: null, barricadeMarkers: [], pathTrackingEnabled: false,
   pathTrackingUnits: new Set(), pathTrackingData: {},
+  unreadMessageCount: 0, lastReadMessageTimestamp: null, activeMessagePanel: false,
 
   init() {
     const params = new URLSearchParams(window.location.search);

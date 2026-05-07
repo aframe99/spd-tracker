@@ -839,12 +839,24 @@ const app = {
     } catch (err) { console.error('Error loading incidents:', err); }
   },
 
-  async switchIncident() {
+ async switchIncident() {
     const incidentId = document.getElementById('incident-selector').value;
+
+    // Always clean up previous listeners and state
+    if (this.currentIncident) {
+      db.ref(`incidents/${this.currentIncident}/units`).off();
+      db.ref(`incidents/${this.currentIncident}/messages`).off();
+    }
+    this.unreadMessages = 0;
+    this.messagePanelOpen = false;
+    const badge = document.getElementById('msg-badge');
+    if (badge) badge.style.display = 'none';
+
     if (!incidentId) {
       this.currentIncident = null; this.clearMapMarkers();
       document.getElementById('unit-panel').innerHTML = '<div style="text-align:center;color:var(--text-tertiary);padding:40px 0;font-size:11px;">Select an incident</div>';
       document.getElementById('units-list').innerHTML = '<div style="text-align:center;color:var(--text-tertiary);padding:15px;font-size:11px;">No units</div>';
+      document.getElementById('messages-log').innerHTML = '<div style="color:var(--text-tertiary);">No messages</div>';
       return;
     }
     this.currentIncident = incidentId; this.selectedUnit = null;

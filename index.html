@@ -1140,6 +1140,7 @@ const app = {
       this.messagePanelOpen = true;
       this.unreadMessageCount = 0;
       this.unreadMessages = 0;
+      this.lastMessageReadAt = new Date().toISOString();
       const badge = document.getElementById('msg-badge');
       if (badge) badge.style.display = 'none';
       this.loadMessagesLog();

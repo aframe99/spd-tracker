@@ -1129,63 +1129,7 @@ const app = {
     } catch (err) { alert('Error: ' + err.message); }
   },
 
-  async sendPushNotifications(messageText) {
-    try {
-      const snap = await db.ref(`incidents/${this.currentIncident}/units`).once('value');
-      const units = snap.val() || {};
-      const tokens = Object.values(units)
-        .filter(u => u.status === 'checkedIn' && u.pushToken)
-        .map(u => u.pushToken);
-      console.log('Push tokens found:', tokens);
-      if (tokens.length === 0) { console.log('No tokens — aborting push'); return; }
-      const payload = tokens.map(token => ({
-        to: token,
-        title: 'IC Message',
-        body: messageText,
-        sound: 'default',
-        priority: 'high'
-      }));
-      console.log('Sending push payload:', JSON.stringify(payload));
-      const response = await fetch('https://exp.host/--/api/v2/push/send', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'Accept-Encoding': 'gzip, deflate'
-        },
-        body: JSON.stringify(payload)
-      });
-      const result = await response.json();
-      console.log('Expo push response:', JSON.stringify(result));
-    } catch (err) { console.error('Push notification error:', err); }
-  },
-
-  async sendPushNotifications(messageText) {
-    try {
-      const snap = await db.ref(`incidents/${this.currentIncident}/units`).once('value');
-      const units = snap.val() || {};
-      const tokens = [];
-      Object.values(units).forEach(unit => {
-        if (unit.status === 'checkedIn' && unit.pushToken) {
-          tokens.push(unit.pushToken);
-        }
-      });
-      if (tokens.length === 0) return;
-      await fetch('https://exp.host/--/api/v2/push/send', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(tokens.map(token => ({
-          to: token,
-          title: 'IC Message',
-          body: messageText,
-          sound: 'default',
-          priority: 'high'
-        })))
-      });
-    } catch (err) {
-      console.error('Push notification error:', err);
-    }
-  },
+ 
 
   loadMessagesLog() {
     if (!this.currentIncident) return;

@@ -416,12 +416,13 @@ firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
 const app = {
-  currentUser: null, userRole: null, currentIncident: null, selectedUnit: null,
+ currentUser: null, userRole: null, currentIncident: null, selectedUnit: null,
   selectedService: null, selectedPoliceType: null, map: null, officerMap: null,
   mapLayers: {}, mapTileLayer: null, currentMapLayer: 'street', gpsWatchId: null,
   showingOfficerMap: false, unitMarkers: {}, incidentMarker: null, cpMarker: null,
   saMarker: null, barricadeMarkers: [], pathTrackingEnabled: false,
   pathTrackingUnits: new Set(), pathTrackingData: {},
+  unreadMessages: 0, messagePanelOpen: false,
   unreadMessageCount: 0, lastReadMessageTimestamp: null, activeMessagePanel: false,
 
   init() {

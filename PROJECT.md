@@ -1,94 +1,200 @@
 # SPD Incident Tracker - Long Term Project
 
 ## Project Overview
-Building a complete incident tracking and officer management system for Shrewsbury Police Department. Everything lives in a single `index.html` file that serves multiple roles depending on how it's accessed:
-- **IC Dashboard** — Command center for incident commanders (login required)
-- **Admin Panel** — User account management (admin login required)
-- **Officer Check-In App** — Mobile check-in flow, accessed via QR code link with `?incident=` parameter
+Building a complete incident tracking and officer management system for Shrewsbury Police Department. Everything lives in a single `index.html` file (IC dashboard) and a React Native iOS app (officer side).
 
-## Current Status (v20250427)
-- ✅ Core architecture complete (Firebase Realtime Database backend)
-- ✅ IC Dashboard with map, unit tracking, messaging
-- ✅ Admin panel for IC and officer account management
-- ✅ Officer check-in flow (PIN-based, QR code accessible)
-- ✅ Real-time GPS tracking with map display
-- ✅ Multiple map layers (Street, Satellite, Topo, Dark)
-- ✅ Map opacity control
-- ✅ Command Post, Staging Area, and Barricade placement on map
-- ✅ Broadcast messaging (IC to all units)
-- ✅ Message log
-- ✅ Path/breadcrumb tracking per unit (toggleable)
-- ✅ Active and closed incident selectors
-- ✅ PDF export of incident report (units, messages)
-- ✅ Officer map view (officer-side mini map)
-- ✅ Department autocomplete suggestions on check-in form
-- ✅ Existing session detection (officer can resume after page reload)
-- ✅ Screen wake lock (keeps phone on during active session)
-- ✅ Deployed to GitHub Pages
+- **IC Dashboard** — Command center for incident commanders (login required) — `index.html` on GitHub Pages
+- **Admin Panel** — User account management (admin login required)
+- **Officer App** — React Native/Expo iOS app, installed via EAS build / TestFlight
+- **Dispatcher View** — Read-only map link (planned — see Feature Backlog)
+
+---
+
+## Current Status (v20250507)
+
+### IC Dashboard (index.html) ✅
+- Core architecture complete (Firebase Realtime Database backend)
+- IC Dashboard with map, unit tracking, messaging
+- Admin panel for IC and officer account management
+- Officer check-in flow (PIN-based, QR code accessible) — web fallback
+- Real-time GPS tracking with map display
+- Multiple map layers (Street, Satellite, Topo, Dark) with opacity control
+- Command Post, Staging Area, and Barricade placement (draggable markers)
+- Broadcast messaging (IC to all units) with unread message badge on MSG tab
+- Message log (newest first, 50 message limit)
+- Path/breadcrumb tracking per unit (toggleable)
+- Active and closed incident selectors
+- PDF export of incident report (units, messages)
+- Document Center (Docs tab) — IC adds name+URL links, stored in Firebase
+- Auto-clears all panels and markers when incident is closed or deselected
+- Firebase listeners properly cleaned up on incident switch/close
+
+### Officer App (React Native/Expo) ✅
+- Standalone iOS app (no local server needed)
+- PIN-based check-in via QR code deep link
+- Real-time GPS tracking (foreground + background)
+- Two-way messaging (receive IC broadcast, send unit messages)
+- Push notifications for IC messages (local notification on message receipt)
+- Session persistence (app remembers logged-in officer across restarts)
+- Officer self-registration with admin oversight
+- Document Center — officers see IC-added links, tap to open in browser
+- Map view with all units, CP, staging, barricades
+- Map quick-zoom toolbar: 📍 Me | 🚨 Incident | 🏛️ CP | 🅿️ Stage | 👥 Units
+- Unit list slide-up modal — tap any unit to zoom map to their location
+- Screen wake lock
+- Auto-checkout from other incidents on check-in (prevents appearing on multiple incidents)
+
+---
 
 ## Files
-- `index.html` — Everything (IC dashboard, admin panel, officer check-in)
+- `index.html` — IC dashboard, admin panel (GitHub Pages)
 - `PROJECT.md` — This file
+- `C:\Users\acameron\SPDOfficerApp2\` — React Native officer app
+  - `screens/SessionScreen.js` — Active session, GPS, messaging, notifications, docs
+  - `screens/MapScreen.js` — Live map with quick-zoom toolbar and unit list
+  - `screens/CheckinScreen.js` — Check-in form with auto-logout from other incidents
+  - `screens/PinScreen.js` — QR/incident entry, PIN validation
+  - `screens/LoginScreen.js` — IC and officer login
+  - `screens/RegisterScreen.js` — Officer self-registration
+  - `screens/IncidentSelectScreen.js` — Active incident list
+  - `App.js` — Navigation, session persistence, push notification setup
+
+---
 
 ## Deployed URLs
-- Main app / IC Login: https://aframe99.github.io/spd-tracker/
+- IC Dashboard / Login: https://aframe99.github.io/spd-tracker/
 - Officer Check-In (QR): https://aframe99.github.io/spd-tracker/?incident=[INCIDENT_ID]
+- Dispatcher View (planned): https://aframe99.github.io/spd-tracker/?incident=[INCIDENT_ID]&view=dispatch
 
-## Phase 1: Core Features (✅ COMPLETED)
-- [x] Firebase Realtime Database setup
-- [x] IC Dashboard with map
-- [x] Officer check-in flow with PIN validation
-- [x] Real-time unit tracking on map
-- [x] Broadcast messaging
-- [x] GitHub Pages deployment
-- [x] Single-file architecture (no build process)
+---
 
-## Phase 2: Testing & Refinement (CURRENT)
-- [ ] Test on real iPhone (real GPS, not simulated)
-- [ ] Verify Firebase data flow end-to-end
-- [ ] Test messaging between IC and officers
-- [ ] Optimize mobile UI for field use
-- [ ] Battery/performance testing with screen wake lock
-- [ ] Test with multiple simultaneous officers
-- [ ] Verify map marker updates in real-time
-- [ ] Test QR code check-in flow on mobile
-- [ ] Verify PDF export output is correct and readable
-- [ ] Test path tracking with real movement
+## Build & Deploy
 
-## Phase 3: Advanced Features (PLANNED)
-- [ ] Firebase Authentication (see Deferred Items below)
-- [ ] Individual officer messaging (not just broadcast)
-- [ ] Message read receipts
-- [ ] Officer statistics (time on scene, duration, etc.)
-- [ ] Photo/document capture in officer app
-- [ ] Offline mode support
-- [ ] Geofencing alerts
-- [ ] Heatmap of high-activity areas
-- [ ] Integration with dispatch system
+### IC Dashboard
+1. Edit `index.html` locally
+2. Test in browser
+3. Commit and push to GitHub → auto-deploys via GitHub Pages
 
-## Phase 4: Native Mobile Apps (FUTURE)
-- [ ] iOS native app (React Native or Swift)
-  - True persistent background GPS (screen off)
-  - Better battery optimization
-  - Push notifications
-  - Home screen icon
-- [ ] Android native app
-- [ ] Shared Firebase backend with web apps
+### Officer App
+```
+cd C:\Users\acameron\SPDOfficerApp2
+set EAS_NO_VCS=1
+eas build --platform ios --profile preview
+```
+Build takes ~10-15 minutes. EAS provides download link for .ipa install.
+
+### Dev Server (debugging only)
+```
+cd C:\Users\acameron\SPDOfficerApp2
+npx expo start
+```
+
+---
+
+## Phase 1: Core Features ✅ COMPLETED
+- Firebase Realtime Database setup
+- IC Dashboard with map
+- Officer check-in flow with PIN validation
+- Real-time unit tracking on map
+- Broadcast messaging
+- GitHub Pages deployment
+- Single-file architecture (no build process)
+
+## Phase 2: Testing & Refinement ✅ SUBSTANTIALLY COMPLETE
+- ✅ Tested on real iPhone (real GPS)
+- ✅ Firebase data flow verified end-to-end
+- ✅ Messaging tested between IC and officers
+- ✅ Push notifications working (local notification model)
+- ✅ Two-way messaging confirmed working
+- ✅ Map marker updates confirmed real-time
+- ✅ QR code check-in flow tested on mobile
+- ✅ Multiple simultaneous officers tested
+- ✅ Document Center tested
+- ✅ Map quick-zoom tested
+- [ ] PDF export — verify output format
+- [ ] Battery/performance testing with screen wake lock over extended session
+- [ ] Path tracking with real movement
+
+## Phase 3: Advanced Features (PLANNED — see Feature Backlog)
+
+## Phase 4: Distribution
+- [ ] TestFlight setup for coworker beta testing
+- [ ] Android build
+- [ ] App Store submission (future)
+
+---
+
+## Feature Backlog
+
+### 🔜 Next Up
+**TestFlight Distribution**
+- Get app to coworkers for beta testing with minimal friction
+- Testers just install TestFlight app + tap invite link — no dev tools needed
+- Requires Apple Developer account ($99/yr) — Team ID 2M3WN4YMGP already exists
+- Build with production profile, submit via `eas submit --platform ios`
+
+### 📋 Queued Features
+
+**Dispatcher View (Read-Only Map Link)**
+- Web link, no app needed — designed for laptops/PCs at dispatch
+- URL: `https://aframe99.github.io/spd-tracker/?incident=[ID]&view=dispatch`
+- PIN-required to access (same 4-digit PIN as incident)
+- Shows: unit markers, incident location, CP, staging, barricades, live GPS
+- Side panel: unit list (name, badge, service, status)
+- Does NOT allow: messaging, editing, marker placement, any data changes
+- Auto-refreshes as units move in real time
+
+**Individual Officer Messaging**
+- IC can message a specific unit instead of broadcast only
+- Unit sees it flagged differently (e.g. "DIRECT MESSAGE")
+
+**Message Read Receipts**
+- Small checkmark or "seen" indicator when officer has read a message
+
+**Officer Statistics**
+- Time on scene per officer
+- Check-in/check-out log per incident
+- Exportable with PDF report
+
+**Photo Messaging**
+- Camera icon in message compose area
+- Photos upload to Firebase Storage
+- Display inline in message thread
+- Requires Firebase Storage setup
+
+**Geofencing Alerts**
+- IC sets a perimeter on the map
+- Alert fires if a unit leaves the perimeter
+
+**Offline Mode**
+- Basic functionality when cell signal is lost
+- Sync when connection restored
+
+### 🔭 Future / Phase 4
+- Android native app
+- App Store / full public release
+- Integration with dispatch CAD system
+- Heatmap of unit activity over incident duration
+- Firebase Authentication (replace manual password checks)
+
+---
 
 ## Known Limitations
-- **Safari on iPhone**: GPS may pause when screen locks (browser limitation, partially mitigated by wake lock)
-- **Web app only**: No true background GPS without a native app
+- **Safari on iPhone**: GPS may pause when screen locks (mitigated by wake lock + background task)
 - **Messaging**: Currently broadcast only — all officers get the same message
-- **Security**: `/ics` node is publicly readable in Firebase (see Deferred Items)
+- **Security**: `/ics` Firebase node is publicly readable (acceptable for dev, fix before production)
+- **Push notifications**: Using local notification model (app must be installed and have had session) — not true remote push
 
 ## Deferred Items
-These were consciously set aside and should be revisited at the appropriate phase:
+- **Firebase Authentication** — Currently using manual password checks. Should be addressed before real-world deployment. Deferred until app is stable post-Phase 2.
 
-- **Firebase Authentication (Phase 3)** — Currently the `/ics` node is publicly readable because the app uses manual password checks instead of Firebase Auth. This is an acceptable tradeoff during development but should be addressed before any real-world deployment. Firebase Auth is free and would allow proper security rules tied to logged-in users. Deferred because it requires reworking the login flow, admin panel, and security rules — best done when the app is otherwise stable after Phase 2 testing.
+---
 
-## Test Credentials & Data
+## Test Credentials
 - **IC Login**: `admin` / `1234`
-- **Default Incident PIN**: Set when creating incident (any 4 digits)
+- **Incident PIN**: Set at incident creation (any 4 digits)
+
+---
 
 ## Firebase Configuration
 ```
@@ -100,6 +206,16 @@ storageBucket: shrewsbury-pd-track.firebasestorage.app
 messagingSenderId: 1833033387326
 appId: 1:1833033387326:web:09b8659a1004aa42bbc6ef
 ```
+
+## Expo / Apple Info
+```
+Expo account: aframe99@gmail.com
+Apple Team ID: 2M3WN4YMGP
+EAS Project ID: f4ee1939-38fa-4cdf-98b3-e8aaacd0597f
+Bundle ID: com.shrewsburypd.officerapp
+```
+
+---
 
 ## Firebase Security Rules (Current)
 ```json
@@ -134,61 +250,46 @@ appId: 1:1833033387326:web:09b8659a1004aa42bbc6ef
 }
 ```
 
+---
+
 ## Architecture
 ```
-index.html (single file, role determined by URL/login)
-  ├── Home Screen (login — IC or Admin)
+index.html (IC dashboard + admin panel)
+  ├── Home Screen (IC login / Admin login)
   ├── Admin Dashboard
-  │   ├── IC Account Management (create, delete)
-  │   └── Officer Account Management (create, reset PW, activate/deactivate, delete)
-  ├── IC Dashboard
-  │   ├── Incident selector (active + closed)
-  │   ├── New incident creation (name, type, address, PIN)
-  │   ├── Map (Leaflet — Street/Satellite/Topo/Dark layers, opacity control)
-  │   ├── Map markers (units, command post, staging area, barricades)
-  │   ├── Unit list with real-time GPS status
-  │   ├── Right panel tabs:
-  │   │   ├── Info (incident details, OIC, CP, staging, QR code, close/export)
-  │   │   ├── Unit (selected unit details)
-  │   │   ├── Messages (broadcast send + log)
-  │   │   └── Tracking (per-unit path tracking toggle)
-  │   └── PDF export
-  └── Officer Check-In (accessed via ?incident= URL)
-      ├── PIN validation
-      ├── Check-in form (name, badge, service, dept, optional: radio/cell/vehicle/notes)
-      ├── Existing session detection + resume
-      ├── GPS tracking (real device GPS)
-      ├── Officer map view (mini map of own location)
-      ├── Message receiver (broadcast from IC)
-      └── Check out
+  │   ├── IC Account Management
+  │   └── Officer Account Management
+  └── IC Dashboard
+      ├── Incident selector (active + closed)
+      ├── New incident creation (name, type, address, PIN)
+      ├── Map (Leaflet — Street/Satellite/Topo/Dark, opacity control)
+      ├── Map markers (units, CP, staging, barricades — draggable)
+      ├── Unit list with real-time GPS status
+      └── Right panel tabs:
+          ├── Info (incident details, OIC, CP, staging, QR code, close/export)
+          ├── Unit (selected unit details + force checkout)
+          ├── Messages (broadcast send + log, unread badge)
+          ├── Tracking (per-unit path tracking toggle)
+          └── Docs (add/remove document links)
+
+Officer App (React Native)
+  ├── PinScreen — QR deep link entry + PIN validation
+  ├── LoginScreen — IC and officer login
+  ├── RegisterScreen — Officer self-registration
+  ├── IncidentSelectScreen — Active incident list
+  ├── CheckinScreen — Check-in form (auto-clears other incidents)
+  ├── SessionScreen — GPS, messaging, notifications, docs, checkout
+  └── MapScreen — Live map, quick-zoom toolbar, unit list modal
 
 Firebase Database
   └── incidents/[incidentId]/
-      ├── info (name, type, location, pin, status, createdAt, etc.)
-      ├── units/[badge]/ (gps, status, officer info, lastUpdatedAt)
-      ├── messages/[messageId]/ (from, text, timestamp)
-      ├── markers/ (commandPost, stagingArea, barricades)
-      └── pathTracking/[unitId]/ (breadcrumb trail)
-  └── ics/[username]/ (IC login accounts)
+      ├── info (name, type, location, pin, status, createdAt)
+      ├── units/[badge]/ (gps, status, officer info, pushToken)
+      ├── messages/[messageId]/ (from, text, timestamp, type)
+      ├── markers/ (CP, staging, barricades)
+      ├── pathTracking/[unitId]/ (breadcrumb trail)
+      └── documents/[docId]/ (name, url, addedAt, addedBy)
+  └── ics/[username]/ (IC accounts + savedCheckinData)
   └── officers/[username]/ (officer accounts)
-  └── admins/ (reserved, currently unused)
+  └── admins/ (reserved)
 ```
-
-## Development Workflow
-1. Edit `index.html` locally
-2. Test in browser (IC dashboard)
-3. Test officer check-in by opening `index.html?incident=[id]`
-4. Test on iPhone in Safari (real GPS)
-5. Commit and push to GitHub
-6. GitHub Pages auto-deploys
-
-## Technical Notes
-- Single HTML file — no build process, no dependencies to install
-- Firebase Realtime Database for all live data
-- Leaflet.js for mapping (multiple tile layer support)
-- QR code generation via qrcodejs
-- PDF export via html2pdf.js
-- Mobile-first, dark theme optimized for field use
-- Screen wake lock requested to prevent phone sleep during active session
-- Department autocomplete via HTML datalist
-- Officer session persisted in localStorage (survives page reload)

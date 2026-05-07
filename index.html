@@ -850,13 +850,13 @@ const app = {
       db.ref(`incidents/${this.currentIncident}/units`).off();
       db.ref(`incidents/${this.currentIncident}/messages`).off();
     }
-   this.unreadMessages = 0;
+  this.unreadMessages = 0;
     this.unreadMessageCount = 0;
     this.messagePanelOpen = false;
     this.activeMessagePanel = false;
+    this.lastMessageReadAt = new Date().toISOString();
     const badge = document.getElementById('msg-badge');
     if (badge) badge.style.display = 'none';
-
     if (!incidentId) {
       this.currentIncident = null; this.clearMapMarkers();
       document.getElementById('unit-panel').innerHTML = '<div style="text-align:center;color:var(--text-tertiary);padding:40px 0;font-size:11px;">Select an incident</div>';

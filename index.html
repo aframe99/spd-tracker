@@ -1116,9 +1116,18 @@ const app = {
     document.querySelectorAll('.panel-tab-content').forEach(content => content.style.display = 'none');
     event.target.classList.add('active');
     document.getElementById(`${panel}-panel`).style.display = 'block';
-    if (panel === 'tracking') this.updateTrackingList();
-    if (panel === 'messages') this.loadMessagesLog();
+   if (panel === 'tracking') this.updateTrackingList();
     if (panel === 'docs') this.loadDocuments();
+    if (panel === 'messages') {
+      this.activeMessagePanel = true;
+      this.unreadMessageCount = 0;
+      this.lastReadMessageTimestamp = new Date().toISOString();
+      const badge = document.getElementById('msg-badge');
+      if (badge) badge.style.display = 'none';
+      this.loadMessagesLog();
+    } else {
+      this.activeMessagePanel = false;
+    }
   },
 
   async sendMessage() {

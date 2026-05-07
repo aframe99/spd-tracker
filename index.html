@@ -1139,7 +1139,7 @@ const app = {
       if (!log) return;
       if (Object.keys(messages).length === 0) { log.innerHTML = '<div style="color:var(--text-tertiary);">No messages</div>'; return; }
       log.innerHTML = Object.entries(messages)
-        .sort((a, b) => new Date(b[1].timestamp) - new Date(a[1].timestamp))
+        .sort((a, b) => new Date(a[1].timestamp) - new Date(b[1].timestamp))
         .slice(0, 20)
         .map(([id, msg]) => {
           const time = new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });

@@ -1223,16 +1223,43 @@ const app = {
       Object.keys(units).forEach(unitId => { updates[`incidents/${this.currentIncident}/units/${unitId}/status`] = 'checkedOut'; });
       updates[`incidents/${this.currentIncident}/status`] = 'closed';
       updates[`incidents/${this.currentIncident}/closedAt`] = new Date().toISOString();
+
+      // Clean up listeners before closing
+      db.ref(`incidents/${this.currentIncident}/units`).off();
+      db.ref(`incidents/${this.currentIncident}/messages`).off();
+
       await db.ref().update(updates);
       this.currentIncident = null;
+
+      // Clear all panel fields
       document.getElementById('incident-selector').value = '';
-      this.clearMapMarkers();
+      document.getElementById('panel-incident-id').value = '';
+      document.getElementById('panel-incident-type').value = '';
+      document.getElementById('panel-incident-location').value = '';
+      document.getElementById('panel-incident-oic').value = '';
+      document.getElementById('panel-incident-cp').value = '';
+      document.getElementById('panel-incident-staging').value = '';
+      document.getElementById('panel-incident-channel').value = '';
+      document.getElementById('panel-incident-notes').value = '';
+      document.getElementById('incident-pin').textContent = '----';
+      document.getElementById('incident-qr').innerHTML = '';
       document.getElementById('units-list').innerHTML = '<div style="text-align:center;color:var(--text-tertiary);padding:15px;font-size:11px;">No units</div>';
+      document.getElementById('unit-panel').innerHTML = '<div style="text-align:center;color:var(--text-tertiary);padding:40px 0;font-size:11px;">Select a unit from the list</div>';
+      document.getElementById('messages-log').innerHTML = '<div style="color:var(--text-tertiary);">No messages</div>';
+      document.getElementById('tracking-units-list').innerHTML = '<div style="font-size:11px;color:var(--text-secondary);">No units checked in</div>';
+      document.getElementById('docs-list').innerHTML = '<div style="color:var(--text-tertiary);">No documents added</div>';
+
+      // Clear unread badge
+      this.unreadMessages = 0;
+      this.messagePanelOpen = false;
+      const msgBadge = document.getElementById('msg-badge');
+      if (msgBadge) msgBadge.style.display = 'none';
+
+      this.clearMapMarkers();
       this.loadIncidents();
       alert('Incident closed');
     } catch (err) { alert('Error: ' + err.message); }
   },
-
   togglePathTrackingUI() {
     this.pathTrackingEnabled = !this.pathTrackingEnabled;
     const btn = document.getElementById('tracking-toggle-btn');

@@ -1608,18 +1608,19 @@ const app = {
       const now = Date.now();
       const fiveMinutes = 5 * 60 * 1000;
 
-      // Update map markers
-      Object.values(this.dispatchUnitMarkers).forEach(m => this.dispatchMap.removeLayer(m));
-      this.dispatchUnitMarkers = {};
-      Object.entries(units).forEach(([id, unit]) => {
-        if (unit.status === 'checkedIn' && unit.gps?.lat && unit.gps?.lng) {
-          const marker = L.marker([unit.gps.lat, unit.gps.lng], {
-            icon: this.getUnitIcon(unit.category, unit.badge, unit.policeType)
-          }).addTo(this.dispatchMap).bindPopup(`<strong>${unit.firstName} ${unit.lastName}</strong><br>Badge: ${unit.badge}<br>${unit.homeDept}<br>${unit.radioChannel ? 'Radio: ' + unit.radioChannel : ''}`);
-          this.dispatchUnitMarkers[id] = marker;
-        }
-      });
-
+     // Update map markers — only if map is ready
+      if (this.dispatchMap) {
+        Object.values(this.dispatchUnitMarkers).forEach(m => this.dispatchMap.removeLayer(m));
+        this.dispatchUnitMarkers = {};
+        Object.entries(units).forEach(([id, unit]) => {
+          if (unit.status === 'checkedIn' && unit.gps?.lat && unit.gps?.lng) {
+            const marker = L.marker([unit.gps.lat, unit.gps.lng], {
+              icon: this.getUnitIcon(unit.category, unit.badge, unit.policeType)
+            }).addTo(this.dispatchMap).bindPopup(`<strong>${unit.firstName} ${unit.lastName}</strong><br>Badge: ${unit.badge}<br>${unit.homeDept}<br>${unit.radioChannel ? 'Radio: ' + unit.radioChannel : ''}`);
+            this.dispatchUnitMarkers[id] = marker;
+          }
+        });
+      }
       // Update stats bar
       const active = Object.values(units).filter(u => u.status === 'checkedIn');
       document.getElementById('dispatch-unit-count').textContent = active.length;

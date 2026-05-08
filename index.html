@@ -396,6 +396,7 @@
 <!-- DISPATCH VIEW -->
 <div class="screen" id="dispatch-screen">
   <div style="display:flex;flex-direction:column;height:100vh;background:var(--bg-primary);">
+
     <!-- Header -->
     <div style="background:var(--bg-secondary);border-bottom:1px solid var(--border-color);padding:12px 20px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;">
       <div style="display:flex;align-items:center;gap:12px;">
@@ -429,26 +430,27 @@
     </div>
 
     <!-- Main content (hidden until PIN verified) -->
-    <div id="dispatch-main" style="display:none;flex:1;overflow:hidden;">
+    <div id="dispatch-main" style="display:none;flex:1;min-height:0;">
       <div style="display:grid;grid-template-columns:1fr 340px;height:100%;">
 
-        <!-- Map -->
-        <div style="position:relative;">
-          <div id="dispatch-map" style="width:100%;height:100%;"></div>
-          <!-- Map layer buttons -->
-          <div style="position:absolute;top:12px;left:12px;display:flex;gap:6px;z-index:1000;">
-            <button onclick="app.setDispatchLayer('street')" id="dl-street" style="padding:6px 12px;font-size:10px;font-weight:700;background:var(--accent-primary);color:white;border:none;border-radius:4px;cursor:pointer;">Street</button>
-            <button onclick="app.setDispatchLayer('satellite')" id="dl-satellite" style="padding:6px 12px;font-size:10px;font-weight:700;background:rgba(15,20,25,0.85);color:var(--text-secondary);border:1px solid var(--border-color);border-radius:4px;cursor:pointer;">Satellite</button>
-            <button onclick="app.setDispatchLayer('topo')" id="dl-topo" style="padding:6px 12px;font-size:10px;font-weight:700;background:rgba(15,20,25,0.85);color:var(--text-secondary);border:1px solid var(--border-color);border-radius:4px;cursor:pointer;">Topo</button>
-            <button onclick="app.setDispatchLayer('dark')" id="dl-dark" style="padding:6px 12px;font-size:10px;font-weight:700;background:rgba(15,20,25,0.85);color:var(--text-secondary);border:1px solid var(--border-color);border-radius:4px;cursor:pointer;">Dark</button>
+        <!-- Map column -->
+        <div style="display:flex;flex-direction:column;min-height:0;">
+          <!-- Map layer buttons — above the map, not overlaid -->
+          <div style="background:var(--bg-secondary);border-bottom:1px solid var(--border-color);border-right:1px solid var(--border-color);padding:8px 12px;display:flex;gap:6px;flex-shrink:0;">
+            <button onclick="app.setDispatchLayer('street')" id="dl-street" style="padding:5px 12px;font-size:10px;font-weight:700;background:var(--accent-primary);color:white;border:none;border-radius:4px;cursor:pointer;">Street</button>
+            <button onclick="app.setDispatchLayer('satellite')" id="dl-satellite" style="padding:5px 12px;font-size:10px;font-weight:700;background:var(--bg-tertiary);color:var(--text-secondary);border:1px solid var(--border-color);border-radius:4px;cursor:pointer;">Satellite</button>
+            <button onclick="app.setDispatchLayer('topo')" id="dl-topo" style="padding:5px 12px;font-size:10px;font-weight:700;background:var(--bg-tertiary);color:var(--text-secondary);border:1px solid var(--border-color);border-radius:4px;cursor:pointer;">Topo</button>
+            <button onclick="app.setDispatchLayer('dark')" id="dl-dark" style="padding:5px 12px;font-size:10px;font-weight:700;background:var(--bg-tertiary);color:var(--text-secondary);border:1px solid var(--border-color);border-radius:4px;cursor:pointer;">Dark</button>
           </div>
+          <!-- Map — explicit flex:1 so it fills remaining height -->
+          <div id="dispatch-map" style="flex:1;min-height:0;"></div>
         </div>
 
         <!-- Right Panel -->
-        <div style="background:var(--bg-secondary);border-left:1px solid var(--border-color);display:flex;flex-direction:column;overflow:hidden;">
+        <div style="background:var(--bg-secondary);border-left:1px solid var(--border-color);display:flex;flex-direction:column;overflow:hidden;min-height:0;">
 
           <!-- Stats bar -->
-          <div style="padding:12px 16px;border-bottom:1px solid var(--border-color);display:flex;gap:16px;">
+          <div style="padding:12px 16px;border-bottom:1px solid var(--border-color);display:flex;gap:16px;flex-shrink:0;">
             <div style="text-align:center;flex:1;">
               <div style="font-size:22px;font-weight:700;color:var(--accent-primary);" id="dispatch-unit-count">0</div>
               <div style="font-size:9px;color:var(--text-tertiary);text-transform:uppercase;">Units</div>
@@ -468,7 +470,7 @@
           </div>
 
           <!-- Tabs -->
-          <div style="display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid var(--border-color);">
+          <div style="display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid var(--border-color);flex-shrink:0;">
             <div id="dispatch-tab-units" onclick="app.switchDispatchTab('units')" style="padding:12px;text-align:center;font-size:10px;font-weight:700;color:var(--accent-primary);border-bottom:2px solid var(--accent-primary);cursor:pointer;text-transform:uppercase;">Units</div>
             <div id="dispatch-tab-messages" onclick="app.switchDispatchTab('messages')" style="padding:12px;text-align:center;font-size:10px;font-weight:700;color:var(--text-tertiary);border-bottom:2px solid transparent;cursor:pointer;text-transform:uppercase;position:relative;">
               Messages
@@ -477,12 +479,12 @@
           </div>
 
           <!-- Units list -->
-          <div id="dispatch-units-panel" style="flex:1;overflow-y:auto;padding:12px;">
+          <div id="dispatch-units-panel" style="flex:1;overflow-y:auto;padding:12px;min-height:0;">
             <div style="text-align:center;color:var(--text-tertiary);padding:20px;font-size:11px;">No units checked in</div>
           </div>
 
           <!-- Messages list -->
-          <div id="dispatch-messages-panel" style="display:none;flex:1;overflow-y:auto;padding:12px;">
+          <div id="dispatch-messages-panel" style="display:none;flex:1;overflow-y:auto;padding:12px;min-height:0;">
             <div style="text-align:center;color:var(--text-tertiary);padding:20px;font-size:11px;">No messages</div>
           </div>
 

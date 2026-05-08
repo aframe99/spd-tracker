@@ -1506,6 +1506,223 @@ const app = {
     } catch (err) { alert('Error: ' + err.message); }
   },
 
+ dispatchMap: null, dispatchTileLayer: null, dispatchMapLayers: {},
+  dispatchUnitMarkers: {}, dispatchIncidentMarker: null, dispatchCpMarker: null,
+  dispatchSaMarker: null, dispatchBarricadeMarkers: [], dispatchUnreadMessages: 0,
+  dispatchCurrentTab: 'units',
+
+  async initDispatchView(incidentId) {
+    const snap = await db.ref(`incidents/${incidentId}`).once('value');
+    const incident = snap.val();
+    if (!incident) {
+      document.getElementById('dispatch-incident-name').textContent = 'Incident not found';
+      return;
+    }
+    document.getElementById('dispatch-incident-name').textContent = `${incident.id} — ${incident.name}`;
+    document.getElementById('dispatch-incident-location').textContent = incident.location || '';
+  },
+
+  validateDispatchPin() {
+    const pin = document.getElementById('dispatch-pin-input').value.trim();
+    const errorEl = document.getElementById('dispatch-pin-error');
+    if (pin.length !== 4 || !/^\d+$/.test(pin)) { errorEl.textContent = 'PIN must be 4 digits'; return; }
+    errorEl.textContent = '';
+    db.ref(`incidents/${this.currentIncident}`).once('value', (snap) => {
+      const incident = snap.val();
+      if (incident && incident.pin === pin) {
+        document.getElementById('dispatch-pin-gate').style.display = 'none';
+        document.getElementById('dispatch-main').style.display = 'flex';
+        this.startDispatchMap(incident);
+        this.monitorDispatchUnits();
+        this.monitorDispatchMessages();
+      } else {
+        errorEl.textContent = 'Invalid PIN';
+      }
+    });
+  },
+
+  startDispatchMap(incident) {
+    setTimeout(() => {
+      this.dispatchMap = L.map('dispatch-map').setView([42.2880, -71.7190], 13);
+      this.dispatchMapLayers = {
+        street: L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap' }),
+        satellite: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { attribution: '© Esri' }),
+        topo: L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', { attribution: '© OpenTopoMap' }),
+        dark: L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png', { attribution: '© CARTO' })
+      };
+      this.dispatchMapLayers.street.addTo(this.dispatchMap);
+      this.dispatchTileLayer = this.dispatchMapLayers.street;
+
+      // Place incident marker and zoom to it
+      if (incident.gps) {
+        this.dispatchMap.setView([incident.gps.lat, incident.gps.lng], 15);
+        this.dispatchIncidentMarker = L.marker([incident.gps.lat, incident.gps.lng], {
+          icon: L.divIcon({ html: '<div style="background:#f59e0b;color:white;padding:6px 10px;border-radius:4px;font-weight:700;font-size:12px;">INCIDENT</div>', className: 'custom-marker', iconSize: [80, 34] })
+        }).addTo(this.dispatchMap).bindPopup(`<strong>${incident.name}</strong><br>${incident.location}`);
+      }
+      if (incident.commandPostGps) {
+        this.dispatchCpMarker = L.marker([incident.commandPostGps.lat, incident.commandPostGps.lng], {
+          icon: L.divIcon({ html: '<div style="background:#2979e8;color:white;padding:4px 8px;border-radius:4px;font-weight:700;font-size:11px;">CP</div>', className: 'custom-marker', iconSize: [35, 28] })
+        }).addTo(this.dispatchMap).bindPopup(`<strong>Command Post</strong><br>${incident.commandPost}`);
+      }
+      if (incident.stagingAreaGps) {
+        this.dispatchSaMarker = L.marker([incident.stagingAreaGps.lat, incident.stagingAreaGps.lng], {
+          icon: L.divIcon({ html: '<div style="background:#4fa3ff;color:white;padding:4px 8px;border-radius:4px;font-weight:700;font-size:11px;">STAGE</div>', className: 'custom-marker', iconSize: [55, 28] })
+        }).addTo(this.dispatchMap).bindPopup(`<strong>Staging Area</strong><br>${incident.stagingArea}`);
+      }
+      const markers = incident.markers || {};
+      Object.entries(markers).forEach(([id, marker]) => {
+        if (marker.type === 'barricade') {
+          const b = L.marker([marker.lat, marker.lng], {
+            icon: L.divIcon({ html: '<div style="font-size:20px;">🚧</div>', className: 'custom-marker', iconSize: [32, 32] })
+          }).addTo(this.dispatchMap).bindPopup(`<strong>Barricade</strong><br>${marker.address}`);
+          this.dispatchBarricadeMarkers.push(b);
+        }
+      });
+    }, 100);
+  },
+
+  setDispatchLayer(layerName) {
+    if (!this.dispatchMap) return;
+    if (this.dispatchTileLayer) this.dispatchMap.removeLayer(this.dispatchTileLayer);
+    this.dispatchTileLayer = this.dispatchMapLayers[layerName];
+    this.dispatchTileLayer.addTo(this.dispatchMap);
+    ['street','satellite','topo','dark'].forEach(l => {
+      const btn = document.getElementById(`dl-${l}`);
+      if (!btn) return;
+      if (l === layerName) { btn.style.background = 'var(--accent-primary)'; btn.style.color = 'white'; btn.style.border = 'none'; }
+      else { btn.style.background = 'rgba(15,20,25,0.85)'; btn.style.color = 'var(--text-secondary)'; btn.style.border = '1px solid var(--border-color)'; }
+    });
+  },
+
+  monitorDispatchUnits() {
+    db.ref(`incidents/${this.currentIncident}/units`).on('value', (snap) => {
+      const units = snap.val() || {};
+      const now = Date.now();
+      const fiveMinutes = 5 * 60 * 1000;
+
+      // Update map markers
+      Object.values(this.dispatchUnitMarkers).forEach(m => this.dispatchMap.removeLayer(m));
+      this.dispatchUnitMarkers = {};
+      Object.entries(units).forEach(([id, unit]) => {
+        if (unit.status === 'checkedIn' && unit.gps?.lat && unit.gps?.lng) {
+          const marker = L.marker([unit.gps.lat, unit.gps.lng], {
+            icon: this.getUnitIcon(unit.category, unit.badge, unit.policeType)
+          }).addTo(this.dispatchMap).bindPopup(`<strong>${unit.firstName} ${unit.lastName}</strong><br>Badge: ${unit.badge}<br>${unit.homeDept}<br>${unit.radioChannel ? 'Radio: ' + unit.radioChannel : ''}`);
+          this.dispatchUnitMarkers[id] = marker;
+        }
+      });
+
+      // Update stats bar
+      const active = Object.values(units).filter(u => u.status === 'checkedIn');
+      document.getElementById('dispatch-unit-count').textContent = active.length;
+      document.getElementById('dispatch-police-count').textContent = active.filter(u => u.category === 'police').length;
+      document.getElementById('dispatch-fire-count').textContent = active.filter(u => u.category === 'fire').length;
+      document.getElementById('dispatch-ems-count').textContent = active.filter(u => u.category === 'ems').length;
+
+      // Update unit list panel
+      const panel = document.getElementById('dispatch-units-panel');
+      if (Object.keys(units).length === 0) {
+        panel.innerHTML = '<div style="text-align:center;color:var(--text-tertiary);padding:20px;font-size:11px;">No units checked in</div>';
+      } else {
+        panel.innerHTML = Object.entries(units).map(([id, unit]) => {
+          const isStale = (now - new Date(unit.lastUpdatedAt).getTime()) > fiveMinutes;
+          const isOut = unit.status === 'checkedOut';
+          const statusColor = isOut ? 'var(--danger)' : isStale ? 'var(--text-tertiary)' : 'var(--success)';
+          const statusText = isOut ? 'CHECKED OUT' : isStale ? 'STALE' : 'ACTIVE';
+          const emoji = unit.category === 'police' ? (unit.policeType === 'k9' ? '🐕' : unit.policeType === 'drone' ? '🚁' : unit.policeType === 'supervisor' ? '⭐' : '🚔') : unit.category === 'fire' ? '🔥' : unit.category === 'ems' ? '🚑' : '📍';
+          return `<div style="background:var(--bg-tertiary);border:1px solid var(--border-color);border-radius:6px;padding:10px 12px;margin-bottom:8px;cursor:pointer;" onclick="app.dispatchZoomToUnit(${unit.gps?.lat},${unit.gps?.lng})">
+            <div style="display:flex;align-items:center;gap:10px;">
+              <div style="font-size:24px;">${emoji}</div>
+              <div style="flex:1;">
+                <div style="font-size:12px;font-weight:700;color:var(--text-primary);">${unit.firstName} ${unit.lastName}</div>
+                <div style="font-size:10px;color:var(--text-tertiary);">Badge ${unit.badge} · ${unit.homeDept}</div>
+                ${unit.radioChannel ? `<div style="font-size:10px;color:var(--text-tertiary);">Radio: ${unit.radioChannel}</div>` : ''}
+                ${unit.vehicleInfo ? `<div style="font-size:10px;color:var(--text-tertiary);">Vehicle: ${unit.vehicleInfo}</div>` : ''}
+              </div>
+              <div style="font-size:9px;font-weight:700;color:${statusColor};">● ${statusText}</div>
+            </div>
+          </div>`;
+        }).join('');
+      }
+
+      // Update last updated time
+      document.getElementById('dispatch-last-updated').textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    });
+  },
+
+  dispatchZoomToUnit(lat, lng) {
+    if (!lat || !lng || !this.dispatchMap) return;
+    this.dispatchMap.setView([lat, lng], 17);
+  },
+
+  monitorDispatchMessages() {
+    let isFirst = true;
+    let knownIds = new Set();
+    db.ref(`incidents/${this.currentIncident}/messages`).on('value', (snap) => {
+      const messages = snap.val() || {};
+      const panel = document.getElementById('dispatch-messages-panel');
+      if (!panel) return;
+
+      if (Object.keys(messages).length === 0) {
+        panel.innerHTML = '<div style="text-align:center;color:var(--text-tertiary);padding:20px;font-size:11px;">No messages</div>';
+        return;
+      }
+
+      // Count new messages for badge
+      if (isFirst) {
+        Object.keys(messages).forEach(id => knownIds.add(id));
+        isFirst = false;
+      } else if (this.dispatchCurrentTab !== 'messages') {
+        const newCount = Object.keys(messages).filter(id => !knownIds.has(id)).length;
+        if (newCount > 0) {
+          this.dispatchUnreadMessages += newCount;
+          Object.keys(messages).forEach(id => knownIds.add(id));
+          const badge = document.getElementById('dispatch-msg-badge');
+          if (badge) { badge.textContent = this.dispatchUnreadMessages > 9 ? '9+' : this.dispatchUnreadMessages; badge.style.display = 'block'; }
+        }
+      } else {
+        Object.keys(messages).forEach(id => knownIds.add(id));
+      }
+
+      panel.innerHTML = Object.entries(messages)
+        .sort((a, b) => new Date(b[1].timestamp) - new Date(a[1].timestamp))
+        .slice(0, 50)
+        .map(([id, msg]) => {
+          const time = new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+          const isUnit = msg.type === 'unit';
+          return `<div style="background:${isUnit ? 'rgba(41,121,232,0.1)' : 'var(--bg-tertiary)'};border:1px solid ${isUnit ? 'rgba(41,121,232,0.3)' : 'var(--border-color)'};border-radius:4px;padding:8px;margin-bottom:8px;">
+            <div style="font-weight:700;color:${isUnit ? '#4fa3ff' : 'var(--accent-primary)'};font-size:10px;margin-bottom:3px;">${msg.from} ${isUnit ? '(UNIT)' : '(IC)'}</div>
+            <div style="font-size:11px;color:var(--text-primary);margin-bottom:3px;">${msg.text}</div>
+            <div style="font-size:9px;color:var(--text-tertiary);">${time}</div>
+          </div>`;
+        }).join('');
+    });
+  },
+
+  switchDispatchTab(tab) {
+    this.dispatchCurrentTab = tab;
+    const tabs = ['units', 'messages'];
+    tabs.forEach(t => {
+      const tabEl = document.getElementById(`dispatch-tab-${t}`);
+      const panelEl = document.getElementById(`dispatch-${t}-panel`);
+      if (t === tab) {
+        tabEl.style.color = 'var(--accent-primary)';
+        tabEl.style.borderBottom = '2px solid var(--accent-primary)';
+        panelEl.style.display = 'block';
+      } else {
+        tabEl.style.color = 'var(--text-tertiary)';
+        tabEl.style.borderBottom = '2px solid transparent';
+        panelEl.style.display = 'none';
+      }
+    });
+    if (tab === 'messages') {
+      this.dispatchUnreadMessages = 0;
+      const badge = document.getElementById('dispatch-msg-badge');
+      if (badge) badge.style.display = 'none';
+    }
+  },
+
   async deleteCommandPost() {
     if (!confirm('Delete Command Post?')) return;
     try {

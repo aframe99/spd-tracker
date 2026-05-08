@@ -392,6 +392,105 @@
   </div>
 </div>
 
+<!-- DISPATCH VIEW -->
+<div class="screen" id="dispatch-screen">
+  <div style="display:flex;flex-direction:column;height:100vh;background:var(--bg-primary);">
+    <!-- Header -->
+    <div style="background:var(--bg-secondary);border-bottom:1px solid var(--border-color);padding:12px 20px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;">
+      <div style="display:flex;align-items:center;gap:12px;">
+        <div style="font-size:20px;">🛡️</div>
+        <div>
+          <div style="font-size:14px;font-weight:700;color:var(--text-primary);" id="dispatch-incident-name">Loading...</div>
+          <div style="font-size:11px;color:var(--text-tertiary);" id="dispatch-incident-location"></div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:16px;">
+        <div style="text-align:right;">
+          <div style="font-size:10px;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:0.5px;">Live Update</div>
+          <div style="font-size:11px;color:var(--success);font-weight:600;" id="dispatch-last-updated">Connecting...</div>
+        </div>
+        <div style="background:rgba(16,185,129,0.15);border:1px solid var(--success);border-radius:4px;padding:4px 10px;">
+          <div style="font-size:10px;font-weight:700;color:var(--success);text-transform:uppercase;letter-spacing:0.5px;">DISPATCH VIEW</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PIN gate -->
+    <div id="dispatch-pin-gate" style="display:flex;align-items:center;justify-content:center;flex:1;">
+      <div style="background:var(--bg-secondary);border:1px solid var(--border-color);border-radius:12px;padding:40px;width:100%;max-width:400px;text-align:center;">
+        <div style="font-size:48px;margin-bottom:16px;">🗺️</div>
+        <div style="font-size:20px;font-weight:700;margin-bottom:8px;">Dispatch Map Access</div>
+        <div style="font-size:13px;color:var(--text-tertiary);margin-bottom:24px;">Enter the incident PIN to view the live map</div>
+        <input type="password" id="dispatch-pin-input" class="form-input" placeholder="4-digit PIN" maxlength="4" inputmode="numeric" style="text-align:center;font-size:20px;letter-spacing:8px;margin-bottom:12px;" onkeypress="if(event.key==='Enter') app.validateDispatchPin()">
+        <div style="font-size:12px;color:var(--danger);min-height:18px;margin-bottom:12px;" id="dispatch-pin-error"></div>
+        <button class="btn primary" onclick="app.validateDispatchPin()" style="width:100%;padding:14px;font-size:13px;">ACCESS MAP</button>
+      </div>
+    </div>
+
+    <!-- Main content (hidden until PIN verified) -->
+    <div id="dispatch-main" style="display:none;flex:1;overflow:hidden;">
+      <div style="display:grid;grid-template-columns:1fr 340px;height:100%;">
+
+        <!-- Map -->
+        <div style="position:relative;">
+          <div id="dispatch-map" style="width:100%;height:100%;"></div>
+          <!-- Map layer buttons -->
+          <div style="position:absolute;top:12px;left:12px;display:flex;gap:6px;z-index:1000;">
+            <button onclick="app.setDispatchLayer('street')" id="dl-street" style="padding:6px 12px;font-size:10px;font-weight:700;background:var(--accent-primary);color:white;border:none;border-radius:4px;cursor:pointer;">Street</button>
+            <button onclick="app.setDispatchLayer('satellite')" id="dl-satellite" style="padding:6px 12px;font-size:10px;font-weight:700;background:rgba(15,20,25,0.85);color:var(--text-secondary);border:1px solid var(--border-color);border-radius:4px;cursor:pointer;">Satellite</button>
+            <button onclick="app.setDispatchLayer('topo')" id="dl-topo" style="padding:6px 12px;font-size:10px;font-weight:700;background:rgba(15,20,25,0.85);color:var(--text-secondary);border:1px solid var(--border-color);border-radius:4px;cursor:pointer;">Topo</button>
+            <button onclick="app.setDispatchLayer('dark')" id="dl-dark" style="padding:6px 12px;font-size:10px;font-weight:700;background:rgba(15,20,25,0.85);color:var(--text-secondary);border:1px solid var(--border-color);border-radius:4px;cursor:pointer;">Dark</button>
+          </div>
+        </div>
+
+        <!-- Right Panel -->
+        <div style="background:var(--bg-secondary);border-left:1px solid var(--border-color);display:flex;flex-direction:column;overflow:hidden;">
+
+          <!-- Stats bar -->
+          <div style="padding:12px 16px;border-bottom:1px solid var(--border-color);display:flex;gap:16px;">
+            <div style="text-align:center;flex:1;">
+              <div style="font-size:22px;font-weight:700;color:var(--accent-primary);" id="dispatch-unit-count">0</div>
+              <div style="font-size:9px;color:var(--text-tertiary);text-transform:uppercase;">Units</div>
+            </div>
+            <div style="text-align:center;flex:1;">
+              <div style="font-size:22px;font-weight:700;color:#2979e8;" id="dispatch-police-count">0</div>
+              <div style="font-size:9px;color:var(--text-tertiary);text-transform:uppercase;">Police</div>
+            </div>
+            <div style="text-align:center;flex:1;">
+              <div style="font-size:22px;font-weight:700;color:#ef4444;" id="dispatch-fire-count">0</div>
+              <div style="font-size:9px;color:var(--text-tertiary);text-transform:uppercase;">Fire</div>
+            </div>
+            <div style="text-align:center;flex:1;">
+              <div style="font-size:22px;font-weight:700;color:#10b981;" id="dispatch-ems-count">0</div>
+              <div style="font-size:9px;color:var(--text-tertiary);text-transform:uppercase;">EMS</div>
+            </div>
+          </div>
+
+          <!-- Tabs -->
+          <div style="display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid var(--border-color);">
+            <div id="dispatch-tab-units" onclick="app.switchDispatchTab('units')" style="padding:12px;text-align:center;font-size:10px;font-weight:700;color:var(--accent-primary);border-bottom:2px solid var(--accent-primary);cursor:pointer;text-transform:uppercase;">Units</div>
+            <div id="dispatch-tab-messages" onclick="app.switchDispatchTab('messages')" style="padding:12px;text-align:center;font-size:10px;font-weight:700;color:var(--text-tertiary);border-bottom:2px solid transparent;cursor:pointer;text-transform:uppercase;position:relative;">
+              Messages
+              <span id="dispatch-msg-badge" style="display:none;position:absolute;top:4px;right:8px;background:#ef4444;color:white;border-radius:50%;width:16px;height:16px;font-size:9px;font-weight:700;line-height:16px;text-align:center;"></span>
+            </div>
+          </div>
+
+          <!-- Units list -->
+          <div id="dispatch-units-panel" style="flex:1;overflow-y:auto;padding:12px;">
+            <div style="text-align:center;color:var(--text-tertiary);padding:20px;font-size:11px;">No units checked in</div>
+          </div>
+
+          <!-- Messages list -->
+          <div id="dispatch-messages-panel" style="display:none;flex:1;overflow-y:auto;padding:12px;">
+            <div style="text-align:center;color:var(--text-tertiary);padding:20px;font-size:11px;">No messages</div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- INCIDENT STARTUP MODAL -->
 <div class="modal" id="incident-startup-modal">
   <div class="modal-content">

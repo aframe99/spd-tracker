@@ -1727,6 +1727,17 @@ const app = {
     }
   },
 
+  copyDispatchLink() {
+    if (!this.currentIncident) { alert('Select an incident first'); return; }
+    const url = `https://aframe99.github.io/spd-tracker/?incident=${this.currentIncident}&view=dispatch`;
+    navigator.clipboard.writeText(url).then(() => {
+      alert('Dispatch link copied!\n\n' + url);
+    }).catch(() => {
+      // Fallback for browsers that block clipboard
+      prompt('Copy this link:', url);
+    });
+  },
+
   async deleteCommandPost() {
     if (!confirm('Delete Command Post?')) return;
     try {

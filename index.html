@@ -1533,12 +1533,15 @@ const app = {
      if (incident && incident.pin === pin) {
         document.getElementById('dispatch-pin-gate').style.display = 'none';
         document.getElementById('dispatch-main').style.display = 'flex';
-        // Wait for DOM to render before initializing map
+      // Wait for DOM to render before initializing map
         setTimeout(() => {
           this.startDispatchMap(incident);
-          this.monitorDispatchUnits();
-          this.monitorDispatchMessages();
-        }, 200);
+          // Give map extra time to fully initialize before starting monitors
+          setTimeout(() => {
+            this.monitorDispatchUnits();
+            this.monitorDispatchMessages();
+          }, 500);
+        }, 300);
       } else {
         errorEl.textContent = 'Invalid PIN';
       }

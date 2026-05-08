@@ -529,8 +529,18 @@ const app = {
   init() {
     const params = new URLSearchParams(window.location.search);
     const incidentId = params.get('incident');
-    if (incidentId) { this.currentIncident = incidentId; this.showScreen('checkin-screen'); this.initOfficerCheckin(incidentId); }
-    else { this.showScreen('home-screen'); }
+    const view = params.get('view');
+    if (incidentId && view === 'dispatch') {
+      this.currentIncident = incidentId;
+      this.showScreen('dispatch-screen');
+      this.initDispatchView(incidentId);
+    } else if (incidentId) {
+      this.currentIncident = incidentId;
+      this.showScreen('checkin-screen');
+      this.initOfficerCheckin(incidentId);
+    } else {
+      this.showScreen('home-screen');
+    }
   },
 
   showScreen(screenId) {

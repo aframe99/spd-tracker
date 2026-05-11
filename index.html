@@ -425,10 +425,8 @@
         <div style="font-size:13px;color:var(--text-tertiary);margin-bottom:24px;">Enter the incident PIN to view the live map</div>
         <input type="password" id="dispatch-pin-input" class="form-input" placeholder="4-digit PIN" maxlength="4" inputmode="numeric" style="text-align:center;font-size:20px;letter-spacing:8px;margin-bottom:12px;" onkeypress="if(event.key==='Enter') app.validateDispatchPin()">
         <div style="font-size:12px;color:var(--danger);min-height:18px;margin-bottom:12px;" id="dispatch-pin-error"></div>
-        <button class="btn primary" onclick="app.validateDispatchPin()" style="width:100%;padding:14px;font-size:13px;">ACCESS MAP</button>
-      </div><div id="dispatch-main" style="display:none;flex:1;min-height:0;width:100vw;">
-      <div style="display:grid;grid-template-columns:calc(100vw - 340px) 340px;height:100%;">
-    </div>
+       <button class="btn primary" onclick="app.validateDispatchPin()" style="width:100%;padding:14px;font-size:13px;">ACCESS MAP</button>
+      </div>
 
     <!-- Main content (hidden until PIN verified) -->
     <div id="dispatch-main" style="display:none;flex:1;min-height:0;width:100%;">

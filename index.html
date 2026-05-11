@@ -1513,7 +1513,7 @@ const app = {
   dispatchSaMarker: null, dispatchBarricadeMarkers: [], dispatchUnreadMessages: 0,
   dispatchCurrentTab: 'units',
 
-  async initDispatchView(incidentId) {
+async initDispatchView(incidentId) {
     const snap = await db.ref(`incidents/${incidentId}`).once('value');
     const incident = snap.val();
     if (!incident) {
@@ -1522,6 +1522,8 @@ const app = {
     }
     document.getElementById('dispatch-incident-name').textContent = `${incident.id} — ${incident.name}`;
     document.getElementById('dispatch-incident-location').textContent = incident.location || '';
+    document.getElementById('dispatch-pin-gate').style.display = 'flex';
+    document.getElementById('dispatch-main').style.display = 'none';
   },
 
   validateDispatchPin() {

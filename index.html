@@ -1087,10 +1087,29 @@ async loadIncidents() {
         this.updateIncidentMarker(incident);
         this.updateLocationMarkers(incident);
         this.loadBarricades(incident);
+        // Show/hide closed banner and action buttons
+        const isClosed = incident.status === 'closed';
+        this.currentIncidentClosed = isClosed;
+        let banner = document.getElementById('closed-incident-banner');
+        if (isClosed) {
+          if (!banner) {
+            banner = document.createElement('div');
+            banner.id = 'closed-incident-banner';
+            banner.style.cssText = 'background:rgba(239,68,68,0.15);border:1px solid var(--danger);border-radius:6px;padding:10px 14px;margin-bottom:12px;font-size:11px;font-weight:700;color:var(--danger);text-align:center;';
+            banner.textContent = '🔒 CLOSED INCIDENT — Read Only';
+            document.getElementById('incident-panel').prepend(banner);
+          }
+          // Hide editing buttons, show only exports
+          document.getElementById('close-incident-btn').style.display = 'none';
+          document.getElementById('map-share-btn').style.display = 'none';
+        } else {
+          if (banner) banner.remove();
+          document.getElementById('close-incident-btn').style.display = 'block';
+          document.getElementById('map-share-btn').style.display = 'block';
+        }
       }
     } catch (err) { console.error('Error loading incident details:', err); }
   },
-
   updateIncidentMarker(incident) {
     if (!this.map) return;
     if (this.incidentMarker) this.map.removeLayer(this.incidentMarker);

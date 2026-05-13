@@ -976,10 +976,9 @@ const app = {
     } catch (err) { alert('Error: ' + err.message); }
   },
 
- async loadIncidents() {
+async loadIncidents() {
     try {
       const snap = await db.ref('incidents').once('value');
-      await Promise.resolve();
       const incidents = snap.val() || {};
       const selector = document.getElementById('incident-selector');
       const closedSelector = document.getElementById('closed-incident-selector');

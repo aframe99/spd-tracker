@@ -1253,6 +1253,7 @@ async loadIncidents() {
   },
 
   async deleteMarker(markerId) {
+    if (this.currentIncidentClosed) { alert('This incident is closed and cannot be modified.'); return; }
     if (confirm('Delete this marker?')) { await db.ref(`incidents/${this.currentIncident}/markers/${markerId}`).remove(); this.loadIncidentDetails(this.currentIncident); }
   },
 

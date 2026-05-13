@@ -1114,11 +1114,12 @@ async loadIncidents() {
     if (!this.map) return;
     if (this.incidentMarker) this.map.removeLayer(this.incidentMarker);
     if (incident.gps) {
+     const closedInc = incident.status === 'closed';
       this.incidentMarker = L.marker([incident.gps.lat, incident.gps.lng], {
         icon: L.divIcon({ html: '<div style="background:#f59e0b;color:white;padding:6px 10px;border-radius:4px;font-weight:700;font-size:12px;">INCIDENT</div>', className: 'custom-marker', iconSize: [80, 40] }),
-        draggable: true
+        draggable: !closedInc
       }).addTo(this.map).bindPopup('<strong>' + incident.name + '</strong><br>' + incident.location);
-      this.incidentMarker.on('dragend', (e) => { this.updateIncidentLocation(e.target.getLatLng().lat, e.target.getLatLng().lng); });
+      if (!closedInc) this.incidentMarker.on('dragend', (e) => { this.updateIncidentLocation(e.target.getLatLng().lat, e.target.getLatLng().lng); });
     }
   },
 

@@ -970,8 +970,9 @@ const app = {
       document.getElementById('incident-state').value = 'MA';
       document.getElementById('incident-pin-input').value = '';
       document.getElementById('create-incident-form').style.display = 'none';
-      this.loadIncidents();
-      setTimeout(() => { document.getElementById('incident-selector').value = incidentId; this.switchIncident(); }, 500);
+    await this.loadIncidents();
+      document.getElementById('incident-selector').value = incidentId;
+      this.switchIncident();
     } catch (err) { alert('Error: ' + err.message); }
   },
 

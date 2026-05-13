@@ -1911,7 +1911,8 @@ async initDispatchView(incidentId) {
     });
   },
 
-  async deleteCommandPost() {
+ async deleteCommandPost() {
+    if (this.currentIncidentClosed) { alert('This incident is closed and cannot be modified.'); return; }
     if (!confirm('Delete Command Post?')) return;
     try {
       await db.ref(`incidents/${this.currentIncident}`).update({ commandPost: null, commandPostGps: null });

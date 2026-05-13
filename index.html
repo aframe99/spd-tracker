@@ -1039,12 +1039,30 @@ async loadIncidents() {
     this.loadIncidentDetails(incidentId); this.monitorUnits(incidentId);
   },
 
-  async viewClosedIncident() {
+ async viewClosedIncident() {
     const incidentId = document.getElementById('closed-incident-selector').value;
     if (!incidentId) return;
-    const snap = await db.ref(`incidents/${incidentId}`).once('value');
-    const incident = snap.val();
-    if (incident) alert(`Incident: ${incident.id} - ${incident.name}\nLocation: ${incident.location}\nStatus: ${incident.status}`);
+    // Clean up any active incident listeners
+    if (this.currentIncident) {
+      db.ref(`incidents/${this.currentIncident}/units`).off();
+      db.ref(`incidents/${this.currentIncident}/messages`).off();
+    }
+    this.currentIncident = incidentId;
+    this.currentIncidentClosed = true;
+    this.selectedUnit = null;
+    // Clear active incident selector so it doesn't conflict
+    document.getElementById('incident-selector').value = '';
+    this.loadIncidentDetails(incidentId);
+    this.loadClosedUnits(incidentId);
+    this.loadMessagesLog();
+    this.loadDocuments();
+  },
+
+  async loadClosedUnits(incidentId) {
+    const snap = await db.ref(`incidents/${incidentId}/units`).once('value');
+    const units = snap.val() || {};
+    this.renderUnitsList(units);
+    this.updateMapMarkers(units);
   },
 
   async loadIncidentDetails(incidentId) {

@@ -1492,7 +1492,7 @@ updateTrackingList() {
     });
   },
 
-  async exportIncident() {
+async exportIncident(includeMap) {
     if (!this.currentIncident) { alert('Select an incident first'); return; }
     try {
       const snap = await db.ref(`incidents/${this.currentIncident}`).once('value');
@@ -1500,14 +1500,75 @@ updateTrackingList() {
       if (!incident) { alert('Incident not found'); return; }
       const units = incident.units || {};
       const messages = incident.messages || {};
-      const htmlContent = `<html><head><style>body{font-family:Arial,sans-serif;margin:20px;line-height:1.6;}h1{color:#333;border-bottom:3px solid #2979e8;padding-bottom:10px;}h2{color:#2979e8;margin-top:20px;font-size:14px;}table{width:100%;border-collapse:collapse;margin-top:10px;}th,td{border:1px solid #ddd;padding:8px;text-align:left;}th{background-color:#f0f0f0;}.info-box{background-color:#f9f9f9;padding:10px;border-left:4px solid #2979e8;margin:10px 0;}</style></head><body><h1>SPD Incident Report</h1><div class="info-box"><h2>Incident Information</h2><table><tr><th>Field</th><th>Value</th></tr><tr><td>Incident ID</td><td>${incident.id||'N/A'}</td></tr><tr><td>Name</td><td>${incident.name||'N/A'}</td></tr><tr><td>Type</td><td>${incident.type||'N/A'}</td></tr><tr><td>Location</td><td>${incident.location||'N/A'}</td></tr><tr><td>Status</td><td>${incident.status||'N/A'}</td></tr><tr><td>Created</td><td>${new Date(incident.createdAt).toLocaleString()}</td></tr></table></div><div class="info-box"><h2>Check-In Log</h2><table><tr><th>Name</th><th>Badge</th><th>Service</th><th>Department</th><th>Checked In</th></tr>${Object.entries(units).map(([id,unit])=>`<tr><td>${unit.firstName} ${unit.lastName}</td><td>${unit.badge}</td><td>${unit.category}</td><td>${unit.homeDept}</td><td>${new Date(unit.checkedInAt).toLocaleString()}</td></tr>`).join('')||'<tr><td colspan="5">No units</td></tr>'}</table></div><div class="info-box"><h2>Messages</h2><table><tr><th>From</th><th>Message</th><th>Time</th></tr>${Object.entries(messages).map(([id,msg])=>`<tr><td>${msg.from}</td><td>${msg.text}</td><td>${new Date(msg.timestamp).toLocaleString()}</td></tr>`).join('')||'<tr><td colspan="3">No messages</td></tr>'}</table></div></body></html>`;
+
+      // Build track color key HTML if includeMap
+      const trackedUnits = Object.entries(units).filter(([id]) => this._trackColorMap && this._trackColorMap[id]);
+      const colorKeyHtml = includeMap && trackedUnits.length > 0 ? `
+        <div class="info-box"><h2>Track Color Key</h2><table>
+          <tr><th>Color</th><th>Officer</th><th>Badge</th></tr>
+          ${trackedUnits.map(([id, unit]) => `<tr><td><div style="width:20px;height:12px;background:${this._trackColorMap[id]};border-radius:2px;display:inline-block;"></div></td><td>${unit.firstName} ${unit.lastName}</td><td>${unit.badge}</td></tr>`).join('')}
+        </table></div>` : '';
+
+      // Build map screenshot pages if includeMap (groups of 5 officers)
+      let mapPagesHtml = '';
+      if (includeMap && trackedUnits.length > 0) {
+        const chunkSize = 5;
+        for (let i = 0; i < trackedUnits.length; i += chunkSize) {
+          const chunk = trackedUnits.slice(i, i + chunkSize);
+          const chunkLabel = chunk.map(([_, u]) => `${u.firstName} ${u.lastName} (${u.badge})`).join(', ');
+          // Capture map screenshot using Leaflet's getContainer
+          try {
+            const mapCanvas = await html2pdf().set({}).from(this.map.getContainer()).outputImg();
+            mapPagesHtml += `<div style="page-break-before:always;padding:20px;">
+              <h2 style="color:#1d4ed8;font-size:14px;margin-bottom:8px;">Track Map — Officers: ${chunkLabel}</h2>
+              <img src="${mapCanvas}" style="width:100%;border:1px solid #ccc;border-radius:4px;">
+            </div>`;
+          } catch(e) { mapPagesHtml += `<div style="page-break-before:always;padding:20px;"><p style="color:#666;">Map capture unavailable for this group.</p></div>`; }
+        }
+      }
+
+      const htmlContent = `<html><head><style>
+        body{font-family:Arial,sans-serif;margin:20px;line-height:1.6;color:#111;}
+        h1{color:#1d4ed8;border-bottom:3px solid #1d4ed8;padding-bottom:10px;font-size:22px;}
+        h2{color:#1d4ed8;margin-top:16px;font-size:14px;font-weight:700;}
+        table{width:100%;border-collapse:collapse;margin-top:8px;}
+        th,td{border:1px solid #aaa;padding:7px 9px;text-align:left;color:#111;font-size:12px;}
+        th{background-color:#dbeafe;color:#1e3a5f;font-weight:700;}
+        tr:nth-child(even) td{background:#f0f4ff;}
+        .info-box{background-color:#f8faff;padding:12px;border-left:4px solid #1d4ed8;margin:12px 0;border-radius:0 4px 4px 0;}
+        .header-meta{font-size:12px;color:#444;margin-bottom:16px;}
+      </style></head><body>
+        <h1>SPD Incident Report</h1>
+        <div class="header-meta">Generated: ${new Date().toLocaleString()} &nbsp;|&nbsp; Exported by: ${this.currentUser}</div>
+        <div class="info-box"><h2>Incident Information</h2><table>
+          <tr><th>Field</th><th>Value</th></tr>
+          <tr><td>Incident ID</td><td>${incident.id||'N/A'}</td></tr>
+          <tr><td>Name</td><td>${incident.name||'N/A'}</td></tr>
+          <tr><td>Type</td><td>${incident.type||'N/A'}</td></tr>
+          <tr><td>Location</td><td>${incident.location||'N/A'}</td></tr>
+          <tr><td>OIC</td><td>${incident.oic||'N/A'}</td></tr>
+          <tr><td>Command Post</td><td>${incident.commandPost||'N/A'}</td></tr>
+          <tr><td>Staging Area</td><td>${incident.stagingArea||'N/A'}</td></tr>
+          <tr><td>Status</td><td>${incident.status||'N/A'}</td></tr>
+          <tr><td>Created</td><td>${new Date(incident.createdAt).toLocaleString()}</td></tr>
+        </table></div>
+        <div class="info-box"><h2>Check-In Log</h2><table>
+          <tr><th>Name</th><th>Badge</th><th>Service</th><th>Department</th><th>Checked In</th></tr>
+          ${Object.entries(units).map(([id,unit])=>`<tr><td>${unit.firstName} ${unit.lastName}</td><td>${unit.badge}</td><td>${unit.category}</td><td>${unit.homeDept||''}</td><td>${new Date(unit.checkedInAt).toLocaleString()}</td></tr>`).join('')||'<tr><td colspan="5">No units</td></tr>'}
+        </table></div>
+        <div class="info-box"><h2>Messages</h2><table>
+          <tr><th>From</th><th>Message</th><th>Time</th></tr>
+          ${Object.entries(messages).sort((a,b)=>new Date(a[1].timestamp)-new Date(b[1].timestamp)).map(([id,msg])=>`<tr><td>${msg.from}</td><td>${msg.text}</td><td>${new Date(msg.timestamp).toLocaleString()}</td></tr>`).join('')||'<tr><td colspan="3">No messages</td></tr>'}
+        </table></div>
+        ${colorKeyHtml}
+        ${mapPagesHtml}
+      </body></html>`;
+
       const element = document.createElement('div');
       element.innerHTML = htmlContent;
-      html2pdf().set({ margin: 10, filename: `incident_${incident.id}_report.pdf`, image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2 }, jsPDF: { orientation: 'portrait', unit: 'mm', format: 'a4' } }).from(element).save();
-      alert('PDF exported successfully');
+      html2pdf().set({ margin: 10, filename: `incident_${incident.id}_report.pdf`, image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2, useCORS: true }, jsPDF: { orientation: 'portrait', unit: 'mm', format: 'a4' } }).from(element).save();
     } catch (err) { alert('Error: ' + err.message); }
   },
-
   async addDocument() {
     if (!this.currentIncident) { alert('Select an incident first'); return; }
     const name = document.getElementById('doc-name-input').value.trim();

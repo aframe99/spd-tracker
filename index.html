@@ -1437,25 +1437,29 @@ const app = {
     }
   },
 
+getTrackColor(unitId) {
+    const colors = ['#ef4444','#f97316','#eab308','#22c55e','#06b6d4','#a855f7','#ec4899','#14b8a6','#f43f5e','#84cc16','#3b82f6','#d946ef','#fb923c','#4ade80','#38bdf8','#c084fc','#fbbf24','#34d399','#60a5fa','#e879f9'];
+    if (!this._trackColorMap) this._trackColorMap = {};
+    if (!this._trackColorMap[unitId]) {
+      const usedCount = Object.keys(this._trackColorMap).length;
+      this._trackColorMap[unitId] = colors[usedCount % colors.length];
+    }
+    return this._trackColorMap[unitId];
+  },
+
   drawUnitPath(unitId) {
     if (!this.map) return;
     if (!this.pathLines) this.pathLines = {};
+    const color = this.getTrackColor(unitId);
     db.ref(`incidents/${this.currentIncident}/pathTracking/${unitId}`).on('value', (snap) => {
       const data = snap.val() || {};
       const points = Object.values(data)
         .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp))
         .map(p => [p.lat, p.lng])
         .filter(p => p[0] !== 0 && p[1] !== 0);
-      if (this.pathLines[unitId]) {
-        this.map.removeLayer(this.pathLines[unitId]);
-      }
+      if (this.pathLines[unitId]) this.map.removeLayer(this.pathLines[unitId]);
       if (points.length > 1) {
-        this.pathLines[unitId] = L.polyline(points, {
-          color: '#2979e8',
-          weight: 3,
-          opacity: 0.8,
-          dashArray: '5, 5'
-        }).addTo(this.map);
+        this.pathLines[unitId] = L.polyline(points, { color, weight: 3, opacity: 0.9, dashArray: '6, 4' }).addTo(this.map);
       }
     });
   },

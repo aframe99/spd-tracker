@@ -237,6 +237,22 @@
       <div style="font-size:16px;font-weight:700;margin-bottom:20px;color:var(--text-primary);">Officer Accounts</div>
       <div id="officer-accounts-list" style="display:flex;flex-direction:column;gap:12px;"><div style="text-align:center;color:var(--text-tertiary);padding:40px 20px;">Loading...</div></div>
     </div>
+    <div id="admin-create-officer-panel" style="display:none;flex:1;overflow-y:auto;padding:20px;">
+      <div style="font-size:16px;font-weight:700;margin-bottom:20px;color:var(--text-primary);">Create New Officer Account</div>
+      <div style="max-width:400px;">
+        <div class="form-group"><label class="form-label">Username</label><input type="text" id="officer-new-username" class="form-input" placeholder="Username"></div>
+        <div class="form-group"><label class="form-label">First Name</label><input type="text" id="officer-new-firstname" class="form-input" placeholder="First name"></div>
+        <div class="form-group"><label class="form-label">Last Name</label><input type="text" id="officer-new-lastname" class="form-input" placeholder="Last name"></div>
+        <div class="form-group"><label class="form-label">Badge #</label><input type="text" id="officer-new-badge" class="form-input" placeholder="Badge number"></div>
+        <div class="form-group"><label class="form-label">Department</label><input type="text" id="officer-new-dept" class="form-input" placeholder="Department" value="Shrewsbury Police"></div>
+        <div class="form-group"><label class="form-label">Password</label><input type="password" id="officer-new-password" class="form-input" placeholder="Password"></div>
+        <div class="form-group"><label class="form-label">Confirm Password</label><input type="password" id="officer-new-password-confirm" class="form-input" placeholder="Confirm Password"></div>
+        <div style="margin-top:20px;display:flex;gap:8px;">
+          <button class="btn primary" onclick="app.createOfficerAccount()" style="font-size:11px;padding:10px;">CREATE</button>
+          <button class="btn" onclick="app.showAdminPanel('officers')" style="font-size:11px;padding:10px;">CANCEL</button>
+        </div>
+      </div>
+    </div>
     <div id="admin-create-panel" style="display:none;flex:1;overflow-y:auto;padding:20px;">
       <div style="font-size:16px;font-weight:700;margin-bottom:20px;color:var(--text-primary);">Create New IC Account</div>
       <div style="max-width:400px;">

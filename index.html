@@ -1036,6 +1036,7 @@ async loadIncidents() {
       return;
     }
     this.currentIncident = incidentId; this.selectedUnit = null;
+    this.currentIncidentClosed = false;
     this.loadIncidentDetails(incidentId); this.monitorUnits(incidentId);
   },
 

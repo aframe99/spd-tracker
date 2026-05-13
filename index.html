@@ -1473,18 +1473,21 @@ getTrackColor(unitId) {
     db.ref(`incidents/${this.currentIncident}/pathTracking/${unitId}`).off();
   },
 
-  updateTrackingList() {
+updateTrackingList() {
     if (!this.currentIncident) return;
     db.ref(`incidents/${this.currentIncident}/units`).once('value', (snap) => {
       const units = snap.val() || {};
       const trackingList = document.getElementById('tracking-units-list');
       const checkedInUnits = Object.entries(units).filter(([_, unit]) => unit.status === 'checkedIn');
       if (checkedInUnits.length === 0) { trackingList.innerHTML = '<div style="font-size:11px;color:var(--text-secondary);">No units checked in</div>'; return; }
-      trackingList.innerHTML = checkedInUnits.map(([id, unit]) => `
-        <div class="tracking-unit-item">
+      trackingList.innerHTML = checkedInUnits.map(([id, unit]) => {
+        const color = this.pathTrackingUnits.has(id) ? this.getTrackColor(id) : '#6b7a8f';
+        return `<div class="tracking-unit-item">
           <input type="checkbox" id="track-${id}" ${this.pathTrackingUnits.has(id)?'checked':''} onchange="app.toggleUnitTracking('${id}',this.checked)" ${!this.pathTrackingEnabled?'disabled':''}>
+          <div style="width:12px;height:12px;border-radius:50%;background:${color};flex-shrink:0;margin-right:6px;"></div>
           <label class="tracking-unit-label" for="track-${id}">${unit.firstName} ${unit.lastName} (${unit.badge})</label>
-        </div>`).join('');
+        </div>`;
+      }).join('');
     });
   },
 

@@ -652,6 +652,26 @@ const app = {
     } catch (err) { alert('Error: ' + err.message); }
   },
 
+  async createOfficerAccount() {
+    const username = document.getElementById('officer-new-username').value.trim();
+    const firstName = document.getElementById('officer-new-firstname').value.trim();
+    const lastName = document.getElementById('officer-new-lastname').value.trim();
+    const badge = document.getElementById('officer-new-badge').value.trim();
+    const department = document.getElementById('officer-new-dept').value.trim();
+    const password = document.getElementById('officer-new-password').value.trim();
+    const passwordConfirm = document.getElementById('officer-new-password-confirm').value.trim();
+    if (!username || !firstName || !lastName || !badge || !department || !password) { alert('Please fill in all fields'); return; }
+    if (password !== passwordConfirm) { alert('Passwords do not match'); return; }
+    if (password.length < 4) { alert('Password must be at least 4 characters'); return; }
+    try {
+      const snap = await db.ref(`officers/${username}`).once('value');
+      if (snap.val()) { alert('Username already exists'); return; }
+      await db.ref(`officers/${username}`).set({ username, firstName, lastName, badge, department, password, status: 'active', createdAt: new Date().toISOString(), createdBy: this.currentUser });
+      alert('Officer account created successfully');
+      this.showAdminPanel('officers');
+    } catch (err) { alert('Error: ' + err.message); }
+  },
+
   async deleteICAccount(username) {
     if (!confirm(`Delete IC account for ${username}?`)) return;
     try { await db.ref(`ics/${username}`).remove(); alert('Account deleted'); this.loadICAccounts(); }

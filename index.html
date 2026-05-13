@@ -605,7 +605,7 @@ const app = {
     }
   },
 
-  async loadICAccounts() {
+ async loadICAccounts() {
     try {
       const snap = await db.ref('ics').once('value');
       const ics = snap.val() || {};
@@ -617,12 +617,31 @@ const app = {
             <div>
               <div style="font-weight:700;color:var(--text-primary);font-size:13px;">${ic.fullName || username}</div>
               <div style="color:var(--text-tertiary);font-size:11px;margin-top:4px;">Username: ${username}</div>
+              <div style="margin-top:6px;"><span style="background:${ic.status==='inactive'?'rgba(239,68,68,0.2)':'rgba(16,185,129,0.2)'};color:${ic.status==='inactive'?'var(--danger)':'var(--success)'};padding:2px 8px;border-radius:3px;font-size:10px;font-weight:700;">${ic.status==='inactive'?'INACTIVE':'ACTIVE'}</span></div>
             </div>
-            <button class="btn danger" onclick="app.deleteICAccount('${username}')" style="padding:6px 10px;font-size:10px;">DELETE</button>
+            <div style="display:flex;flex-direction:column;gap:6px;">
+              <button class="btn" onclick="app.resetICPassword('${username}')" style="padding:6px 10px;font-size:10px;">RESET PW</button>
+              <button class="btn ${ic.status==='inactive'?'':'danger'}" onclick="app.toggleICStatus('${username}','${ic.status||'active'}')" style="padding:6px 10px;font-size:10px;">${ic.status==='inactive'?'ACTIVATE':'DEACTIVATE'}</button>
+              <button class="btn danger" onclick="app.deleteICAccount('${username}')" style="padding:6px 10px;font-size:10px;">DELETE</button>
+            </div>
           </div>
           <div style="color:var(--text-secondary);font-size:10px;">Created: ${new Date(ic.createdAt).toLocaleDateString()}</div>
         </div>`).join('');
     } catch (err) { console.error('Error loading IC accounts:', err); }
+  },
+
+  async resetICPassword(username) {
+    const newPassword = prompt(`Enter new password for IC ${username}:`);
+    if (!newPassword || newPassword.length < 4) { alert('Password must be at least 4 characters'); return; }
+    try { await db.ref(`ics/${username}/password`).set(newPassword); alert('Password reset successfully'); }
+    catch (err) { alert('Error: ' + err.message); }
+  },
+
+  async toggleICStatus(username, currentStatus) {
+    const newStatus = currentStatus === 'active' ? 'inactive' : 'active';
+    if (!confirm(`${newStatus === 'inactive' ? 'Deactivate' : 'Activate'} IC account for ${username}?`)) return;
+    try { await db.ref(`ics/${username}/status`).set(newStatus); this.loadICAccounts(); }
+    catch (err) { alert('Error: ' + err.message); }
   },
 
   showAdminPanel(panel) {

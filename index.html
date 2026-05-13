@@ -1135,19 +1135,20 @@ async loadIncidents() {
     if (!this.map) return;
     if (this.cpMarker) this.map.removeLayer(this.cpMarker);
     if (this.saMarker) this.map.removeLayer(this.saMarker);
+    const closedLoc = incident.status === 'closed';
     if (incident.commandPostGps) {
       this.cpMarker = L.marker([incident.commandPostGps.lat, incident.commandPostGps.lng], {
         icon: L.divIcon({ html: '<div style="background:#2979e8;color:white;padding:4px 8px;border-radius:4px;font-weight:700;font-size:11px;">CP</div>', className: 'custom-marker', iconSize: [35, 30] }),
-        draggable: true
+        draggable: !closedLoc
       }).addTo(this.map).bindPopup('<strong>Command Post</strong><br>' + incident.commandPost);
-      this.cpMarker.on('dragend', (e) => { this.updateLocationMarkerPosition('commandPost', e.target.getLatLng().lat, e.target.getLatLng().lng); });
+      if (!closedLoc) this.cpMarker.on('dragend', (e) => { this.updateLocationMarkerPosition('commandPost', e.target.getLatLng().lat, e.target.getLatLng().lng); });
     }
     if (incident.stagingAreaGps) {
       this.saMarker = L.marker([incident.stagingAreaGps.lat, incident.stagingAreaGps.lng], {
         icon: L.divIcon({ html: '<div style="background:#4fa3ff;color:white;padding:4px 8px;border-radius:4px;font-weight:700;font-size:11px;white-space:nowrap;">Stage</div>', className: 'custom-marker', iconSize: [50, 30] }),
-        draggable: true
+        draggable: !closedLoc
       }).addTo(this.map).bindPopup('<strong>Staging Area</strong><br>' + incident.stagingArea);
-      this.saMarker.on('dragend', (e) => { this.updateLocationMarkerPosition('stagingArea', e.target.getLatLng().lat, e.target.getLatLng().lng); });
+      if (!closedLoc) this.saMarker.on('dragend', (e) => { this.updateLocationMarkerPosition('stagingArea', e.target.getLatLng().lat, e.target.getLatLng().lng); });
     }
   },
 

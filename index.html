@@ -373,7 +373,8 @@
           </div>
         </div>
       <button class="btn" onclick="app.copyDispatchLink()" style="width:100%;padding:10px;font-size:10px;margin-bottom:8px;">🗺️ INCIDENT MAP SHARE</button>
-        <button class="btn primary" onclick="app.exportIncident()" style="width:100%;padding:10px;font-size:10px;margin-bottom:8px;">EXPORT PDF</button>
+       <button class="btn primary" onclick="app.exportIncident(false)" style="width:100%;padding:10px;font-size:10px;margin-bottom:8px;">EXPORT PDF</button>
+        <button class="btn" onclick="app.exportIncident(true)" style="width:100%;padding:10px;font-size:10px;margin-bottom:8px;">EXPORT PDF + MAP TRACKS</button>
         <button class="btn danger" onclick="app.closeIncident()" style="width:100%;padding:10px;font-size:10px;">CLOSE INCIDENT</button>
       </div>
       <div id="unit-panel" class="panel-tab-content" style="display:none;"><div style="text-align:center;color:var(--text-tertiary);padding:40px 0;font-size:11px;">Select a unit from the list</div></div>

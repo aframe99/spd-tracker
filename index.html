@@ -1160,9 +1160,10 @@ async loadIncidents() {
     } catch (err) { console.error('Error updating location marker:', err); }
   },
 
-  async dropMarkerAtCenter(type) {
+ async dropMarkerAtCenter(type) {
     if (!this.map) { alert('Map not loaded'); return; }
     if (!this.currentIncident) { alert('Select an incident first'); return; }
+    if (this.currentIncidentClosed) { alert('This incident is closed and cannot be modified.'); return; }
     const center = this.map.getCenter();
     const currentZoom = this.map.getZoom();
     await this.placeMarker(center, type);

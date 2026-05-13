@@ -1922,6 +1922,7 @@ async initDispatchView(incidentId) {
   },
 
   async deleteStagingArea() {
+    if (this.currentIncidentClosed) { alert('This incident is closed and cannot be modified.'); return; }
     if (!confirm('Delete Staging Area?')) return;
     try {
       await db.ref(`incidents/${this.currentIncident}`).update({ stagingArea: null, stagingAreaGps: null });

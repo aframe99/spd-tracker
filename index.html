@@ -561,7 +561,7 @@ firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
 const app = {
- currentUser: null, userRole: null, currentIncident: null, selectedUnit: null,
+currentUser: null, userRole: null, currentIncident: null, selectedUnit: null,
   selectedService: null, selectedPoliceType: null, map: null, officerMap: null,
   mapLayers: {}, mapTileLayer: null, currentMapLayer: 'street', gpsWatchId: null,
   showingOfficerMap: false, unitMarkers: {}, incidentMarker: null, cpMarker: null,
@@ -571,7 +571,7 @@ const app = {
   unreadMessageCount: 0, activeMessagePanel: false,
   lastMessageReadAt: null,
   unreadMessageCount: 0, lastReadMessageTimestamp: null, activeMessagePanel: false,
-
+  geofenceCircle: null, geofenceCenterMarker: null, geofenceMode: false, geofenceRadius: 300,
   init() {
     const params = new URLSearchParams(window.location.search);
     const incidentId = params.get('incident');

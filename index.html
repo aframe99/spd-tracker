@@ -1913,7 +1913,7 @@ async initDispatchView(incidentId) {
 
   copyDispatchLink() {
     if (!this.currentIncident) { alert('Select an incident first'); return; }
-    const url = `https://aframe99.github.io/spd-tracker/?incident=${this.currentIncident}&view=dispatch`;
+   const url = `https://spd-tracker.pages.dev/?incident=${this.currentIncident}&view=dispatch`;
     navigator.clipboard.writeText(url).then(() => {
       alert('Dispatch link copied!\n\n' + url);
     }).catch(() => {

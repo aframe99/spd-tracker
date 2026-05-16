@@ -1271,7 +1271,7 @@ async loadIncidents() {
     if (confirm('Delete this marker?')) { await db.ref(`incidents/${this.currentIncident}/markers/${markerId}`).remove(); this.loadIncidentDetails(this.currentIncident); }
   },
 
-  monitorUnits(incidentId) {
+ monitorUnits(incidentId) {
     db.ref(`incidents/${incidentId}/units`).on('value', (snap) => {
       const units = snap.val() || {};
       this.updateMapMarkers(units);
@@ -1282,7 +1282,25 @@ async loadIncidents() {
         this._lastCheckedInCount = checkedInCount;
         this.renderUnitsList(units);
       }
+      this.updateRecipientDropdown(units);
     });
+  },
+
+  updateRecipientDropdown(units) {
+    const select = document.getElementById('message-recipient');
+    if (!select) return;
+    const current = select.value;
+    select.innerHTML = '<option value="all">📢 All Units (Broadcast)</option>';
+    Object.entries(units)
+      .filter(([_, unit]) => unit.status === 'checkedIn')
+      .sort((a, b) => a[1].lastName.localeCompare(b[1].lastName))
+      .forEach(([badge, unit]) => {
+        const opt = document.createElement('option');
+        opt.value = badge;
+        opt.textContent = `📨 ${unit.lastName}, ${unit.firstName} (${badge})`;
+        select.appendChild(opt);
+      });
+    if ([...select.options].some(o => o.value === current)) select.value = current;
   },
 
   renderUnitsList(units) {

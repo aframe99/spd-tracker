@@ -1110,9 +1110,10 @@ async loadIncidents() {
         new QRCode(qrContainer, `https://spd-tracker.pages.dev/?incident=${incidentId}`);
         if (incident.gps && this.map && !this._preserveMapView) this.map.setView([incident.gps.lat, incident.gps.lng], 14);
         this._preserveMapView = false;
-        this.updateIncidentMarker(incident);
+       this.updateIncidentMarker(incident);
         this.updateLocationMarkers(incident);
         this.loadBarricades(incident);
+        this.loadGeofence(incident);
         // Show/hide closed banner and action buttons
         const isClosed = incident.status === 'closed';
         this.currentIncidentClosed = isClosed;

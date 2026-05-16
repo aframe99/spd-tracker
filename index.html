@@ -1546,6 +1546,8 @@ async loadIncidents() {
       const msgBadge = document.getElementById('msg-badge');
       if (msgBadge) msgBadge.style.display = 'none';
 
+     if (this.geofenceCircle) { this.map.removeLayer(this.geofenceCircle); this.geofenceCircle = null; }
+      if (this.geofenceCenterMarker) { this.map.removeLayer(this.geofenceCenterMarker); this.geofenceCenterMarker = null; }
       this.clearMapMarkers();
       this.loadIncidents();
       alert('Incident closed');

@@ -1089,7 +1089,7 @@ async loadIncidents() {
         document.getElementById('incident-pin').textContent = incident.pin;
         const qrContainer = document.getElementById('incident-qr');
         qrContainer.innerHTML = '';
-        new QRCode(qrContainer, `https://aframe99.github.io/spd-tracker/?incident=${incidentId}`);
+        new QRCode(qrContainer, `https://spd-tracker.pages.dev/?incident=${incidentId}`);
         if (incident.gps && this.map && !this._preserveMapView) this.map.setView([incident.gps.lat, incident.gps.lng], 14);
         this._preserveMapView = false;
         this.updateIncidentMarker(incident);

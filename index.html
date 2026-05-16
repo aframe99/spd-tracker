@@ -1994,6 +1994,133 @@ async initDispatchView(incidentId) {
     } catch (err) { alert('Error: ' + err.message); }
   },
 
+  toggleGeofenceMode() {
+    if (!this.currentIncident) { alert('Select an incident first'); return; }
+    if (this.currentIncidentClosed) { alert('This incident is closed and cannot be modified.'); return; }
+    this.geofenceMode = !this.geofenceMode;
+    const btn = document.getElementById('geofence-btn');
+    const controls = document.getElementById('geofence-controls');
+    if (this.geofenceMode) {
+      btn.textContent = '⭕ GEOFENCE ON';
+      btn.style.background = 'rgba(245,158,11,0.2)';
+      btn.style.borderColor = 'var(--warning)';
+      btn.style.color = 'var(--warning)';
+      controls.style.display = 'block';
+      this.map.on('click', this._geofenceClickHandler = (e) => {
+        this.placeGeofenceCenter(e.latlng.lat, e.latlng.lng);
+      });
+    } else {
+      btn.textContent = '⭕ SET GEOFENCE';
+      btn.style.background = '';
+      btn.style.borderColor = '';
+      btn.style.color = '';
+      controls.style.display = 'none';
+      if (this._geofenceClickHandler) this.map.off('click', this._geofenceClickHandler);
+    }
+  },
+
+  async placeGeofenceCenter(lat, lng) {
+    const radius = parseInt(document.getElementById('geofence-radius').value);
+    this.geofenceRadius = radius;
+    // Remove existing
+    if (this.geofenceCircle) this.map.removeLayer(this.geofenceCircle);
+    if (this.geofenceCenterMarker) this.map.removeLayer(this.geofenceCenterMarker);
+    // Draw circle
+    this.geofenceCircle = L.circle([lat, lng], {
+      radius,
+      color: '#f59e0b',
+      fillColor: '#f59e0b',
+      fillOpacity: 0.08,
+      weight: 2,
+      dashArray: '6, 4'
+    }).addTo(this.map);
+    // Place draggable center marker
+    this.geofenceCenterMarker = L.marker([lat, lng], {
+      icon: L.divIcon({ html: '<div style="background:#f59e0b;color:white;padding:4px 8px;border-radius:4px;font-weight:700;font-size:10px;white-space:nowrap;">⭕ GEOFENCE</div>', className: 'custom-marker', iconSize: [80, 28] }),
+      draggable: true
+    }).addTo(this.map);
+    this.geofenceCenterMarker.on('drag', (e) => {
+      const pos = e.target.getLatLng();
+      this.geofenceCircle.setLatLng(pos);
+    });
+    this.geofenceCenterMarker.on('dragend', async (e) => {
+      const pos = e.target.getLatLng();
+      await this.saveGeofence(pos.lat, pos.lng, this.geofenceRadius);
+    });
+    await this.saveGeofence(lat, lng, radius);
+  },
+
+  async updateGeofenceRadius(value) {
+    this.geofenceRadius = parseInt(value);
+    document.getElementById('geofence-radius-label').textContent = value + 'm';
+    if (this.geofenceCircle) {
+      this.geofenceCircle.setRadius(this.geofenceRadius);
+      const center = this.geofenceCircle.getLatLng();
+      await this.saveGeofence(center.lat, center.lng, this.geofenceRadius);
+    }
+  },
+
+  async saveGeofence(lat, lng, radius) {
+    try {
+      await db.ref(`incidents/${this.currentIncident}/geofence`).set({
+        lat, lng, radius, updatedAt: new Date().toISOString()
+      });
+    } catch (err) { console.error('Error saving geofence:', err); }
+  },
+
+  async clearGeofence() {
+    if (!this.currentIncident) return;
+    if (this.currentIncidentClosed) { alert('This incident is closed and cannot be modified.'); return; }
+    if (!confirm('Clear geofence?')) return;
+    if (this.geofenceCircle) { this.map.removeLayer(this.geofenceCircle); this.geofenceCircle = null; }
+    if (this.geofenceCenterMarker) { this.map.removeLayer(this.geofenceCenterMarker); this.geofenceCenterMarker = null; }
+    // Reset button state
+    this.geofenceMode = false;
+    const btn = document.getElementById('geofence-btn');
+    btn.textContent = '⭕ SET GEOFENCE';
+    btn.style.background = '';
+    btn.style.borderColor = '';
+    btn.style.color = '';
+    document.getElementById('geofence-controls').style.display = 'none';
+    if (this._geofenceClickHandler) this.map.off('click', this._geofenceClickHandler);
+    try {
+      await db.ref(`incidents/${this.currentIncident}/geofence`).remove();
+    } catch (err) { alert('Error: ' + err.message); }
+  },
+
+  loadGeofence(incident) {
+    if (!incident.geofence || !this.map) return;
+    const { lat, lng, radius } = incident.geofence;
+    if (this.geofenceCircle) this.map.removeLayer(this.geofenceCircle);
+    if (this.geofenceCenterMarker) this.map.removeLayer(this.geofenceCenterMarker);
+    this.geofenceRadius = radius;
+    this.geofenceCircle = L.circle([lat, lng], {
+      radius,
+      color: '#f59e0b',
+      fillColor: '#f59e0b',
+      fillOpacity: 0.08,
+      weight: 2,
+      dashArray: '6, 4'
+    }).addTo(this.map);
+    const isClosed = incident.status === 'closed';
+    this.geofenceCenterMarker = L.marker([lat, lng], {
+      icon: L.divIcon({ html: '<div style="background:#f59e0b;color:white;padding:4px 8px;border-radius:4px;font-weight:700;font-size:10px;white-space:nowrap;">⭕ GEOFENCE</div>', className: 'custom-marker', iconSize: [80, 28] }),
+      draggable: !isClosed
+    }).addTo(this.map);
+    if (!isClosed) {
+      this.geofenceCenterMarker.on('drag', (e) => {
+        this.geofenceCircle.setLatLng(e.target.getLatLng());
+      });
+      this.geofenceCenterMarker.on('dragend', async (e) => {
+        const pos = e.target.getLatLng();
+        await this.saveGeofence(pos.lat, pos.lng, this.geofenceRadius);
+      });
+      // Sync radius slider
+      const slider = document.getElementById('geofence-radius');
+      if (slider) { slider.value = radius; document.getElementById('geofence-radius-label').textContent = radius + 'm'; }
+    }
+  },
+
   async deleteStagingArea() {
     if (this.currentIncidentClosed) { alert('This incident is closed and cannot be modified.'); return; }
     if (!confirm('Delete Staging Area?')) return;

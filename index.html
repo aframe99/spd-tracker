@@ -1502,6 +1502,8 @@ async loadIncidents() {
     if (this.saMarker) { this.map.removeLayer(this.saMarker); this.saMarker = null; }
     this.barricadeMarkers.forEach(m => this.map.removeLayer(m));
     this.barricadeMarkers = [];
+    if (this.geofenceCircle) { this.map.removeLayer(this.geofenceCircle); this.geofenceCircle = null; }
+    if (this.geofenceCenterMarker) { this.map.removeLayer(this.geofenceCenterMarker); this.geofenceCenterMarker = null; }
     this.map.setView([42.2880, -71.7190], 13);
   },
 

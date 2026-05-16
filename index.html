@@ -1378,14 +1378,27 @@ async loadIncidents() {
     if (!this.currentIncident) { alert('Select an incident first'); return; }
     const messageText = document.getElementById('message-text').value.trim();
     if (!messageText) { alert('Enter a message'); return; }
+    const recipient = document.getElementById('message-recipient').value;
     try {
       const messageId = db.ref(`incidents/${this.currentIncident}/messages`).push().key;
-      await db.ref(`incidents/${this.currentIncident}/messages/${messageId}`).set({ from: this.currentUser, text: messageText, timestamp: new Date().toISOString(), type: 'broadcast' });
+      const messageData = {
+        from: this.currentUser,
+        text: messageText,
+        timestamp: new Date().toISOString(),
+        type: recipient === 'all' ? 'broadcast' : 'direct',
+      };
+      if (recipient !== 'all') {
+        const snap = await db.ref(`incidents/${this.currentIncident}/units/${recipient}`).once('value');
+        const unit = snap.val();
+        messageData.to = recipient;
+        messageData.toName = unit ? `${unit.firstName} ${unit.lastName}` : recipient;
+      }
+      await db.ref(`incidents/${this.currentIncident}/messages/${messageId}`).set(messageData);
       document.getElementById('message-text').value = '';
+      document.getElementById('message-recipient').value = 'all';
       this.loadMessagesLog();
     } catch (err) { alert('Error: ' + err.message); }
   },
-
  
 
  loadMessagesLog() {

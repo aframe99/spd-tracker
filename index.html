@@ -973,11 +973,13 @@ currentUser: null, userRole: null, currentIncident: null, selectedUnit: null,
     setTimeout(() => {
       if (this.map) this.map.remove();
       this.map = L.map('ic-map').setView([42.2880, -71.7190], 13);
+    const mbToken = 'pk.eyJ1IjoiYWZyYW1lOTkiLCJhIjoiY21wOTZpbTJmMHA4MDJycHZiNTUzcjJuMyJ9.uhS0MWQx2KbeHAa5nFvViA';
+      const mbOpts = { tileSize: 512, zoomOffset: -1, maxZoom: 22, attribution: '© <a href="https://www.mapbox.com/">Mapbox</a> © <a href="https://www.openstreetmap.org/">OSM</a>' };
       this.mapLayers = {
-        street: L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap' }),
-        satellite: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { attribution: '© Esri' }),
-        topo: L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', { attribution: '© OpenTopoMap' }),
-        dark: L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png', { attribution: '© CARTO' })
+        street: L.tileLayer(`https://api.mapbox.com/styles/v1/mapbox/streets-v12/tiles/{z}/{x}/{y}?access_token=${mbToken}`, mbOpts),
+        satellite: L.tileLayer(`https://api.mapbox.com/styles/v1/mapbox/satellite-streets-v12/tiles/{z}/{x}/{y}?access_token=${mbToken}`, mbOpts),
+        topo: L.tileLayer(`https://api.mapbox.com/styles/v1/mapbox/outdoors-v12/tiles/{z}/{x}/{y}?access_token=${mbToken}`, mbOpts),
+        dark: L.tileLayer(`https://api.mapbox.com/styles/v1/mapbox/dark-v11/tiles/{z}/{x}/{y}?access_token=${mbToken}`, mbOpts)
       };
       this.mapLayers.street.addTo(this.map);
       this.mapTileLayer = this.mapLayers.street;

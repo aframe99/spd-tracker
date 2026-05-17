@@ -1028,7 +1028,7 @@ currentUser: null, userRole: null, currentIncident: null, selectedUnit: null,
       document.getElementById('incident-town').value = 'Shrewsbury';
       document.getElementById('incident-state').value = 'MA';
       document.getElementById('incident-pin-input').value = '';
-      document.getElementById('create-incident-form').style.display = 'none';
+    document.getElementById('create-incident-modal').classList.remove('open');
     await this.loadIncidents();
       document.getElementById('incident-selector').value = incidentId;
       this.switchIncident();

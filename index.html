@@ -337,18 +337,23 @@
         <button class="map-control-btn" onclick="app.dropMarkerAtCenter('stagingArea')">DROP STAGE</button>
         <button class="map-control-btn" onclick="app.dropMarkerAtCenter('barricade')">ADD BARRICADE</button>
       </div>
-      <div style="display:flex;gap:8px;width:100%;justify-content:center;flex-wrap:wrap;">
-        <button class="map-control-btn" id="geofence-btn" onclick="app.toggleGeofenceMode()">⭕ SET GEOFENCE</button>
-        <button class="map-control-btn" onclick="app.clearGeofence()" style="color:var(--danger);border-color:rgba(239,68,68,0.3);">✕ CLEAR GEOFENCE</button>
+     <div style="display:flex;gap:8px;width:100%;justify-content:center;flex-wrap:wrap;align-items:center;">
+        <button class="map-control-btn" onclick="app.toggleGeofenceSection()" id="geofence-section-toggle" style="font-size:9px;">⭕ GEOFENCE ▼</button>
       </div>
-      <div id="geofence-controls" style="display:none;width:100%;padding:0 4px;">
-        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:center;">
-          <label style="font-size:10px;font-weight:600;color:var(--text-secondary);text-transform:uppercase;">Radius:</label>
-          <input type="range" id="geofence-radius" min="50" max="2000" value="300" step="50" style="width:120px;cursor:pointer;" oninput="app.updateGeofenceRadius(this.value)">
-          <span id="geofence-radius-label" style="font-size:10px;color:var(--text-secondary);min-width:50px;">300m</span>
+      <div id="geofence-section" style="display:none;width:100%;">
+        <div style="display:flex;gap:8px;width:100%;justify-content:center;flex-wrap:wrap;margin-bottom:4px;">
+          <button class="map-control-btn" id="geofence-btn" onclick="app.toggleGeofenceMode()">⭕ SET GEOFENCE</button>
+          <button class="map-control-btn" onclick="app.clearGeofence()" style="color:var(--danger);border-color:rgba(239,68,68,0.3);">✕ CLEAR GEOFENCE</button>
         </div>
-        <div style="text-align:center;margin-top:6px;">
-          <span style="font-size:10px;color:var(--warning);">Click map to place center, drag to move</span>
+        <div id="geofence-controls" style="display:none;width:100%;padding:0 4px;">
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:center;">
+            <label style="font-size:10px;font-weight:600;color:var(--text-secondary);text-transform:uppercase;">Radius:</label>
+            <input type="range" id="geofence-radius" min="50" max="2000" value="300" step="50" style="width:120px;cursor:pointer;" oninput="app.updateGeofenceRadius(this.value)">
+            <span id="geofence-radius-label" style="font-size:10px;color:var(--text-secondary);min-width:50px;">300m</span>
+          </div>
+          <div style="text-align:center;margin-top:6px;">
+            <span style="font-size:10px;color:var(--warning);">Click map to place center, drag to move</span>
+          </div>
         </div>
       </div>
     </div>

@@ -1649,21 +1649,23 @@ async exportIncident(includeMap) {
           ${trackedUnits.map(([id, unit]) => `<tr><td><div style="width:20px;height:12px;background:${this._trackColorMap[id]};border-radius:2px;display:inline-block;"></div></td><td>${unit.firstName} ${unit.lastName}</td><td>${unit.badge}</td></tr>`).join('')}
         </table></div>` : '';
 
-      // Build map screenshot pages if includeMap (groups of 5 officers)
+      // Build map screenshot pages if includeMap
       let mapPagesHtml = '';
-      if (includeMap && trackedUnits.length > 0) {
-        const chunkSize = 5;
-        for (let i = 0; i < trackedUnits.length; i += chunkSize) {
-          const chunk = trackedUnits.slice(i, i + chunkSize);
-          const chunkLabel = chunk.map(([_, u]) => `${u.firstName} ${u.lastName} (${u.badge})`).join(', ');
-          // Capture map screenshot using Leaflet's getContainer
-          try {
-            const mapCanvas = await html2pdf().set({}).from(this.map.getContainer()).outputImg();
-            mapPagesHtml += `<div style="page-break-before:always;padding:20px;">
-              <h2 style="color:#1d4ed8;font-size:14px;margin-bottom:8px;">Track Map — Officers: ${chunkLabel}</h2>
-              <img src="${mapCanvas}" style="width:100%;border:1px solid #ccc;border-radius:4px;">
-            </div>`;
-          } catch(e) { mapPagesHtml += `<div style="page-break-before:always;padding:20px;"><p style="color:#666;">Map capture unavailable for this group.</p></div>`; }
+      if (includeMap && this.map) {
+        try {
+          // Use html2canvas directly on the map container
+          const mapContainer = this.map.getContainer();
+          const canvas = await html2canvas(mapContainer, { useCORS: true, scale: 1.5, logging: false });
+          const mapImgSrc = canvas.toDataURL('image/jpeg', 0.92);
+          const allTrackedLabel = trackedUnits.length > 0
+            ? trackedUnits.map(([_, u]) => `${u.firstName} ${u.lastName} (${u.badge})`).join(', ')
+            : 'All units';
+          mapPagesHtml = `<div style="page-break-before:always;padding:20px;">
+            <h2 style="color:#1d4ed8;font-size:14px;margin-bottom:8px;">Track Map — ${allTrackedLabel}</h2>
+            <img src="${mapImgSrc}" style="width:100%;border:1px solid #ccc;border-radius:4px;">
+          </div>`;
+        } catch(e) {
+          mapPagesHtml = `<div style="page-break-before:always;padding:20px;"><p style="color:#666;">Map capture unavailable. Try exporting without map tracks.</p></div>`;
         }
       }
 

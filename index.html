@@ -2024,6 +2024,14 @@ async initDispatchView(incidentId) {
     } catch (err) { alert('Error: ' + err.message); }
   },
 
+  toggleMapControls() {
+    const body = document.getElementById('map-controls-body');
+    const btn = document.getElementById('map-controls-toggle');
+    const isOpen = body.style.display !== 'none';
+    body.style.display = isOpen ? 'none' : 'block';
+    btn.textContent = isOpen ? 'MAP TOOLS ▼' : 'MAP TOOLS ▲';
+  },
+
   toggleGeofenceSection() {
     const section = document.getElementById('geofence-section');
     const btn = document.getElementById('geofence-section-toggle');

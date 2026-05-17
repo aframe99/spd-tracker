@@ -997,7 +997,10 @@ currentUser: null, userRole: null, currentIncident: null, selectedUnit: null,
   },
 
   createNewIncidentPrompt() { document.getElementById('incident-startup-modal').classList.remove('open'); this.toggleCreateIncident(); },
-  toggleCreateIncident() { const form = document.getElementById('create-incident-form'); form.style.display = form.style.display === 'none' ? 'block' : 'none'; },
+ toggleCreateIncident() {
+    const modal = document.getElementById('create-incident-modal');
+    modal.classList.toggle('open');
+  },
 
   async createIncident() {
     const name = document.getElementById('incident-name-input').value.trim();

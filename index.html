@@ -1826,10 +1826,10 @@ async initDispatchView(incidentId) {
     setTimeout(() => {
       this.dispatchMap = L.map('dispatch-map').setView([42.2880, -71.7190], 13);
       this.dispatchMapLayers = {
-        street: L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap' }),
-        satellite: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { attribution: '© Esri' }),
-        topo: L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', { attribution: '© OpenTopoMap' }),
-        dark: L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png', { attribution: '© CARTO' })
+      street: L.tileLayer(`https://api.mapbox.com/styles/v1/mapbox/streets-v12/tiles/{z}/{x}/{y}?access_token=pk.eyJ1IjoiYWZyYW1lOTkiLCJhIjoiY21wOTZpbTJmMHA4MDJycHZiNTUzcjJuMyJ9.uhS0MWQx2KbeHAa5nFvViA`, { tileSize: 512, zoomOffset: -1, maxZoom: 22, attribution: '© Mapbox © OSM' }),
+        satellite: L.tileLayer(`https://api.mapbox.com/styles/v1/mapbox/satellite-streets-v12/tiles/{z}/{x}/{y}?access_token=pk.eyJ1IjoiYWZyYW1lOTkiLCJhIjoiY21wOTZpbTJmMHA4MDJycHZiNTUzcjJuMyJ9.uhS0MWQx2KbeHAa5nFvViA`, { tileSize: 512, zoomOffset: -1, maxZoom: 22, attribution: '© Mapbox © OSM' }),
+        topo: L.tileLayer(`https://api.mapbox.com/styles/v1/mapbox/outdoors-v12/tiles/{z}/{x}/{y}?access_token=pk.eyJ1IjoiYWZyYW1lOTkiLCJhIjoiY21wOTZpbTJmMHA4MDJycHZiNTUzcjJuMyJ9.uhS0MWQx2KbeHAa5nFvViA`, { tileSize: 512, zoomOffset: -1, maxZoom: 22, attribution: '© Mapbox © OSM' }),
+        dark: L.tileLayer(`https://api.mapbox.com/styles/v1/mapbox/dark-v11/tiles/{z}/{x}/{y}?access_token=pk.eyJ1IjoiYWZyYW1lOTkiLCJhIjoiY21wOTZpbTJmMHA4MDJycHZiNTUzcjJuMyJ9.uhS0MWQx2KbeHAa5nFvViA`, { tileSize: 512, zoomOffset: -1, maxZoom: 22, attribution: '© Mapbox © OSM' })
       };
       this.dispatchMapLayers.street.addTo(this.dispatchMap);
       this.dispatchTileLayer = this.dispatchMapLayers.street;

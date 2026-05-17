@@ -2047,8 +2047,8 @@ async initDispatchView(incidentId) {
       dashArray: '6, 4'
     }).addTo(this.map);
     // Place draggable center marker
-    this.geofenceCenterMarker = L.marker([lat, lng], {
-      icon: L.divIcon({ html: '<div style="background:#f59e0b;color:white;padding:4px 8px;border-radius:4px;font-weight:700;font-size:10px;white-space:nowrap;">⭕ GEOFENCE</div>', className: 'custom-marker', iconSize: [80, 28] }),
+   this.geofenceCenterMarker = L.marker([lat, lng], {
+      icon: L.divIcon({ html: '<div style="width:12px;height:12px;background:#f59e0b;border:2px solid white;border-radius:50%;box-shadow:0 0 4px rgba(0,0,0,0.5);"></div>', className: 'custom-marker', iconSize: [12, 12], iconAnchor: [6, 6] }),
       draggable: true
     }).addTo(this.map);
     this.geofenceCenterMarker.on('drag', (e) => {

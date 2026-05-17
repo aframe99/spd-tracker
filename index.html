@@ -1692,9 +1692,9 @@ async exportIncident(includeMap) {
           <tr><td>Status</td><td>${incident.status||'N/A'}</td></tr>
           <tr><td>Created</td><td>${new Date(incident.createdAt).toLocaleString()}</td></tr>
         </table></div>
-        <div class="info-box"><h2>Check-In Log</h2><table>
-          <tr><th>Name</th><th>Badge</th><th>Service</th><th>Department</th><th>Checked In</th></tr>
-          ${Object.entries(units).map(([id,unit])=>`<tr><td>${unit.firstName} ${unit.lastName}</td><td>${unit.badge}</td><td>${unit.category}</td><td>${unit.homeDept||''}</td><td>${new Date(unit.checkedInAt).toLocaleString()}</td></tr>`).join('')||'<tr><td colspan="5">No units</td></tr>'}
+       <div class="info-box"><h2>Unit Log</h2><table>
+          <tr><th>Name</th><th>Badge</th><th>Service</th><th>Department</th><th>Checked In</th><th>Checked Out</th></tr>
+          ${Object.entries(units).map(([id,unit])=>`<tr><td>${unit.firstName} ${unit.lastName}</td><td>${unit.badge}</td><td>${(unit.category||'').charAt(0).toUpperCase()+(unit.category||'').slice(1)}</td><td>${unit.homeDept||''}</td><td>${unit.checkedInAt ? new Date(unit.checkedInAt).toLocaleString() : 'N/A'}</td><td>${unit.checkedOutAt ? new Date(unit.checkedOutAt).toLocaleString() : '—'}</td></tr>`).join('')||'<tr><td colspan="6">No units</td></tr>'}
         </table></div>
         <div class="info-box"><h2>Messages</h2><table>
           <tr><th>From</th><th>Message</th><th>Time</th></tr>

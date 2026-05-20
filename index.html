@@ -1342,6 +1342,29 @@ async loadIncidents() {
   renderUnitsList(units) {
     const list = document.getElementById('units-list');
     if (Object.keys(units).length === 0) { list.innerHTML = '<div style="text-align:center;color:var(--text-tertiary);padding:15px;font-size:11px;">No units</div>'; return; }
+
+    // Check for any new geofence breaches and show alert banner
+    const breachedUnits = Object.values(units).filter(u => u.status === 'checkedIn' && u.outsideGeofence === true);
+    let alertBanner = document.getElementById('geofence-alert-banner');
+    if (!alertBanner) {
+      alertBanner = document.createElement('div');
+      alertBanner.id = 'geofence-alert-banner';
+      alertBanner.style.cssText = 'display:none;background:rgba(245,158,11,0.15);border:1px solid #f59e0b;border-radius:6px;padding:10px 14px;margin:8px 12px;font-size:11px;font-weight:700;color:#f59e0b;text-align:center;cursor:pointer;';
+      alertBanner.onclick = () => alertBanner.style.display = 'none';
+      list.parentElement.insertBefore(alertBanner, list);
+    }
+    if (breachedUnits.length > 0) {
+      const names = breachedUnits.map(u => `${u.lastName} [${u.badge}]`).join(', ');
+      alertBanner.textContent = `⚠️ OUTSIDE PERIMETER: ${names} — click to dismiss`;
+      if (alertBanner.style.display === 'none') {
+        alertBanner.style.display = 'block';
+        // Play alert sound
+        try { const ctx = new AudioContext(); const o = ctx.createOscillator(); const g = ctx.createGain(); o.connect(g); g.connect(ctx.destination); o.frequency.value = 880; g.gain.setValueAtTime(0.3, ctx.currentTime); g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4); o.start(ctx.currentTime); o.stop(ctx.currentTime + 0.4); } catch(e) {}
+      }
+    } else {
+      alertBanner.style.display = 'none';
+    }
+
     const now = Date.now();
     const fiveMinutes = 5 * 60 * 1000;
     list.innerHTML = Object.entries(units).map(([id, unit]) => {

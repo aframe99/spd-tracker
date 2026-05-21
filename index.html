@@ -1062,11 +1062,14 @@ async loadIncidents() {
  async switchIncident() {
     const incidentId = document.getElementById('incident-selector').value;
 
-    // Always clean up previous listeners and state
+   // Always clean up previous listeners and state
     if (this.currentIncident) {
       db.ref(`incidents/${this.currentIncident}/units`).off();
       db.ref(`incidents/${this.currentIncident}/messages`).off();
+      db.ref(`incidents/${this.currentIncident}/documents`).off();
     }
+    this._sosAlertedBadges = new Set();
+    this._geofenceAlertedBadges = new Set();
   this.unreadMessages = 0;
     this.unreadMessageCount = 0;
     this.messagePanelOpen = false;

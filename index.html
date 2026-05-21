@@ -2043,7 +2043,10 @@ async initDispatchView(incidentId) {
           const isOut = unit.status === 'checkedOut';
           const statusColor = isOut ? 'var(--danger)' : isStale ? 'var(--text-tertiary)' : 'var(--success)';
           const statusText = isOut ? 'CHECKED OUT' : isStale ? 'STALE' : 'ACTIVE';
-        const emoji = unit.category === 'police' ? (unit.policeType === 'k9' ? '🐕' : unit.policeType === 'drone' ? '🚁' : unit.policeType === 'supervisor' ? '⭐' : '🚔') : unit.category === 'fire' ? '🚒' : unit.category === 'ems' ? '🚑' : '📍';
+      const _pt = unit.policeType;
+          const _ub = unit.category === 'police' ? (_pt === 'supervisor' ? '#1a5fb4' : _pt === 'drone' ? '#6b7a8f' : '#2979e8') : unit.category === 'fire' ? '#ef4444' : unit.category === 'ems' ? '#10b981' : '#6b7a8f';
+          const _ul = unit.category === 'police' ? (_pt === 'supervisor' ? 'SGT' : _pt === 'k9' ? 'K9' : _pt === 'drone' ? 'UAV' : _pt === 'other' ? 'PLN' : 'PTL') : unit.category === 'fire' ? 'FIRE' : unit.category === 'ems' ? 'EMS' : '?';
+          const emoji = `<div style="background:${_ub};color:white;font-size:10px;font-weight:700;padding:3px 6px;border-radius:3px;min-width:32px;text-align:center;letter-spacing:0.5px;">${_ul}</div>`;
           return `<div style="background:var(--bg-tertiary);border:1px solid var(--border-color);border-radius:6px;padding:10px 12px;margin-bottom:8px;cursor:pointer;" onclick="app.dispatchZoomToUnit(${unit.gps?.lat},${unit.gps?.lng})">
             <div style="display:flex;align-items:center;gap:10px;">
               <div style="font-size:24px;">${emoji}</div>

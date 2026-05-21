@@ -1596,6 +1596,12 @@ getUnitIcon(category, badge, policeType) {
     });
   },
 
+ async clearUnitSOS(badge) {
+    try {
+      await db.ref(`incidents/${this.currentIncident}/units/${badge}`).update({ sos: false, sosAt: null, sosGps: null });
+    } catch (err) { alert('Error clearing SOS: ' + err.message); }
+  },
+
   async forceCheckOut(badge) {
     if (!confirm(`Force check out unit ${badge}?`)) return;
     try {

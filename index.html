@@ -2101,9 +2101,14 @@ async initDispatchView(incidentId) {
         .slice(0, 50)
         .map(([id, msg]) => {
           const time = new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-          const isUnit = msg.type === 'unit';
-          return `<div style="background:${isUnit ? 'rgba(41,121,232,0.1)' : 'var(--bg-tertiary)'};border:1px solid ${isUnit ? 'rgba(41,121,232,0.3)' : 'var(--border-color)'};border-radius:4px;padding:8px;margin-bottom:8px;">
-            <div style="font-weight:700;color:${isUnit ? '#4fa3ff' : 'var(--accent-primary)'};font-size:10px;margin-bottom:3px;">${msg.from} ${isUnit ? '(UNIT)' : '(IC)'}</div>
+       const isUnit = msg.type === 'unit';
+          const isSosEvent = msg.type === 'sos_event';
+          const bgCol = isSosEvent ? 'rgba(239,68,68,0.1)' : isUnit ? 'rgba(41,121,232,0.1)' : 'var(--bg-tertiary)';
+          const borderCol = isSosEvent ? 'rgba(239,68,68,0.4)' : isUnit ? 'rgba(41,121,232,0.3)' : 'var(--border-color)';
+          const fromCol = isSosEvent ? '#ef4444' : isUnit ? '#4fa3ff' : 'var(--accent-primary)';
+          const typeTag = isSosEvent ? '(SOS)' : isUnit ? '(UNIT)' : '(IC)';
+          return `<div style="background:${bgCol};border:1px solid ${borderCol};border-radius:4px;padding:8px;margin-bottom:8px;">
+            <div style="font-weight:700;color:${fromCol};font-size:10px;margin-bottom:3px;">${msg.from} ${typeTag}</div>
             <div style="font-size:11px;color:var(--text-primary);margin-bottom:3px;">${msg.text}</div>
             <div style="font-size:9px;color:var(--text-tertiary);">${time}</div>
           </div>`;

@@ -1605,7 +1605,7 @@ getUnitIcon(category, badge, policeType) {
   async forceCheckOut(badge) {
     if (!confirm(`Force check out unit ${badge}?`)) return;
     try {
-      await db.ref(`incidents/${this.currentIncident}/units/${badge}`).update({ status: 'checkedOut', checkedOutAt: new Date().toISOString(), forcedCheckOut: true });
+    await db.ref(`incidents/${this.currentIncident}/units/${badge}`).update({ status: 'checkedOut', checkedOutAt: new Date().toISOString(), forcedCheckOut: true, sos: false, sosAt: null, sosGps: null });
       alert(`Unit ${badge} has been checked out`);
       this.displayUnitInfo(null);
     } catch (err) { alert('Error: ' + err.message); }

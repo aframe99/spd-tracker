@@ -1607,7 +1607,16 @@ getUnitIcon(category, badge, policeType) {
 
  async clearUnitSOS(badge) {
     try {
+      const unitSnap = await db.ref(`incidents/${this.currentIncident}/units/${badge}`).once('value');
+      const unit = unitSnap.val() || {};
       await db.ref(`incidents/${this.currentIncident}/units/${badge}`).update({ sos: false, sosAt: null, sosGps: null });
+      await db.ref(`incidents/${this.currentIncident}/messages`).push({
+        from: 'IC Dashboard',
+        text: `✅ SOS ACKNOWLEDGED — ${unit.firstName || ''} ${unit.lastName || ''} [${badge}] cleared by IC`,
+        timestamp: new Date().toISOString(),
+        type: 'sos_event',
+        badge
+      });
     } catch (err) { alert('Error clearing SOS: ' + err.message); }
   },
 

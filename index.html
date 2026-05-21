@@ -1487,21 +1487,23 @@ async loadIncidents() {
   },
 
 getUnitIcon(category, badge, policeType) {
-    let emoji;
+    let label, bg;
     if (category === 'police') {
-      if (policeType === 'supervisor') emoji = '⭐';
-      else if (policeType === 'k9') emoji = '🐕';
-      else if (policeType === 'drone') emoji = '🚁';
-      else emoji = '🚔';
+      bg = '#2979e8';
+      if (policeType === 'supervisor') { label = 'SGT'; bg = '#1a5fb4'; }
+      else if (policeType === 'k9') label = 'K9';
+      else if (policeType === 'drone') { label = 'UAV'; bg = '#6b7a8f'; }
+      else if (policeType === 'other') label = 'PLN';
+      else label = 'PTL';
     } else if (category === 'fire') {
-      emoji = '🚒';
+      label = 'FIRE'; bg = '#ef4444';
     } else if (category === 'ems') {
-      emoji = '🚑';
+      label = 'EMS'; bg = '#10b981';
     } else {
-      emoji = '📍';
+      label = '?'; bg = '#6b7a8f';
     }
-    const html = `<div style="text-align:center;background:transparent;"><div style="font-size:32px;">${emoji}</div><div style="font-size:11px;font-weight:700;color:white;background:rgba(0,0,0,0.6);padding:2px 4px;border-radius:3px;margin-top:2px;">${badge}</div></div>`;
-    return L.divIcon({ html, className: 'custom-marker', iconSize: [48, 56], iconAnchor: [24, 56], popupAnchor: [0, -56] });
+    const html = `<div style="text-align:center;background:transparent;"><div style="background:${bg};color:white;font-size:11px;font-weight:700;padding:4px 7px;border-radius:4px;min-width:36px;text-align:center;letter-spacing:0.5px;">${label}</div><div style="font-size:11px;font-weight:700;color:white;background:rgba(0,0,0,0.65);padding:2px 4px;border-radius:3px;margin-top:2px;">${badge}</div></div>`;
+    return L.divIcon({ html, className: 'custom-marker', iconSize: [48, 44], iconAnchor: [24, 44], popupAnchor: [0, -44] });
   },
 
   switchPanel(panel) {

@@ -1373,9 +1373,9 @@ async loadIncidents() {
       alertBanner.style.display = 'none';
     }
 
-    const now = Date.now();
+   const now = Date.now();
     const fiveMinutes = 5 * 60 * 1000;
-    list.innerHTML = Object.entries(units).map(([id, unit]) => {
+    const renderUnit = ([id, unit]) => {
       const lastUpdate = new Date(unit.lastUpdatedAt);
       const isStale = (now - lastUpdate.getTime()) > fiveMinutes;
       const timeString = lastUpdate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -1384,12 +1384,23 @@ async loadIncidents() {
       if (unit.status === 'checkedOut') { statusText = '● CHECKED OUT'; statusStyle = 'color:var(--danger);'; }
       else if (isStale) { statusText = '● STALE'; statusStyle = 'color:var(--text-tertiary);'; }
       else { statusText = '● ACTIVE'; statusStyle = 'color:var(--success);'; }
-   let geofenceWarning = '';
+      let geofenceWarning = '';
       if (unit.status === 'checkedIn' && unit.outsideGeofence === true) {
         geofenceWarning = '<div style="font-size:9px;color:var(--warning);font-weight:700;margin-top:2px;">⚠️ OUTSIDE GEOFENCE</div>';
       }
       return `<div class="unit-item" onclick="app.selectUnit('${id}')"><div class="unit-badge">${unit.badge}</div><div style="font-size:10px;color:var(--text-primary);font-weight:600;margin-bottom:4px;">${unit.firstName} ${unit.lastName}</div><div style="font-size:9px;${statusStyle}">${statusText}</div>${geofenceWarning}<div class="unit-time">${dateString} ${timeString}</div></div>`;
-    }).join('');
+    };
+    const groups = { police: [], fire: [], ems: [], other: [] };
+    Object.entries(units).forEach(entry => {
+      const cat = entry[1].category;
+      if (groups[cat]) groups[cat].push(entry); else groups.other.push(entry);
+    });
+    const groupLabel = (label, count) => count > 0 ? `<div style="font-size:9px;font-weight:700;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:1px;padding:8px 4px 4px;">${label} (${count})</div>` : '';
+    list.innerHTML =
+      groupLabel('Police', groups.police.length) + groups.police.map(renderUnit).join('') +
+      groupLabel('Fire', groups.fire.length) + groups.fire.map(renderUnit).join('') +
+      groupLabel('EMS', groups.ems.length) + groups.ems.map(renderUnit).join('') +
+      groups.other.map(renderUnit).join('');
   },
 
   selectUnit(unitId) {

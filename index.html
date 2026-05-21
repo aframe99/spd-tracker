@@ -1598,11 +1598,10 @@ getUnitIcon(category, badge, policeType) {
       updates[`incidents/${this.currentIncident}/status`] = 'closed';
       updates[`incidents/${this.currentIncident}/closedAt`] = new Date().toISOString();
 
-      // Clean up listeners before closing
+     await db.ref().update(updates);
+      // Clean up IC listeners after write completes
       db.ref(`incidents/${this.currentIncident}/units`).off();
       db.ref(`incidents/${this.currentIncident}/messages`).off();
-
-      await db.ref().update(updates);
       this.currentIncident = null;
 
       // Clear all panel fields

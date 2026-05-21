@@ -1316,9 +1316,13 @@ async loadIncidents() {
       this.updateMapMarkers(units);
       const unitCount = Object.keys(units).length;
       const checkedInCount = Object.values(units).filter(u => u.status === 'checkedIn').length;
-      if (unitCount !== this._lastUnitCount || checkedInCount !== this._lastCheckedInCount) {
+      const sosState = Object.values(units).filter(u => u.sos === true).map(u => u.badge).sort().join(',');
+      const geofenceState = Object.values(units).filter(u => u.outsideGeofence === true).map(u => u.badge).sort().join(',');
+      if (unitCount !== this._lastUnitCount || checkedInCount !== this._lastCheckedInCount || sosState !== this._lastSosState || geofenceState !== this._lastGeofenceState) {
         this._lastUnitCount = unitCount;
         this._lastCheckedInCount = checkedInCount;
+        this._lastSosState = sosState;
+        this._lastGeofenceState = geofenceState;
         this.renderUnitsList(units);
       }
       this.updateRecipientDropdown(units);

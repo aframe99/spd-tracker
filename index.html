@@ -1896,7 +1896,7 @@ async initDispatchView(incidentId) {
           icon: L.divIcon({ html: '<div style="background:#4fa3ff;color:white;padding:4px 8px;border-radius:4px;font-weight:700;font-size:11px;">STAGE</div>', className: 'custom-marker', iconSize: [55, 28] })
         }).addTo(this.dispatchMap).bindPopup(`<strong>Staging Area</strong><br>${incident.stagingArea}`);
       }
-      const markers = incident.markers || {};
+     const markers = incident.markers || {};
       Object.entries(markers).forEach(([id, marker]) => {
         if (marker.type === 'barricade') {
           const b = L.marker([marker.lat, marker.lng], {
@@ -1905,9 +1905,20 @@ async initDispatchView(incidentId) {
           this.dispatchBarricadeMarkers.push(b);
         }
       });
+      // Draw geofence circle if one exists
+      if (incident.geofence) {
+        const { lat, lng, radius } = incident.geofence;
+        this.dispatchGeofenceCircle = L.circle([lat, lng], {
+          radius,
+          color: '#f59e0b',
+          fillColor: '#f59e0b',
+          fillOpacity: 0.08,
+          weight: 2,
+          dashArray: '6, 4'
+        }).addTo(this.dispatchMap);
+      }
     }, 100);
   },
-
   setDispatchLayer(layerName) {
     if (!this.dispatchMap) return;
     if (this.dispatchTileLayer) this.dispatchMap.removeLayer(this.dispatchTileLayer);

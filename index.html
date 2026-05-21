@@ -1584,14 +1584,16 @@ getUnitIcon(category, badge, policeType) {
         .slice(0, 50)
         .map(([id, msg]) => {
           const time = new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-          const isUnit = msg.type === 'unit';
+         const isUnit = msg.type === 'unit';
           const isDirect = msg.type === 'direct';
+          const isSosEvent = msg.type === 'sos_event';
           let bgColor = 'var(--bg-tertiary)';
           let borderColor = 'var(--border-color)';
           let fromColor = 'var(--accent-primary)';
           let tag = '(IC)';
           if (isUnit) { bgColor = 'rgba(41,121,232,0.1)'; borderColor = 'rgba(41,121,232,0.3)'; fromColor = '#4fa3ff'; tag = '(UNIT)'; }
           if (isDirect) { bgColor = 'rgba(168,85,247,0.1)'; borderColor = 'rgba(168,85,247,0.3)'; fromColor = '#a855f7'; tag = '(IC → DIRECT)'; }
+          if (isSosEvent) { bgColor = 'rgba(239,68,68,0.1)'; borderColor = 'rgba(239,68,68,0.4)'; fromColor = '#ef4444'; tag = '(SOS)'; }
          const toLine = isDirect && msg.toName ? `<div style="font-size:9px;color:#a855f7;margin-bottom:3px;">→ ${msg.toName}</div>` : '';
           const readReceipt = isDirect
             ? (msg.readBy && msg.to && msg.readBy[msg.to]

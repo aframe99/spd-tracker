@@ -1424,12 +1424,21 @@ async loadIncidents() {
     });
   },
 
-  getUnitIcon(category, badge) {
-    let html;
-    if (category === 'police') html = `<div style="text-align:center;background:transparent;"><div style="font-size:32px;">🚔</div><div style="font-size:11px;font-weight:700;color:white;background:rgba(0,0,0,0.6);padding:2px 4px;border-radius:3px;margin-top:2px;">${badge}</div></div>`;
-    else if (category === 'fire') html = `<div style="text-align:center;background:transparent;"><div style="font-size:32px;">🚒</div><div style="font-size:11px;font-weight:700;color:white;background:rgba(0,0,0,0.6);padding:2px 4px;border-radius:3px;margin-top:2px;">${badge}</div></div>`;
-    else if (category === 'ems') html = `<div style="text-align:center;background:transparent;"><div style="font-size:32px;">🚑</div><div style="font-size:11px;font-weight:700;color:white;background:rgba(0,0,0,0.6);padding:2px 4px;border-radius:3px;margin-top:2px;">${badge}</div></div>`;
-    else html = '<div style="font-size:20px;">📍</div>';
+getUnitIcon(category, badge, policeType) {
+    let emoji;
+    if (category === 'police') {
+      if (policeType === 'supervisor') emoji = '⭐';
+      else if (policeType === 'k9') emoji = '🐕';
+      else if (policeType === 'drone') emoji = '🚁';
+      else emoji = '🚔';
+    } else if (category === 'fire') {
+      emoji = '🚒';
+    } else if (category === 'ems') {
+      emoji = '🚑';
+    } else {
+      emoji = '📍';
+    }
+    const html = `<div style="text-align:center;background:transparent;"><div style="font-size:32px;">${emoji}</div><div style="font-size:11px;font-weight:700;color:white;background:rgba(0,0,0,0.6);padding:2px 4px;border-radius:3px;margin-top:2px;">${badge}</div></div>`;
     return L.divIcon({ html, className: 'custom-marker', iconSize: [48, 56], iconAnchor: [24, 56], popupAnchor: [0, -56] });
   },
 

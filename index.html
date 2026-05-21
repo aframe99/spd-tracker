@@ -2026,7 +2026,7 @@ async initDispatchView(incidentId) {
           const isOut = unit.status === 'checkedOut';
           const statusColor = isOut ? 'var(--danger)' : isStale ? 'var(--text-tertiary)' : 'var(--success)';
           const statusText = isOut ? 'CHECKED OUT' : isStale ? 'STALE' : 'ACTIVE';
-          const emoji = unit.category === 'police' ? (unit.policeType === 'k9' ? '🐕' : unit.policeType === 'drone' ? '🚁' : unit.policeType === 'supervisor' ? '⭐' : '🚔') : unit.category === 'fire' ? '🔥' : unit.category === 'ems' ? '🚑' : '📍';
+        const emoji = unit.category === 'police' ? (unit.policeType === 'k9' ? '🐕' : unit.policeType === 'drone' ? '🚁' : unit.policeType === 'supervisor' ? '⭐' : '🚔') : unit.category === 'fire' ? '🚒' : unit.category === 'ems' ? '🚑' : '📍';
           return `<div style="background:var(--bg-tertiary);border:1px solid var(--border-color);border-radius:6px;padding:10px 12px;margin-bottom:8px;cursor:pointer;" onclick="app.dispatchZoomToUnit(${unit.gps?.lat},${unit.gps?.lng})">
             <div style="display:flex;align-items:center;gap:10px;">
               <div style="font-size:24px;">${emoji}</div>

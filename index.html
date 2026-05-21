@@ -2049,7 +2049,7 @@ async initDispatchView(incidentId) {
           const emoji = `<div style="background:${_ub};color:white;font-size:10px;font-weight:700;padding:3px 6px;border-radius:3px;min-width:32px;text-align:center;letter-spacing:0.5px;">${_ul}</div>`;
           return `<div style="background:var(--bg-tertiary);border:1px solid var(--border-color);border-radius:6px;padding:10px 12px;margin-bottom:8px;cursor:pointer;" onclick="app.dispatchZoomToUnit(${unit.gps?.lat},${unit.gps?.lng})">
             <div style="display:flex;align-items:center;gap:10px;">
-              <div style="font-size:24px;">${emoji}</div>
+              <div style="margin-right:2px;">${emoji}</div>
               <div style="flex:1;">
                 <div style="font-size:12px;font-weight:700;color:var(--text-primary);">${unit.firstName} ${unit.lastName}</div>
                 <div style="font-size:10px;color:var(--text-tertiary);">Badge ${unit.badge} · ${unit.homeDept}</div>

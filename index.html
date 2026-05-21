@@ -1417,7 +1417,7 @@ async loadIncidents() {
     this.unitMarkers = {};
     Object.entries(units).forEach(([id, unit]) => {
       if (unit.gps && unit.status === 'checkedIn') {
-        const marker = L.marker([unit.gps.lat, unit.gps.lng], { icon: this.getUnitIcon(unit.category, unit.badge) }).addTo(this.map);
+      const marker = L.marker([unit.gps.lat, unit.gps.lng], { icon: this.getUnitIcon(unit.category, unit.badge, unit.policeType) }).addTo(this.map);
         marker.on('click', () => { this.map.setView([unit.gps.lat, unit.gps.lng], 16); });
         this.unitMarkers[id] = marker;
       }

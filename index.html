@@ -1344,6 +1344,40 @@ async loadIncidents() {
     if (Object.keys(units).length === 0) { list.innerHTML = '<div style="text-align:center;color:var(--text-tertiary);padding:15px;font-size:11px;">No units</div>'; return; }
 
  // Check for any new geofence breaches and show alert banner
+   // SOS banner — always above geofence banner, never auto-dismisses
+    if (!this._sosAlertedBadges) this._sosAlertedBadges = new Set();
+    const sosUnits = Object.values(units).filter(u => u.status === 'checkedIn' && u.sos === true);
+    let sosBanner = document.getElementById('sos-alert-banner');
+    if (!sosBanner) {
+      sosBanner = document.createElement('div');
+      sosBanner.id = 'sos-alert-banner';
+      sosBanner.style.cssText = 'display:none;background:rgba(239,68,68,0.2);border:2px solid #ef4444;border-radius:6px;padding:10px 14px;margin:8px 12px 0;font-size:11px;font-weight:700;color:#ef4444;text-align:center;cursor:pointer;animation:pulse 1s infinite;';
+      list.parentElement.insertBefore(sosBanner, list);
+    }
+    if (sosUnits.length > 0) {
+      sosBanner.style.display = 'block';
+      const newSos = sosUnits.filter(u => !this._sosAlertedBadges.has(u.badge));
+      if (newSos.length > 0) {
+        newSos.forEach(u => this._sosAlertedBadges.add(u.badge));
+        try {
+          const ctx = new AudioContext();
+          [0, 0.3].forEach(t => {
+            const o = ctx.createOscillator(); const g = ctx.createGain();
+            o.connect(g); g.connect(ctx.destination);
+            o.frequency.value = 1100;
+            g.gain.setValueAtTime(0.4, ctx.currentTime + t);
+            g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + t + 0.2);
+            o.start(ctx.currentTime + t); o.stop(ctx.currentTime + t + 0.2);
+          });
+        } catch(e) {}
+      }
+      sosBanner.innerHTML = sosUnits.map(u => `🚨 SOS: ${u.lastName} [${u.badge}] · ${u.sosAt ? new Date(u.sosAt).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}) : ''} <button onclick="event.stopPropagation();app.clearUnitSOS('${u.badge}')" style="margin-left:8px;background:rgba(239,68,68,0.3);border:1px solid #ef4444;color:#ef4444;border-radius:4px;padding:2px 8px;font-size:10px;font-weight:700;cursor:pointer;">CLEAR</button>`).join('<br>');
+      sosBanner.onclick = () => { if (sosUnits[0]?.sosGps) this.map.setView([sosUnits[0].sosGps.lat, sosUnits[0].sosGps.lng], 17); };
+    } else {
+      sosBanner.style.display = 'none';
+      this._sosAlertedBadges = new Set();
+    }
+
     if (!this._geofenceAlertedBadges) this._geofenceAlertedBadges = new Set();
     const breachedUnits = Object.values(units).filter(u => u.status === 'checkedIn' && u.outsideGeofence === true);
     const breachedBadges = new Set(breachedUnits.map(u => u.badge));

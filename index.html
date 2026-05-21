@@ -941,7 +941,7 @@ currentUser: null, userRole: null, currentIncident: null, selectedUnit: null,
           if (incident.commandPostGps) L.marker([incident.commandPostGps.lat, incident.commandPostGps.lng], { icon: L.divIcon({ html: '<div style="background:#2979e8;color:white;padding:4px 8px;border-radius:4px;font-weight:700;font-size:11px;">CP</div>', className: 'custom-marker', iconSize: [35, 30] }) }).addTo(this.officerMap);
           if (incident.stagingAreaGps) L.marker([incident.stagingAreaGps.lat, incident.stagingAreaGps.lng], { icon: L.divIcon({ html: '<div style="background:#4fa3ff;color:white;padding:4px 8px;border-radius:4px;font-weight:700;font-size:11px;">STAGE</div>', className: 'custom-marker', iconSize: [50, 30] }) }).addTo(this.officerMap);
           const units = incident.units || {};
-          Object.entries(units).forEach(([id, unit]) => { if (unit.gps && unit.status === 'checkedIn') L.marker([unit.gps.lat, unit.gps.lng], { icon: this.getUnitIcon(unit.category, unit.badge) }).addTo(this.officerMap); });
+         Object.entries(units).forEach(([id, unit]) => { if (unit.gps && unit.status === 'checkedIn') L.marker([unit.gps.lat, unit.gps.lng], { icon: this.getUnitIcon(unit.category, unit.badge, unit.policeType) }).addTo(this.officerMap); });
           const markers = incident.markers || {};
           Object.entries(markers).forEach(([id, marker]) => { if (marker.type === 'barricade') L.marker([marker.lat, marker.lng], { icon: L.divIcon({ html: '<div style="font-size:20px;">🚧</div>', className: 'custom-marker', iconSize: [32, 32] }) }).addTo(this.officerMap); });
         });

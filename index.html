@@ -1632,10 +1632,13 @@ getUnitIcon(category, badge, policeType) {
       const units = snap.val() || {};
       const updates = {};
      Object.keys(units).forEach(unitId => {
-        updates[`incidents/${this.currentIncident}/units/${unitId}/status`] = 'checkedOut';
+       updates[`incidents/${this.currentIncident}/units/${unitId}/status`] = 'checkedOut';
         updates[`incidents/${this.currentIncident}/units/${unitId}/forcedCheckOut`] = true;
         updates[`incidents/${this.currentIncident}/units/${unitId}/checkedOutAt`] = new Date().toISOString();
         updates[`incidents/${this.currentIncident}/units/${unitId}/pushToken`] = null;
+        updates[`incidents/${this.currentIncident}/units/${unitId}/sos`] = false;
+        updates[`incidents/${this.currentIncident}/units/${unitId}/sosAt`] = null;
+        updates[`incidents/${this.currentIncident}/units/${unitId}/sosGps`] = null;
       });
       updates[`incidents/${this.currentIncident}/status`] = 'closed';
       updates[`incidents/${this.currentIncident}/closedAt`] = new Date().toISOString();

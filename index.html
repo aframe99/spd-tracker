@@ -578,6 +578,7 @@ const firebaseConfig = {
 
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
+firebase.auth().signInAnonymously().catch(err => console.error('Firebase auth error:', err));
 
 const app = {
 currentUser: null, userRole: null, currentIncident: null, selectedUnit: null,

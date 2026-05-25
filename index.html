@@ -622,10 +622,8 @@ currentUser: null, userRole: null, currentIncident: null, selectedUnit: null,
     const username = document.getElementById('login-username').value.trim();
     const password = document.getElementById('login-password').value.trim();
     if (!username || !password) { alert('Please enter username and password'); return; }
-    if (!authReady) {
-      await new Promise(resolve => {
-        const unsub = firebase.auth().onAuthStateChanged(user => { if (user) { unsub(); resolve(); } });
-      });
+    if (!firebase.auth().currentUser) {
+      try { await firebase.auth().signInAnonymously(); } catch(e) { console.warn('Auth unavailable, proceeding anyway:', e.message); }
     }
     try {
       if (role === 'admin' && username === 'admin' && password === '1234') {

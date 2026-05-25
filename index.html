@@ -1010,7 +1010,7 @@ currentUser: null, userRole: null, currentIncident: null, selectedUnit: null,
     modal.classList.toggle('open');
   },
 
-  async createIncident() {
+ async createIncident(status = 'active') {
     const name = document.getElementById('incident-name-input').value.trim();
     const type = document.getElementById('incident-type').value;
     const street = document.getElementById('incident-street').value.trim();
@@ -1031,18 +1031,21 @@ currentUser: null, userRole: null, currentIncident: null, selectedUnit: null,
       const incidentId = `${year}-${nextNumber}`;
       let gps = { lat: 42.2880, lng: -71.7190 };
       try { const geocoded = await this.geocodeAddress(location); if (geocoded) gps = geocoded; } catch (e) {}
-      await db.ref(`incidents/${incidentId}`).set({ id: incidentId, name, type, location, pin, status: 'active', createdAt: new Date().toISOString(), createdBy: this.currentUser, gps, oic: '', commandPost: '', commandPostGps: null, stagingArea: '', stagingAreaGps: null, radioChannel: '', notes: '', units: {}, markers: {}, pathTracking: {} });
+      await db.ref(`incidents/${incidentId}`).set({ id: incidentId, name, type, location, pin, status, createdAt: new Date().toISOString(), createdBy: this.currentUser, gps, oic: '', commandPost: '', commandPostGps: null, stagingArea: '', stagingAreaGps: null, radioChannel: '', notes: '', units: {}, markers: {}, pathTracking: {} });
       ['incident-name-input','incident-street'].forEach(id => { document.getElementById(id).value = ''; });
       document.getElementById('incident-town').value = 'Shrewsbury';
       document.getElementById('incident-state').value = 'MA';
       document.getElementById('incident-pin-input').value = '';
-    document.getElementById('create-incident-modal').classList.remove('open');
-    await this.loadIncidents();
-      document.getElementById('incident-selector').value = incidentId;
-      this.switchIncident();
+      document.getElementById('create-incident-modal').classList.remove('open');
+      await this.loadIncidents();
+      if (status === 'active') {
+        document.getElementById('incident-selector').value = incidentId;
+        this.switchIncident();
+      } else {
+        document.getElementById('draft-incident-selector').value = incidentId;
+      }
     } catch (err) { alert('Error: ' + err.message); }
   },
-
 async loadIncidents() {
     try {
       const snap = await db.ref('incidents').once('value');

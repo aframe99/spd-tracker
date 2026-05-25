@@ -1067,6 +1067,42 @@ async loadIncidents() {
     } catch (err) { console.error('Error loading incidents:', err); }
   },
 
+async manageDraft() {
+    const incidentId = document.getElementById('draft-incident-selector').value;
+    if (!incidentId) return;
+    const snap = await db.ref(`incidents/${incidentId}`).once('value');
+    const incident = snap.val();
+    if (!incident) return;
+    this.currentIncident = incidentId;
+    this.loadIncidentDetails(incidentId);
+    // Show activate button in info panel
+    const existingBtn = document.getElementById('draft-activate-btn');
+    if (existingBtn) existingBtn.remove();
+    const infoPanel = document.getElementById('info-panel-content') || document.querySelector('.panel-tab-content');
+    if (infoPanel) {
+      const btn = document.createElement('button');
+      btn.id = 'draft-activate-btn';
+      btn.className = 'btn primary';
+      btn.style.cssText = 'width:100%;padding:12px;margin-top:12px;background:#10b981;border-color:#10b981;';
+      btn.textContent = '▶ ACTIVATE INCIDENT';
+      btn.onclick = () => this.activateDraft(incidentId);
+      infoPanel.prepend(btn);
+    }
+  },
+
+  async activateDraft(incidentId) {
+    if (!confirm('Activate this incident? Officers will be able to see and check in to it.')) return;
+    try {
+      await db.ref(`incidents/${incidentId}`).update({ status: 'active' });
+      const existingBtn = document.getElementById('draft-activate-btn');
+      if (existingBtn) existingBtn.remove();
+      document.getElementById('draft-incident-selector').value = '';
+      await this.loadIncidents();
+      document.getElementById('incident-selector').value = incidentId;
+      this.switchIncident();
+    } catch (err) { alert('Error activating incident: ' + err.message); }
+  },
+
  async switchIncident() {
     const incidentId = document.getElementById('incident-selector').value;
 

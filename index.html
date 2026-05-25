@@ -929,7 +929,7 @@ currentUser: null, userRole: null, currentIncident: null, selectedUnit: null,
     setTimeout(() => {
       if (this.officerMap) this.officerMap.remove();
       this.officerMap = L.map('officer-map').setView([42.2880, -71.7190], 13);
-    L.tileLayer(`https://api.mapbox.com/styles/v1/mapbox/streets-v12/tiles/{z}/{x}/{y}?access_token=pk.eyJ1IjoiYWZyYW1lOTkiLCJhIjoiY21wOTZpbTJmMHA4MDJycHZiNTUzcjJuMyJ9.uhS0MWQx2KbeHAa5nFvViA`, { tileSize: 512, zoomOffset: -1, maxZoom: 22, attribution: '© Mapbox © OSM' }).addTo(this.officerMap);
+    L.tileLayer(`https://api.mapbox.com/styles/v1/mapbox/streets-v12/tiles/{z}/{x}/{y}?access_token=pk.eyJ1IjoiYWZyYW1lOTkiLCJhIjoiY21wbGloazFuMjIwdDJxcHFrcDBnb2FtMCJ9.aHmjE79R_GJDICDstcGa7g`, { tileSize: 512, zoomOffset: -1, maxZoom: 22, attribution: '© Mapbox © OSM' }).addTo(this.officerMap);
       if (this.currentIncident) {
         db.ref(`incidents/${this.currentIncident}`).once('value', (snap) => {
           const incident = snap.val();

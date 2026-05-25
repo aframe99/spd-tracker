@@ -1053,13 +1053,16 @@ async loadIncidents() {
       const incidents = snap.val() || {};
       const selector = document.getElementById('incident-selector');
       const closedSelector = document.getElementById('closed-incident-selector');
+      const draftSelector = document.getElementById('draft-incident-selector');
       selector.innerHTML = '<option value="">-- SELECT INCIDENT --</option>';
       closedSelector.innerHTML = '<option value="">-- VIEW CLOSED --</option>';
+      draftSelector.innerHTML = '<option value="">-- DRAFTS --</option>';
       Object.entries(incidents).sort((a, b) => (parseInt(a[0].split('-')[1])||0) - (parseInt(b[0].split('-')[1])||0)).forEach(([id, inc]) => {
         const opt = document.createElement('option');
         opt.value = id; opt.textContent = `${inc.id} - ${inc.name}`;
         if (inc.status === 'active') selector.appendChild(opt);
         else if (inc.status === 'closed') { const c = opt.cloneNode(true); closedSelector.appendChild(c); }
+        else if (inc.status === 'draft') { const d = opt.cloneNode(true); draftSelector.appendChild(d); }
       });
     } catch (err) { console.error('Error loading incidents:', err); }
   },

@@ -626,10 +626,7 @@ currentUser: null, userRole: null, currentIncident: null, selectedUnit: null,
       try { await firebase.auth().signInAnonymously(); } catch(e) { console.warn('Auth unavailable, proceeding anyway:', e.message); }
     }
     try {
-      if (role === 'admin' && username === 'admin' && password === '1234') {
-        this.currentUser = username; this.userRole = 'admin';
-        this.showScreen('admin-dashboard'); this.loadICAccounts(); return;
-      }
+     
       const path = role === 'admin' ? 'admins' : 'ics';
       const snap = await db.ref(`${path}/${username}`).once('value');
       const account = snap.val();

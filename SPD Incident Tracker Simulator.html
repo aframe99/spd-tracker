@@ -1,0 +1,1068 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SPD Incident Simulator</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@400;600;700&display=swap');
+
+  :root {
+    --bg: #0a0c10;
+    --panel: #0f1318;
+    --border: #1e2630;
+    --accent: #00e5ff;
+    --police: #3b82f6;
+    --fire: #f97316;
+    --ems: #22c55e;
+    --warn: #facc15;
+    --danger: #ef4444;
+    --text: #c9d4e0;
+    --dim: #4a5568;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 14px;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* scan line effect */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0,229,255,0.015) 2px,
+      rgba(0,229,255,0.015) 4px
+    );
+    pointer-events: none;
+    z-index: 1000;
+  }
+
+  header {
+    background: var(--panel);
+    border-bottom: 1px solid var(--border);
+    padding: 14px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .header-left {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .badge-icon {
+    width: 36px;
+    height: 36px;
+    background: linear-gradient(135deg, var(--accent), #0077aa);
+    clip-path: polygon(50% 0%, 93% 25%, 93% 75%, 50% 100%, 7% 75%, 7% 25%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    flex-shrink: 0;
+  }
+
+  .header-title {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 16px;
+    color: var(--accent);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  .header-sub {
+    font-size: 11px;
+    color: var(--dim);
+    letter-spacing: 0.08em;
+    margin-top: 1px;
+  }
+
+  .sim-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 12px;
+  }
+
+  .status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--dim);
+    transition: background 0.3s;
+  }
+
+  .status-dot.running {
+    background: var(--ems);
+    box-shadow: 0 0 8px var(--ems);
+    animation: pulse 1.5s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
+  .main {
+    display: grid;
+    grid-template-columns: 340px 1fr;
+    gap: 0;
+    height: calc(100vh - 65px);
+  }
+
+  .sidebar {
+    background: var(--panel);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .config-section {
+    padding: 16px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .section-label {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+    color: var(--accent);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .section-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  .field-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+  }
+
+  .field-label {
+    font-size: 12px;
+    color: var(--text);
+    font-weight: 600;
+  }
+
+  .field-label small {
+    display: block;
+    font-size: 10px;
+    color: var(--dim);
+    font-weight: 400;
+    margin-top: 1px;
+  }
+
+  input[type="text"], input[type="number"] {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 12px;
+    padding: 6px 10px;
+    border-radius: 4px;
+    width: 140px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  input[type="text"]:focus, input[type="number"]:focus {
+    border-color: var(--accent);
+  }
+
+  .unit-counts {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+
+  .count-box {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 10px 8px;
+    text-align: center;
+  }
+
+  .count-box .count-num {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 22px;
+    font-weight: 700;
+    margin-bottom: 2px;
+  }
+
+  .count-box .count-lbl {
+    font-size: 9px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--dim);
+  }
+
+  .count-box.police .count-num { color: var(--police); }
+  .count-box.fire .count-num { color: var(--fire); }
+  .count-box.ems .count-num { color: var(--ems); }
+
+  input[type="number"].count-input {
+    width: 60px;
+    font-size: 16px;
+    text-align: center;
+    padding: 6px;
+  }
+
+  .slider-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+
+  input[type="range"] {
+    flex: 1;
+    accent-color: var(--accent);
+    height: 4px;
+  }
+
+  .slider-val {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 12px;
+    color: var(--accent);
+    min-width: 40px;
+    text-align: right;
+  }
+
+  .btn-row {
+    display: flex;
+    gap: 8px;
+    margin-top: 4px;
+  }
+
+  .btn {
+    flex: 1;
+    padding: 10px;
+    border: 1px solid;
+    border-radius: 4px;
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    cursor: pointer;
+    transition: all 0.15s;
+    text-transform: uppercase;
+  }
+
+  .btn-start {
+    background: rgba(0, 229, 255, 0.1);
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  .btn-start:hover {
+    background: rgba(0, 229, 255, 0.2);
+    box-shadow: 0 0 12px rgba(0,229,255,0.2);
+  }
+
+  .btn-stop {
+    background: rgba(239, 68, 68, 0.1);
+    border-color: var(--danger);
+    color: var(--danger);
+  }
+
+  .btn-stop:hover {
+    background: rgba(239, 68, 68, 0.2);
+  }
+
+  .btn-clear {
+    background: rgba(74, 85, 104, 0.2);
+    border-color: var(--dim);
+    color: var(--dim);
+  }
+
+  .btn-clear:hover {
+    border-color: var(--text);
+    color: var(--text);
+  }
+
+  .btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+  }
+
+  .unit-scroll {
+    flex: 1;
+    overflow-y: auto;
+    padding: 12px;
+  }
+
+  .unit-scroll::-webkit-scrollbar { width: 4px; }
+  .unit-scroll::-webkit-scrollbar-track { background: transparent; }
+  .unit-scroll::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  .unit-card {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--dim);
+    border-radius: 4px;
+    padding: 8px 10px;
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    animation: slideIn 0.2s ease-out;
+    transition: border-color 0.3s;
+  }
+
+  .unit-card.police { border-left-color: var(--police); }
+  .unit-card.fire { border-left-color: var(--fire); }
+  .unit-card.ems { border-left-color: var(--ems); }
+  .unit-card.flash { background: rgba(0,229,255,0.05); }
+
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateX(-8px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+
+  .unit-emoji { font-size: 20px; width: 24px; text-align: center; }
+
+  .unit-info { flex: 1; min-width: 0; }
+
+  .unit-name {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .unit-meta {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+    color: var(--dim);
+    margin-top: 2px;
+  }
+
+  .unit-gps {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 9px;
+    color: var(--accent);
+    text-align: right;
+    line-height: 1.4;
+    opacity: 0.7;
+  }
+
+  .content {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background: var(--bg);
+  }
+
+  .log-header {
+    padding: 12px 18px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+    color: var(--dim);
+    letter-spacing: 0.1em;
+    flex-shrink: 0;
+  }
+
+  .stats-bar {
+    display: flex;
+    gap: 24px;
+  }
+
+  .stat-item { text-align: center; }
+  .stat-num {
+    font-size: 20px;
+    font-weight: 700;
+    font-family: 'Share Tech Mono', monospace;
+    color: var(--accent);
+  }
+  .stat-lbl {
+    font-size: 9px;
+    color: var(--dim);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-top: 1px;
+  }
+
+  .log-container {
+    flex: 1;
+    overflow-y: auto;
+    padding: 12px 18px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+    line-height: 1.6;
+  }
+
+  .log-container::-webkit-scrollbar { width: 4px; }
+  .log-container::-webkit-scrollbar-track { background: transparent; }
+  .log-container::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  .log-entry {
+    display: flex;
+    gap: 12px;
+    padding: 3px 0;
+    border-bottom: 1px solid rgba(30,38,48,0.4);
+    animation: fadeLog 0.3s ease-out;
+  }
+
+  @keyframes fadeLog {
+    from { opacity: 0; background: rgba(0,229,255,0.05); }
+    to { opacity: 1; background: transparent; }
+  }
+
+  .log-time { color: var(--dim); min-width: 70px; }
+  .log-badge { min-width: 50px; }
+  .log-badge.police { color: var(--police); }
+  .log-badge.fire { color: var(--fire); }
+  .log-badge.ems { color: var(--ems); }
+  .log-msg { color: var(--text); flex: 1; }
+  .log-msg.checkin { color: var(--ems); }
+  .log-msg.move { color: var(--text); }
+  .log-msg.status { color: var(--warn); }
+
+  .warning-bar {
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    border-radius: 4px;
+    padding: 10px 14px;
+    margin: 12px;
+    font-size: 12px;
+    color: var(--danger);
+    display: none;
+  }
+
+  .warning-bar.show { display: block; }
+
+  .toggle-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+  }
+
+  .toggle {
+    position: relative;
+    width: 38px;
+    height: 20px;
+  }
+
+  .toggle input { opacity: 0; width: 0; height: 0; }
+
+  .toggle-slider {
+    position: absolute;
+    inset: 0;
+    background: var(--border);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: 0.2s;
+  }
+
+  .toggle-slider::before {
+    content: '';
+    position: absolute;
+    width: 14px;
+    height: 14px;
+    left: 3px;
+    bottom: 3px;
+    background: var(--dim);
+    border-radius: 50%;
+    transition: 0.2s;
+  }
+
+  .toggle input:checked + .toggle-slider { background: rgba(0,229,255,0.2); }
+  .toggle input:checked + .toggle-slider::before {
+    transform: translateX(18px);
+    background: var(--accent);
+  }
+
+  .incident-id-display {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 8px 12px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+    color: var(--accent);
+    word-break: break-all;
+    min-height: 34px;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <div class="badge-icon">🛡</div>
+    <div>
+      <div class="header-title">SPD Incident Simulator</div>
+      <div class="header-sub">Shrewsbury Police Department · Firebase Live Test</div>
+    </div>
+  </div>
+  <div class="sim-status">
+    <div class="status-dot" id="statusDot"></div>
+    <span id="statusText" style="color:var(--dim)">IDLE</span>
+  </div>
+</header>
+
+<div class="main">
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="config-section">
+      <div class="section-label">Incident Target</div>
+      <div class="field-row">
+        <div class="field-label">Incident ID<small>From IC dashboard URL</small></div>
+      </div>
+      <input type="text" id="incidentId" placeholder="e.g. -OHx2abc123..." style="width:100%;margin-bottom:8px;">
+      <div class="incident-id-display" id="incidentDisplay">Paste incident ID above</div>
+    </div>
+
+    <div class="config-section">
+      <div class="section-label">Unit Roster</div>
+      <div class="unit-counts">
+        <div class="count-box police">
+          <div class="count-num"><input type="number" class="count-input" id="cntPolice" value="8" min="0" max="15" style="color:var(--police);border-color:rgba(59,130,246,0.3);background:transparent;"></div>
+          <div class="count-lbl">🚔 Police</div>
+        </div>
+        <div class="count-box fire">
+          <div class="count-num"><input type="number" class="count-input" id="cntFire" value="4" min="0" max="10" style="color:var(--fire);border-color:rgba(249,115,22,0.3);background:transparent;"></div>
+          <div class="count-lbl">🔥 Fire</div>
+        </div>
+        <div class="count-box ems">
+          <div class="count-num"><input type="number" class="count-input" id="cntEMS" value="4" min="0" max="10" style="color:var(--ems);border-color:rgba(34,197,94,0.3);background:transparent;"></div>
+          <div class="count-lbl">🚑 EMS</div>
+        </div>
+      </div>
+      <div style="font-size:10px;color:var(--dim);text-align:center;">Total: <span id="totalCount" style="color:var(--accent);">16</span> units</div>
+    </div>
+
+    <div class="config-section">
+      <div class="section-label">Simulation Settings</div>
+      <div class="field-label" style="margin-bottom:6px;">GPS Update Interval</div>
+      <div class="slider-row">
+        <input type="range" id="updateInterval" min="2" max="30" value="5">
+        <span class="slider-val" id="intervalVal">5s</span>
+      </div>
+      <div class="field-label" style="margin-bottom:6px;">Movement Radius</div>
+      <div class="slider-row">
+        <input type="range" id="moveRadius" min="50" max="1000" value="200" step="50">
+        <span class="slider-val" id="radiusVal">200m</span>
+      </div>
+      <div class="toggle-row" style="margin-top:8px;">
+        <div class="field-label">Simulate Status Changes<small>Units go RESPONDING/ON-SCENE</small></div>
+        <label class="toggle">
+          <input type="checkbox" id="simStatuses" checked>
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+      <div class="toggle-row">
+        <div class="field-label">Scatter Around Shrewsbury<small>vs. tight cluster at center</small></div>
+        <label class="toggle">
+          <input type="checkbox" id="scatter" checked>
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+    </div>
+
+    <div class="config-section">
+      <div class="btn-row">
+        <button class="btn btn-start" id="btnStart" onclick="startSim()">▶ START SIM</button>
+        <button class="btn btn-stop" id="btnStop" onclick="stopSim()" disabled>■ STOP</button>
+      </div>
+      <div class="btn-row" style="margin-top:8px;">
+        <button class="btn btn-clear" onclick="clearUnits()">🗑 CLEAR FIREBASE</button>
+      </div>
+    </div>
+
+    <div class="section-label" style="padding:12px 12px 4px;">Live Units (<span id="unitCount">0</span>)</div>
+    <div class="unit-scroll" id="unitList">
+      <div style="text-align:center;color:var(--dim);padding:30px;font-size:11px;">No units loaded yet</div>
+    </div>
+  </div>
+
+  <!-- MAIN CONTENT -->
+  <div class="content">
+    <div class="warning-bar" id="warnBar"></div>
+
+    <div class="log-header">
+      <span>SIMULATION LOG</span>
+      <div class="stats-bar">
+        <div class="stat-item">
+          <div class="stat-num" id="statTick">0</div>
+          <div class="stat-lbl">Ticks</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-num" id="statUpdates">0</div>
+          <div class="stat-lbl">GPS Updates</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-num" id="statActive">0</div>
+          <div class="stat-lbl">Active Units</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-num" id="statElapsed">0:00</div>
+          <div class="stat-lbl">Elapsed</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="log-container" id="logContainer">
+      <div style="color:var(--dim);padding:20px 0;">Waiting for simulation to start...</div>
+    </div>
+  </div>
+</div>
+
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
+<script>
+// Firebase config
+const firebaseConfig = {
+  apiKey: "AIzaSyC-56rq9DEw2U0XJ3708ruje0604zAphXE",
+  authDomain: "shrewsbury-pd-track.firebaseapp.com",
+  databaseURL: "https://shrewsbury-pd-track-default-rtdb.firebaseio.com",
+  projectId: "shrewsbury-pd-track",
+  storageBucket: "shrewsbury-pd-track.firebasestorage.app",
+  messagingSenderId: "1833033387326",
+  appId: "1:1833033387326:web:09b8659a1004aa42bbc6ef"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+// Shrewsbury center
+const CENTER = { lat: 42.2880, lng: -71.7190 };
+
+// Sim state
+let simInterval = null;
+let simStartTime = null;
+let simUnits = [];
+let tickCount = 0;
+let updateCount = 0;
+let elapsedTimer = null;
+
+// Police subtypes
+const POLICE_TYPES = ['patrol','patrol','patrol','patrol','supervisor','patrol','k9','drone'];
+const POLICE_NAMES = [
+  ['Smith','James'],['Johnson','Maria'],['Williams','Robert'],['Brown','Sarah'],
+  ['Davis','Michael'],['Miller','Jennifer'],['Wilson','Christopher'],['Moore','Patricia'],
+  ['Taylor','Daniel'],['Anderson','Lisa'],['Thomas','Kevin'],['Jackson','Nancy'],
+  ['White','Mark'],['Harris','Dorothy'],['Martin','Steven'],['Garcia','Betty']
+];
+const FIRE_NAMES = [
+  ['Lopez','Carlos'],['Gonzalez','Sandra'],['Rodriguez','Richard'],['Perez','Angela'],
+  ['Walker','Henry'],['Hall','Diane'],['Allen','George'],['Young','Ruth']
+];
+const EMS_NAMES = [
+  ['King','Sharon'],['Wright','Paul'],['Scott','Helen'],['Torres','Brian'],
+  ['Nguyen','Anna'],['Hill','Timothy'],['Flores','Katherine'],['Green','Lawrence']
+];
+const DEPTS = ['Shrewsbury PD','Shrewsbury PD','Shrewsbury PD','Worcester PD','State Police'];
+const FIRE_DEPTS = ['Shrewsbury FD','Shrewsbury FD','Worcester FD'];
+const EMS_DEPTS = ['Shrewsbury EMS','AMR Worcester','Life-Star EMS'];
+const RADIOS = ['Ch 1','Ch 2','Ch 3','Ch 4','TAC-1','TAC-2'];
+const STATUSES = ['checkedIn','responding','on-scene','checkedIn','checkedIn'];
+
+// Generate unit roster
+function generateRoster() {
+  const police = parseInt(document.getElementById('cntPolice').value) || 0;
+  const fire   = parseInt(document.getElementById('cntFire').value)   || 0;
+  const ems    = parseInt(document.getElementById('cntEMS').value)    || 0;
+  const scatter = document.getElementById('scatter').checked;
+  const moveRadius = parseInt(document.getElementById('moveRadius').value);
+
+  const units = [];
+  let badgeBase = 101;
+
+  // Police
+  for (let i = 0; i < police; i++) {
+    const [last, first] = POLICE_NAMES[i % POLICE_NAMES.length];
+    const badge = String(badgeBase++);
+    const ptype = POLICE_TYPES[i % POLICE_TYPES.length];
+    const pos = scatter ? randomPosition(CENTER, 800) : randomPosition(CENTER, 200);
+    units.push({
+      badge,
+      firstName: first,
+      lastName: last,
+      category: 'police',
+      policeType: ptype,
+      homeDept: DEPTS[i % DEPTS.length],
+      radioChannel: RADIOS[i % RADIOS.length],
+      cellNumber: `508-${String(Math.floor(Math.random()*900)+100)}-${String(Math.floor(Math.random()*9000)+1000)}`,
+      vehicleInfo: `Unit ${badge}`,
+      notes: '',
+      status: 'checkedIn',
+      pos: { ...pos },
+      waypoint: { ...pos },
+      waypointTimer: 0,
+    });
+  }
+
+  // Fire
+  for (let i = 0; i < fire; i++) {
+    const [last, first] = FIRE_NAMES[i % FIRE_NAMES.length];
+    const badge = String(badgeBase++);
+    const pos = scatter ? randomPosition(CENTER, 700) : randomPosition(CENTER, 300);
+    units.push({
+      badge,
+      firstName: first,
+      lastName: last,
+      category: 'fire',
+      homeDept: FIRE_DEPTS[i % FIRE_DEPTS.length],
+      radioChannel: RADIOS[i % RADIOS.length],
+      cellNumber: `508-${String(Math.floor(Math.random()*900)+100)}-${String(Math.floor(Math.random()*9000)+1000)}`,
+      vehicleInfo: `Engine ${i+1}`,
+      notes: '',
+      status: 'checkedIn',
+      pos: { ...pos },
+      waypoint: { ...pos },
+      waypointTimer: 0,
+    });
+  }
+
+  // EMS
+  for (let i = 0; i < ems; i++) {
+    const [last, first] = EMS_NAMES[i % EMS_NAMES.length];
+    const badge = String(badgeBase++);
+    const pos = scatter ? randomPosition(CENTER, 700) : randomPosition(CENTER, 300);
+    units.push({
+      badge,
+      firstName: first,
+      lastName: last,
+      category: 'ems',
+      homeDept: EMS_DEPTS[i % EMS_DEPTS.length],
+      radioChannel: RADIOS[i % RADIOS.length],
+      cellNumber: `508-${String(Math.floor(Math.random()*900)+100)}-${String(Math.floor(Math.random()*9000)+1000)}`,
+      vehicleInfo: `Medic ${i+1}`,
+      notes: '',
+      status: 'checkedIn',
+      pos: { ...pos },
+      waypoint: { ...pos },
+      waypointTimer: 0,
+    });
+  }
+
+  return units;
+}
+
+// Random position within radius meters
+function randomPosition(center, radiusMeters) {
+  const r = radiusMeters / 111320;
+  const angle = Math.random() * 2 * Math.PI;
+  const dist = Math.sqrt(Math.random()) * r;
+  const lat = center.lat + dist * Math.cos(angle);
+  const cosLat = Math.cos(center.lat * Math.PI / 180);
+  const lng = center.lng + (cosLat !== 0 ? dist * Math.sin(angle) / cosLat : 0);
+  // Safety check — return center if anything goes wrong
+  if (isNaN(lat) || isNaN(lng)) return { lat: center.lat, lng: center.lng };
+  return { lat, lng };
+}
+
+// Move unit toward its waypoint, pick new one when close
+function moveUnit(unit) {
+  const moveRadius = parseInt(document.getElementById('moveRadius').value);
+  const speed = 0.00003; // degrees per tick
+
+  const dlat = unit.waypoint.lat - unit.pos.lat;
+  const dlng = unit.waypoint.lng - unit.pos.lng;
+  const dist = Math.sqrt(dlat*dlat + dlng*dlng);
+
+  if (dist < 0.0001 || unit.waypointTimer <= 0) {
+    unit.waypoint = randomPosition(CENTER, moveRadius);
+    unit.waypointTimer = Math.floor(Math.random() * 20) + 5;
+  }
+
+  // Step toward waypoint — guard against dist=0 divide
+  if (dist > 0.000001) {
+    const step = Math.min(speed, dist);
+    const ratio = step / dist;
+    unit.pos.lat += dlat * ratio + (Math.random() - 0.5) * 0.00003;
+    unit.pos.lng += dlng * ratio + (Math.random() - 0.5) * 0.00003;
+  } else {
+    // Already at waypoint, just jitter slightly
+    unit.pos.lat += (Math.random() - 0.5) * 0.00003;
+    unit.pos.lng += (Math.random() - 0.5) * 0.00003;
+  }
+  unit.waypointTimer--;
+
+  // Final NaN guard — reset to center if corrupted
+  if (isNaN(unit.pos.lat) || isNaN(unit.pos.lng)) {
+    unit.pos = { lat: CENTER.lat, lng: CENTER.lng };
+    unit.waypoint = randomPosition(CENTER, moveRadius);
+  }
+}
+
+// Check-in all units to Firebase
+async function checkInUnits(units, incidentId) {
+  const now = new Date().toISOString();
+  const writes = units.map(unit => {
+    const data = {
+      badge: unit.badge,
+      firstName: unit.firstName,
+      lastName: unit.lastName,
+      category: unit.category,
+      homeDept: unit.homeDept,
+      radioChannel: unit.radioChannel,
+      cellNumber: unit.cellNumber,
+      vehicleInfo: unit.vehicleInfo,
+      notes: unit.notes,
+      status: 'checkedIn',
+      checkedInAt: now,
+      lastUpdatedAt: now,
+      gps: { lat: unit.pos.lat, lng: unit.pos.lng, timestamp: now }
+    };
+    if (unit.policeType) data.policeType = unit.policeType;
+    return db.ref(`incidents/${incidentId}/units/${unit.badge}`).set(data);
+  });
+  await Promise.all(writes);
+}
+
+// Tick: update GPS for all units (fire-and-forget writes, never blocks)
+function tick(units, incidentId) {
+  const now = new Date().toISOString();
+  const simStatuses = document.getElementById('simStatuses').checked;
+
+  for (const unit of units) {
+    moveUnit(unit);
+
+    const update = {
+      gps: { lat: unit.pos.lat, lng: unit.pos.lng, timestamp: now },
+      lastUpdatedAt: now
+    };
+
+    // Occasionally change status
+    if (simStatuses && Math.random() < 0.03) {
+      const newStatus = STATUSES[Math.floor(Math.random() * STATUSES.length)];
+      unit.status = newStatus;
+      update.status = newStatus;
+      addLog(unit.badge, unit.category, `Status → ${newStatus.toUpperCase()}`, 'status');
+    }
+
+    // Fire and forget — don't await, never blocks the interval
+    db.ref(`incidents/${incidentId}/units/${unit.badge}`).update(update)
+      .catch(e => addLog('SIM', 'ems', `Write error ${unit.badge}: ${e.message}`, 'status'));
+
+    // Write breadcrumb to pathTracking (mirrors what the iOS app does)
+    db.ref(`incidents/${incidentId}/pathTracking/${unit.badge}`).push({
+      lat: unit.pos.lat,
+      lng: unit.pos.lng,
+      timestamp: now
+    }).catch(() => {});
+
+    updateCount++;
+  }
+
+  tickCount++;
+
+  document.getElementById('statTick').textContent = tickCount;
+  document.getElementById('statUpdates').textContent = updateCount;
+  document.getElementById('statActive').textContent = units.length;
+
+  renderUnitList(units);
+
+  // Periodic log entry (not every tick to keep log readable)
+  if (tickCount % 3 === 0) {
+    const u = units[Math.floor(Math.random() * units.length)];
+    addLog(u.badge, u.category, `GPS ${u.pos.lat.toFixed(5)}, ${u.pos.lng.toFixed(5)}`, 'move');
+  }
+}
+
+function renderUnitList(units) {
+  const html = units.map(u => {
+    const emoji = u.category === 'police'
+      ? (u.policeType === 'k9' ? '🐕' : u.policeType === 'drone' ? '🚁' : u.policeType === 'supervisor' ? '⭐' : '🚔')
+      : u.category === 'fire' ? '🔥' : '🚑';
+    return `
+      <div class="unit-card ${u.category}">
+        <div class="unit-emoji">${emoji}</div>
+        <div class="unit-info">
+          <div class="unit-name">${u.lastName}, ${u.firstName}</div>
+          <div class="unit-meta">Badge ${u.badge} · ${u.homeDept}</div>
+        </div>
+        <div class="unit-gps">
+          ${u.pos.lat.toFixed(4)}<br>${u.pos.lng.toFixed(4)}
+        </div>
+      </div>
+    `;
+  }).join('');
+  document.getElementById('unitList').innerHTML = html;
+  document.getElementById('unitCount').textContent = units.length;
+}
+
+let logLines = 0;
+function addLog(badge, category, msg, type = 'move') {
+  const container = document.getElementById('logContainer');
+  const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  const entry = document.createElement('div');
+  entry.className = 'log-entry';
+  entry.innerHTML = `<span class="log-time">${time}</span><span class="log-badge ${category}">[${badge}]</span><span class="log-msg ${type}">${msg}</span>`;
+  container.insertBefore(entry, container.firstChild);
+  logLines++;
+  if (logLines > 200) container.lastElementChild?.remove();
+}
+
+function showWarn(msg) {
+  const bar = document.getElementById('warnBar');
+  bar.textContent = '⚠ ' + msg;
+  bar.classList.add('show');
+}
+
+function hideWarn() {
+  document.getElementById('warnBar').classList.remove('show');
+}
+
+async function startSim() {
+  const incidentId = document.getElementById('incidentId').value.trim();
+  if (!incidentId) { showWarn('Enter an Incident ID from the IC dashboard first.'); return; }
+
+  // Verify incident exists — check the node itself, fallback to info.name or the ID
+  try {
+    const snap = await db.ref(`incidents/${incidentId}`).once('value');
+    if (!snap.exists()) { showWarn('Incident not found. Check the ID and try again.'); return; }
+    const data = snap.val();
+    const displayName = data?.info?.name || data?.name || incidentId;
+    document.getElementById('incidentDisplay').textContent = displayName;
+  } catch (e) {
+    showWarn('Firebase error: ' + e.message);
+    return;
+  }
+
+  hideWarn();
+  simUnits = generateRoster();
+
+  // Set up UI immediately — don't wait for Firebase
+  simStartTime = Date.now();
+  tickCount = 0;
+  updateCount = 0;
+  document.getElementById('statusDot').classList.add('running');
+  document.getElementById('statusText').textContent = 'RUNNING';
+  document.getElementById('statusText').style.color = 'var(--ems)';
+  document.getElementById('btnStart').disabled = true;
+  document.getElementById('btnStop').disabled = false;
+  document.getElementById('incidentId').disabled = true;
+
+  // Check in all units — fire and forget, don't await
+  addLog('SIM', 'ems', `Checking in ${simUnits.length} units...`, 'checkin');
+  checkInUnits(simUnits, incidentId).then(() => {
+    simUnits.forEach(u => addLog(u.badge, u.category, `${u.firstName} ${u.lastName} checked in`, 'checkin'));
+    addLog('SIM', 'ems', 'All units checked in. GPS ticking...', 'checkin');
+  }).catch(e => addLog('SIM', 'ems', 'Check-in error: ' + e.message, 'status'));
+
+  // Start GPS ticking immediately (independent of check-in)
+  const interval = parseInt(document.getElementById('updateInterval').value) * 1000;
+
+  simInterval = setInterval(() => {
+    if (simUnits.length === 0) return;
+    try { tick(simUnits, incidentId); }
+    catch(e) { addLog('SIM','ems','Tick error: '+e.message,'status'); }
+  }, interval);
+
+  elapsedTimer = setInterval(() => {
+    const elapsed = Math.floor((Date.now() - simStartTime) / 1000);
+    const m = Math.floor(elapsed / 60);
+    const s = String(elapsed % 60).padStart(2, '0');
+    document.getElementById('statElapsed').textContent = `${m}:${s}`;
+  }, 1000);
+
+  // First tick after 2 seconds (give check-in a head start)
+  setTimeout(() => {
+    if (simUnits.length > 0) {
+      try { tick(simUnits, incidentId); }
+      catch(e) { addLog('SIM','ems','First tick error: '+e.message,'status'); }
+    }
+  }, 2000);
+}
+
+function stopSim() {
+  clearInterval(simInterval);
+  clearInterval(elapsedTimer);
+  simInterval = null;
+  addLog('SIM', 'ems', 'Simulation stopped. Units remain checked in Firebase.', 'status');
+
+  document.getElementById('statusDot').classList.remove('running');
+  document.getElementById('statusText').textContent = 'STOPPED';
+  document.getElementById('statusText').style.color = 'var(--warn)';
+  document.getElementById('btnStart').disabled = false;
+  document.getElementById('btnStop').disabled = true;
+  document.getElementById('incidentId').disabled = false;
+}
+
+async function clearUnits() {
+  const incidentId = document.getElementById('incidentId').value.trim();
+  if (!incidentId) { showWarn('Enter an Incident ID first.'); return; }
+  if (!confirm('This will remove ALL units from this incident in Firebase. Continue?')) return;
+
+  if (simInterval) stopSim();
+
+  try {
+    await db.ref(`incidents/${incidentId}/units`).remove();
+    addLog('SIM', 'ems', 'All units cleared from Firebase.', 'status');
+    document.getElementById('unitList').innerHTML = '<div style="text-align:center;color:var(--dim);padding:30px;font-size:11px;">Units cleared</div>';
+    document.getElementById('unitCount').textContent = '0';
+    simUnits = [];
+  } catch (e) {
+    showWarn('Error clearing units: ' + e.message);
+  }
+}
+
+// Live update count display
+['cntPolice','cntFire','cntEMS'].forEach(id => {
+  document.getElementById(id).addEventListener('input', updateTotal);
+});
+function updateTotal() {
+  const p = parseInt(document.getElementById('cntPolice').value) || 0;
+  const f = parseInt(document.getElementById('cntFire').value) || 0;
+  const e = parseInt(document.getElementById('cntEMS').value) || 0;
+  document.getElementById('totalCount').textContent = p + f + e;
+}
+
+// Slider labels
+document.getElementById('updateInterval').addEventListener('input', function() {
+  document.getElementById('intervalVal').textContent = this.value + 's';
+});
+document.getElementById('moveRadius').addEventListener('input', function() {
+  document.getElementById('radiusVal').textContent = this.value + 'm';
+});
+
+// Incident ID display
+document.getElementById('incidentId').addEventListener('input', function() {
+  document.getElementById('incidentDisplay').textContent = this.value.trim() || 'Paste incident ID above';
+  hideWarn();
+});
+</script>
+</body>
+</html>

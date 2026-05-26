@@ -664,6 +664,7 @@ const firebaseConfig = {
 
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
+firebase.auth().signInAnonymously().catch(err => console.error('Auth error:', err));
 
 // Shrewsbury center
 const CENTER = { lat: 42.2880, lng: -71.7190 };

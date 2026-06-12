@@ -1897,6 +1897,10 @@ async exportIncident(includeMap) {
           <tr><th>From</th><th>Message</th><th>Time</th></tr>
           ${Object.entries(messages).sort((a,b)=>new Date(a[1].timestamp)-new Date(b[1].timestamp)).map(([id,msg])=>`<tr><td>${msg.from}</td><td>${msg.text}</td><td>${new Date(msg.timestamp).toLocaleString()}</td></tr>`).join('')||'<tr><td colspan="3">No messages</td></tr>'}
         </table></div>
+        ${Object.keys(incident.documents||{}).length > 0 ? `<div class="info-box"><h2>Documents &amp; Links</h2><table>
+          <tr><th>Name</th><th>Type</th><th>URL</th><th>Added By</th><th>Added At</th></tr>
+          ${Object.entries(incident.documents).sort((a,b)=>new Date(a[1].addedAt)-new Date(b[1].addedAt)).map(([id,doc])=>`<tr><td>${doc.name}</td><td>${doc.type==='livefeed'?'Live Feed':'Document'}</td><td>${doc.url}</td><td>${doc.addedBy}</td><td>${new Date(doc.addedAt).toLocaleString()}</td></tr>`).join('')}
+        </table></div>` : ''}
         ${colorKeyHtml}
         ${mapPagesHtml}
       </body></html>`;

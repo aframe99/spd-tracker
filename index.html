@@ -1906,6 +1906,19 @@ async exportIncident(includeMap) {
       html2pdf().set({ margin: 10, filename: `incident_${incident.id}_report.pdf`, image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2, useCORS: true }, jsPDF: { orientation: 'portrait', unit: 'mm', format: 'a4' } }).from(element).save();
     } catch (err) { alert('Error: ' + err.message); }
   },
+  _docType: 'document',
+  setDocType(type) {
+    this._docType = type;
+    const docBtn = document.getElementById('doc-type-doc');
+    const feedBtn = document.getElementById('doc-type-feed');
+    if (type === 'livefeed') {
+      feedBtn.style.background = '#f59e0b'; feedBtn.style.borderColor = '#f59e0b'; feedBtn.style.color = 'white';
+      docBtn.style.background = 'var(--bg-tertiary)'; docBtn.style.borderColor = 'var(--border-color)'; docBtn.style.color = 'var(--text-secondary)';
+    } else {
+      docBtn.style.background = 'var(--accent-primary)'; docBtn.style.borderColor = 'var(--accent-primary)'; docBtn.style.color = 'white';
+      feedBtn.style.background = 'var(--bg-tertiary)'; feedBtn.style.borderColor = 'var(--border-color)'; feedBtn.style.color = 'var(--text-secondary)';
+    }
+  },
   async addDocument() {
     if (!this.currentIncident) { alert('Select an incident first'); return; }
     const name = document.getElementById('doc-name-input').value.trim();
@@ -1915,14 +1928,13 @@ async exportIncident(includeMap) {
     try {
       const docId = 'doc_' + Date.now();
       await db.ref(`incidents/${this.currentIncident}/documents/${docId}`).set({
-        id: docId, name, url, addedAt: new Date().toISOString(), addedBy: this.currentUser
+        id: docId, name, url, type: this._docType, addedAt: new Date().toISOString(), addedBy: this.currentUser
       });
       document.getElementById('doc-name-input').value = '';
       document.getElementById('doc-url-input').value = '';
       this.loadDocuments();
     } catch (err) { alert('Error: ' + err.message); }
   },
-
   loadDocuments() {
     if (!this.currentIncident) return;
     db.ref(`incidents/${this.currentIncident}/documents`).on('value', (snap) => {

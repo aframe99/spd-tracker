@@ -413,14 +413,18 @@
       </div>
       <div id="docs-panel" class="panel-tab-content" style="display:none;">
         <div class="panel-section">
-          <div class="panel-label">Add Document Link</div>
-          <input type="text" id="doc-name-input" class="panel-input" placeholder="Document name" style="margin-bottom:8px;">
+          <div class="panel-label">Add Document or Link</div>
+          <input type="text" id="doc-name-input" class="panel-input" placeholder="Name (e.g. Operational Plan, Drone Feed)" style="margin-bottom:8px;">
           <input type="text" id="doc-url-input" class="panel-input" placeholder="https://..." style="margin-bottom:8px;">
-          <button class="btn primary" onclick="app.addDocument()" style="width:100%;padding:10px;font-size:10px;">ADD DOCUMENT</button>
+          <div style="display:flex;gap:8px;margin-bottom:8px;">
+            <button id="doc-type-doc" onclick="app.setDocType('document')" style="flex:1;padding:8px;font-size:10px;font-weight:700;text-transform:uppercase;border-radius:4px;border:1px solid var(--accent-primary);background:var(--accent-primary);color:white;cursor:pointer;">📄 Document</button>
+            <button id="doc-type-feed" onclick="app.setDocType('livefeed')" style="flex:1;padding:8px;font-size:10px;font-weight:700;text-transform:uppercase;border-radius:4px;border:1px solid var(--border-color);background:var(--bg-tertiary);color:var(--text-secondary);cursor:pointer;">📺 Live Feed</button>
+          </div>
+          <button class="btn primary" onclick="app.addDocument()" style="width:100%;padding:10px;font-size:10px;">ADD</button>
         </div>
         <div class="panel-section">
-          <div class="panel-label">Incident Documents</div>
-          <div id="docs-list" style="font-size:11px;color:var(--text-tertiary);">No documents added</div>
+          <div class="panel-label">Documents &amp; Links</div>
+          <div id="docs-list" style="font-size:11px;color:var(--text-tertiary);">No documents or links added</div>
         </div>
       </div>
       <div id="tracking-panel" class="panel-tab-content" style="display:none;">

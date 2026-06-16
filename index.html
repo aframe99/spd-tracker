@@ -815,7 +815,7 @@ currentUser: null, userRole: null, currentIncident: null, selectedUnit: null,
             <div style="display:flex;flex-direction:column;gap:6px;">
               <button class="btn" onclick="app.resetOfficerPassword('${username}')" style="padding:6px 10px;font-size:10px;">RESET PW</button>
               <button class="btn ${officer.status==='active'?'danger':''}" onclick="app.toggleOfficerStatus('${username}','${officer.status}')" style="padding:6px 10px;font-size:10px;">${officer.status==='active'?'DEACTIVATE':'ACTIVATE'}</button>
-              <button class="btn danger" onclick="app.deleteOfficerAccount('${username}')" style="padding:6px 10px;font-size:10px;">DELETE</button>
+              <button class="btn danger" onclick="app.deleteOfficerAccount('${uid}')" style="padding:6px 10px;font-size:10px;">DELETE</button>
             </div>
           </div>
           <div style="color:var(--text-secondary);font-size:10px;">Created: ${new Date(officer.createdAt).toLocaleDateString()}</div>
@@ -844,10 +844,15 @@ currentUser: null, userRole: null, currentIncident: null, selectedUnit: null,
     catch (err) { alert('Error: ' + err.message); }
   },
 
-  async deleteOfficerAccount(username) {
-    if (!confirm(`Permanently delete account for ${username}?`)) return;
-    try { await db.ref(`officers/${username}`).remove(); this.loadOfficerAccounts(); }
-    catch (err) { alert('Error: ' + err.message); }
+  async deleteOfficerAccount(uid) {
+    const snap = await db.ref(`officers/${uid}`).once('value');
+    const officer = snap.val();
+    const displayName = officer ? `${officer.firstName} ${officer.lastName}` : uid;
+    if (!confirm(`Permanently delete ${displayName} from FieldCommand?\n\nNote: You must also delete their account in Firebase Console → Authentication → Users to allow re-invitation with the same email.`)) return;
+    try {
+      await db.ref(`officers/${uid}`).remove();
+      this.loadOfficerAccounts();
+    } catch (err) { alert('Error: ' + err.message); }
   },
 
   async initOfficerCheckin(incidentId) {
@@ -1469,9 +1474,7 @@ async manageDraft() {
     }
     if (sosUnits.length > 0) {
       sosBanner.style.display = 'block';
-      const newSos = sosUnits.filter(u => !this._sosAlertedBadges.has(u.badge));
-      if (newSos.length > 0) {
-        newSos.forEach(u => this._sosAlertedBadges.add(u.badge));
+      const playSosTone = () => {
         try {
           const ctx = new AudioContext();
           [0, 0.3].forEach(t => {
@@ -1483,13 +1486,29 @@ async manageDraft() {
             o.start(ctx.currentTime + t); o.stop(ctx.currentTime + t + 0.2);
           });
         } catch(e) {}
+      };
+      const newSos = sosUnits.filter(u => !this._sosAlertedBadges.has(u.badge));
+      if (newSos.length > 0) {
+        newSos.forEach(u => this._sosAlertedBadges.add(u.badge));
+        playSosTone();
+      }
+      if (!this._sosRepeatInterval) {
+        this._sosRepeatInterval = setInterval(() => {
+          const stillActive = Object.values(this._lastUnits || {}).some(u => u.status === 'checkedIn' && u.sos === true);
+          if (stillActive) playSosTone();
+        }, 5000);
       }
       sosBanner.innerHTML = sosUnits.map(u => `🚨 SOS: ${u.lastName} [${u.badge}] · ${u.sosAt ? new Date(u.sosAt).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}) : ''} <button onclick="event.stopPropagation();app.clearUnitSOS('${u.badge}')" style="margin-left:8px;background:rgba(239,68,68,0.3);border:1px solid #ef4444;color:#ef4444;border-radius:4px;padding:2px 8px;font-size:10px;font-weight:700;cursor:pointer;">CLEAR</button>`).join('<br>');
       sosBanner.onclick = () => { if (sosUnits[0]?.sosGps) this.map.setView([sosUnits[0].sosGps.lat, sosUnits[0].sosGps.lng], 17); };
     } else {
       sosBanner.style.display = 'none';
       this._sosAlertedBadges = new Set();
+      if (this._sosRepeatInterval) {
+        clearInterval(this._sosRepeatInterval);
+        this._sosRepeatInterval = null;
+      }
     }
+    this._lastUnits = units;
 
     if (!this._geofenceAlertedBadges) this._geofenceAlertedBadges = new Set();
     const breachedUnits = Object.values(units).filter(u => u.status === 'checkedIn' && u.outsideGeofence === true);

@@ -234,7 +234,7 @@
       <button class="btn primary" onclick="app.showAdminPanel('list')" style="width:100%;font-size:11px;padding:10px;margin-bottom:8px;">IC ACCOUNTS</button>
       <button class="btn primary" onclick="app.showAdminPanel('create')" style="width:100%;font-size:11px;padding:10px;margin-bottom:8px;">+ NEW IC</button>
       <button class="btn primary" onclick="app.showAdminPanel('officers')" style="width:100%;font-size:11px;padding:10px;margin-bottom:8px;">OFFICER ACCOUNTS</button>
-      <button class="btn primary" onclick="app.showAdminPanel('create-officer')" style="width:100%;font-size:11px;padding:10px;margin-bottom:8px;">+ NEW OFFICER</button>
+      <button class="btn primary" onclick="app.showAdminPanel('invite-officer')" style="width:100%;font-size:11px;padding:10px;margin-bottom:8px;">+ INVITE OFFICER</button>
     </div>
   </div>
   <div style="flex:1;display:flex;flex-direction:column;background:var(--bg-primary);overflow:auto;">
@@ -246,18 +246,18 @@
       <div style="font-size:16px;font-weight:700;margin-bottom:20px;color:var(--text-primary);">Officer Accounts</div>
       <div id="officer-accounts-list" style="display:flex;flex-direction:column;gap:12px;"><div style="text-align:center;color:var(--text-tertiary);padding:40px 20px;">Loading...</div></div>
     </div>
-    <div id="admin-create-officer-panel" style="display:none;flex:1;overflow-y:auto;padding:20px;">
-      <div style="font-size:16px;font-weight:700;margin-bottom:20px;color:var(--text-primary);">Create New Officer Account</div>
+    <div id="admin-invite-officer-panel" style="display:none;flex:1;overflow-y:auto;padding:20px;">
+      <div style="font-size:16px;font-weight:700;margin-bottom:20px;color:var(--text-primary);">Invite New Officer</div>
       <div style="max-width:400px;">
-        <div class="form-group"><label class="form-label">Username</label><input type="text" id="officer-new-username" class="form-input" placeholder="Username"></div>
+        <div style="background:rgba(41,121,232,0.1);border:1px solid rgba(41,121,232,0.3);border-radius:6px;padding:12px;margin-bottom:20px;font-size:12px;color:var(--text-secondary);">An invite email will be sent to the officer with a link to set their password.</div>
+        <div class="form-group"><label class="form-label">Email</label><input type="email" id="officer-new-email" class="form-input" placeholder="officer@shrewsburyma.gov"></div>
         <div class="form-group"><label class="form-label">First Name</label><input type="text" id="officer-new-firstname" class="form-input" placeholder="First name"></div>
         <div class="form-group"><label class="form-label">Last Name</label><input type="text" id="officer-new-lastname" class="form-input" placeholder="Last name"></div>
         <div class="form-group"><label class="form-label">Badge #</label><input type="text" id="officer-new-badge" class="form-input" placeholder="Badge number"></div>
         <div class="form-group"><label class="form-label">Department</label><input type="text" id="officer-new-dept" class="form-input" placeholder="Department" value="Shrewsbury Police"></div>
-        <div class="form-group"><label class="form-label">Password</label><input type="password" id="officer-new-password" class="form-input" placeholder="Password"></div>
-        <div class="form-group"><label class="form-label">Confirm Password</label><input type="password" id="officer-new-password-confirm" class="form-input" placeholder="Confirm Password"></div>
-        <div style="margin-top:20px;display:flex;gap:8px;">
-          <button class="btn primary" onclick="app.createOfficerAccount()" style="font-size:11px;padding:10px;">CREATE</button>
+        <div id="officer-invite-status" style="min-height:20px;font-size:12px;margin-bottom:8px;"></div>
+        <div style="margin-top:12px;display:flex;gap:8px;">
+          <button class="btn primary" id="officer-invite-btn" onclick="app.inviteOfficer()" style="font-size:11px;padding:10px;">SEND INVITE</button>
           <button class="btn" onclick="app.showAdminPanel('officers')" style="font-size:11px;padding:10px;">CANCEL</button>
         </div>
       </div>
@@ -701,12 +701,18 @@ currentUser: null, userRole: null, currentIncident: null, selectedUnit: null,
     document.getElementById('admin-list-panel').style.display = panel === 'list' ? 'block' : 'none';
     document.getElementById('admin-create-panel').style.display = panel === 'create' ? 'block' : 'none';
     document.getElementById('admin-officers-panel').style.display = panel === 'officers' ? 'block' : 'none';
-    document.getElementById('admin-create-officer-panel').style.display = panel === 'create-officer' ? 'block' : 'none';
+    document.getElementById('admin-invite-officer-panel').style.display = panel === 'invite-officer' ? 'block' : 'none';
     if (panel === 'list') {
       this.loadICAccounts();
       ['admin-new-username','admin-new-fullname','admin-new-password','admin-new-password-confirm'].forEach(id => { document.getElementById(id).value = ''; });
     }
     if (panel === 'officers') this.loadOfficerAccounts();
+    if (panel === 'invite-officer') {
+      ['officer-new-email','officer-new-firstname','officer-new-lastname','officer-new-badge'].forEach(id => { document.getElementById(id).value = ''; });
+      document.getElementById('officer-new-dept').value = 'Shrewsbury Police';
+      document.getElementById('officer-invite-status').textContent = '';
+      document.getElementById('officer-invite-btn').disabled = false;
+    }
   },
 
   async createICAccount() {
@@ -726,24 +732,63 @@ currentUser: null, userRole: null, currentIncident: null, selectedUnit: null,
     } catch (err) { alert('Error: ' + err.message); }
   },
 
-  async createOfficerAccount() {
-    const username = document.getElementById('officer-new-username').value.trim();
+  async inviteOfficer() {
+    const email = document.getElementById('officer-new-email').value.trim();
     const firstName = document.getElementById('officer-new-firstname').value.trim();
     const lastName = document.getElementById('officer-new-lastname').value.trim();
     const badge = document.getElementById('officer-new-badge').value.trim();
     const department = document.getElementById('officer-new-dept').value.trim();
-    const password = document.getElementById('officer-new-password').value.trim();
-    const passwordConfirm = document.getElementById('officer-new-password-confirm').value.trim();
-    if (!username || !firstName || !lastName || !badge || !department || !password) { alert('Please fill in all fields'); return; }
-    if (password !== passwordConfirm) { alert('Passwords do not match'); return; }
-    if (password.length < 4) { alert('Password must be at least 4 characters'); return; }
+    const statusEl = document.getElementById('officer-invite-status');
+    const btn = document.getElementById('officer-invite-btn');
+    if (!email || !firstName || !lastName || !badge || !department) {
+      statusEl.style.color = 'var(--danger)';
+      statusEl.textContent = 'Please fill in all fields.';
+      return;
+    }
+    btn.disabled = true;
+    statusEl.style.color = 'var(--text-secondary)';
+    statusEl.textContent = 'Creating account...';
+    const FIREBASE_API_KEY = firebaseConfig.apiKey;
     try {
-      const snap = await db.ref(`officers/${username}`).once('value');
-      if (snap.val()) { alert('Username already exists'); return; }
-      await db.ref(`officers/${username}`).set({ username, firstName, lastName, badge, department, password, status: 'active', createdAt: new Date().toISOString(), createdBy: this.currentUser });
-      alert('Officer account created successfully');
-      this.showAdminPanel('officers');
-    } catch (err) { alert('Error: ' + err.message); }
+      // Step 1: Create Firebase Auth user via REST API
+      const createRes = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=${FIREBASE_API_KEY}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password: Math.random().toString(36).slice(-12) + 'Aa1!', returnSecureToken: false })
+      });
+      const createData = await createRes.json();
+      if (createData.error) {
+        statusEl.style.color = 'var(--danger)';
+        statusEl.textContent = 'Error: ' + (createData.error.message === 'EMAIL_EXISTS' ? 'That email already has an account.' : createData.error.message);
+        btn.disabled = false;
+        return;
+      }
+      const uid = createData.localId;
+      // Step 2: Write profile to /officers/<uid>/
+      await db.ref(`officers/${uid}`).set({
+        uid, email, firstName, lastName, badge, department,
+        status: 'active', createdAt: new Date().toISOString(), createdBy: this.currentUser
+      });
+      // Step 3: Send password-reset email as invite
+      const resetRes = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:sendOobCode?key=${FIREBASE_API_KEY}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ requestType: 'PASSWORD_RESET', email })
+      });
+      const resetData = await resetRes.json();
+      if (resetData.error) {
+        statusEl.style.color = 'var(--warning)';
+        statusEl.textContent = 'Account created but invite email failed. Use Reset Password to resend.';
+      } else {
+        statusEl.style.color = 'var(--success)';
+        statusEl.textContent = `Invite sent to ${email}`;
+      }
+      setTimeout(() => { this.showAdminPanel('officers'); }, 1800);
+    } catch (err) {
+      statusEl.style.color = 'var(--danger)';
+      statusEl.textContent = 'Error: ' + err.message;
+      btn.disabled = false;
+    }
   },
 
   async deleteICAccount(username) {
@@ -778,11 +823,18 @@ currentUser: null, userRole: null, currentIncident: null, selectedUnit: null,
     } catch (err) { console.error('Error loading officer accounts:', err); }
   },
 
-  async resetOfficerPassword(username) {
-    const newPassword = prompt(`Enter new password for ${username}:`);
-    if (!newPassword || newPassword.length < 4) { alert('Password must be at least 4 characters'); return; }
-    try { await db.ref(`officers/${username}/password`).set(newPassword); alert('Password reset successfully'); }
-    catch (err) { alert('Error: ' + err.message); }
+  async resetOfficerPassword(uid, email) {
+    if (!confirm(`Send a password reset email to ${email}?`)) return;
+    try {
+      const res = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:sendOobCode?key=${firebaseConfig.apiKey}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ requestType: 'PASSWORD_RESET', email })
+      });
+      const data = await res.json();
+      if (data.error) { alert('Error: ' + data.error.message); return; }
+      alert(`Password reset email sent to ${email}`);
+    } catch (err) { alert('Error: ' + err.message); }
   },
 
   async toggleOfficerStatus(username, currentStatus) {

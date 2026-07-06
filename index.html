@@ -653,11 +653,17 @@ currentUser: null, userRole: null, currentIncident: null, selectedUnit: null,
       try {
         const cred = await firebase.auth().signInWithEmailAndPassword(username, password);
         const uid = cred.user.uid;
-        const snap = await db.ref(`users/${uid}`).once('value');
-        const account = snap.val();
+        // Check /users/ first (dedicated admin/IC accounts)...
+        let snap = await db.ref(`users/${uid}`).once('value');
+        let account = snap.val();
+        // ...then fall back to /officers/ (accounts that are also officers, like yours)
+        if (!account) {
+          snap = await db.ref(`officers/${uid}`).once('value');
+          account = snap.val();
+        }
         if (!account) { alert('User profile not found. Contact your administrator.'); return; }
         if (account.status === 'inactive') { alert('Your account has been deactivated.'); return; }
-        this.currentUser = account.fullName || username;
+        this.currentUser = account.fullName || `${account.firstName || ''} ${account.lastName || ''}`.trim() || username;
         this.currentUserUid = uid;
         const hasAdmin = account.permissions && account.permissions.admin;
         const hasIC = account.permissions && account.permissions.ic;
@@ -666,7 +672,7 @@ currentUser: null, userRole: null, currentIncident: null, selectedUnit: null,
         } else if (hasIC) {
           this.userRole = 'ic'; this.showScreen('ic-dashboard'); this.initICDashboard();
         } else {
-          alert('Your account has no assigned permissions. Contact your administrator.');
+          alert('Your account has no admin/IC permissions assigned. Contact your administrator.');
         }
         return;
       } catch (err) {

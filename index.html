@@ -228,7 +228,8 @@
   <div class="sidebar">
     <div class="sidebar-header">
       <div class="sidebar-title">ADMIN PANEL</div>
-      <button class="btn" onclick="app.logout()" style="width:100%;font-size:11px;padding:8px;">LOGOUT</button>
+      <button class="btn" onclick="app.logout()" style="width:100%;font-size:11px;padding:8px;margin-bottom:8px;">LOGOUT</button>
+      <button class="btn primary" id="switch-to-ic-btn" onclick="app.switchToICDashboard()" style="display:none;width:100%;font-size:11px;padding:8px;">SWITCH TO IC DASHBOARD</button>
     </div>
     <div class="sidebar-section">
       <button class="btn primary" onclick="app.showAdminPanel('list')" style="width:100%;font-size:11px;padding:10px;margin-bottom:8px;">IC ACCOUNTS</button>
@@ -304,7 +305,8 @@
   <div class="sidebar">
     <div class="sidebar-header">
       <div class="sidebar-title">IC COMMAND</div>
-      <button class="btn" onclick="app.logout()" style="width:100%;font-size:11px;padding:8px;">LOGOUT</button>
+      <button class="btn" onclick="app.logout()" style="width:100%;font-size:11px;padding:8px;margin-bottom:8px;">LOGOUT</button>
+      <button class="btn primary" id="switch-to-admin-btn" onclick="app.switchToAdminDashboard()" style="display:none;width:100%;font-size:11px;padding:8px;">SWITCH TO ADMIN PANEL</button>
     </div>
     <div class="sidebar-section">
       <div class="sidebar-section-title" style="color:#10b981;">Active Incident</div>
@@ -667,6 +669,7 @@ currentUser: null, userRole: null, currentIncident: null, selectedUnit: null,
         this.currentUserUid = uid;
         const hasAdmin = account.permissions && account.permissions.admin;
         const hasIC = account.permissions && account.permissions.ic;
+        this.userPermissions = { admin: !!hasAdmin, ic: !!hasIC };
         if (hasAdmin) {
           this.userRole = 'admin'; this.showScreen('admin-dashboard'); this.loadICAccounts();
         } else if (hasIC) {
@@ -674,6 +677,7 @@ currentUser: null, userRole: null, currentIncident: null, selectedUnit: null,
         } else {
           alert('Your account has no admin/IC permissions assigned. Contact your administrator.');
         }
+        this.updateDashboardSwitchButtons();
         return;
       } catch (err) {
         alert('Login failed: ' + err.message);

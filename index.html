@@ -813,9 +813,9 @@ currentUser: null, userRole: null, currentIncident: null, selectedUnit: null,
               <div style="margin-top:6px;"><span style="background:${officer.status==='active'?'rgba(16,185,129,0.2)':'rgba(239,68,68,0.2)'};color:${officer.status==='active'?'var(--success)':'var(--danger)'};padding:2px 8px;border-radius:3px;font-size:10px;font-weight:700;">${(officer.status||'active').toUpperCase()}</span></div>
             </div>
             <div style="display:flex;flex-direction:column;gap:6px;">
-              <button class="btn" onclick="app.resetOfficerPassword('${username}')" style="padding:6px 10px;font-size:10px;">RESET PW</button>
+              <button class="btn" onclick="app.resetOfficerPassword('${username}','${officer.email}')" style="padding:6px 10px;font-size:10px;">RESET PW</button>
               <button class="btn ${officer.status==='active'?'danger':''}" onclick="app.toggleOfficerStatus('${username}','${officer.status}')" style="padding:6px 10px;font-size:10px;">${officer.status==='active'?'DEACTIVATE':'ACTIVATE'}</button>
-              <button class="btn danger" onclick="app.deleteOfficerAccount('${uid}')" style="padding:6px 10px;font-size:10px;">DELETE</button>
+              <button class="btn danger" onclick="app.deleteOfficerAccount('${username}')" style="padding:6px 10px;font-size:10px;">DELETE</button>
             </div>
           </div>
           <div style="color:var(--text-secondary);font-size:10px;">Created: ${new Date(officer.createdAt).toLocaleDateString()}</div>

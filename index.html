@@ -702,6 +702,28 @@ currentUser: null, userRole: null, currentIncident: null, selectedUnit: null,
     } catch (err) { alert('Error: ' + err.message); }
   },
 
+  updateDashboardSwitchButtons() {
+    const showBoth = this.userPermissions && this.userPermissions.admin && this.userPermissions.ic;
+    const icBtn = document.getElementById('switch-to-ic-btn');
+    const adminBtn = document.getElementById('switch-to-admin-btn');
+    if (icBtn) icBtn.style.display = showBoth ? 'block' : 'none';
+    if (adminBtn) adminBtn.style.display = showBoth ? 'block' : 'none';
+  },
+
+  switchToICDashboard() {
+    this.userRole = 'ic';
+    this.showScreen('ic-dashboard');
+    this.initICDashboard();
+    this.updateDashboardSwitchButtons();
+  },
+
+  switchToAdminDashboard() {
+    this.userRole = 'admin';
+    this.showScreen('admin-dashboard');
+    this.loadICAccounts();
+    this.updateDashboardSwitchButtons();
+  },
+
   logout() {
     if (confirm('Logout?')) {
       this.currentUser = null; this.userRole = null; this.currentIncident = null;

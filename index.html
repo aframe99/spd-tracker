@@ -2087,7 +2087,7 @@ async exportIncident(includeMap) {
       const colorKeyHtml = includeMap && trackedUnits.length > 0 ? `
         <div class="info-box"><h2>Track Color Key</h2><table>
           <tr><th>Color</th><th>Officer</th><th>Badge</th></tr>
-          ${trackedUnits.map(([id, unit]) => `<tr><td><div style="width:20px;height:12px;background:${this._trackColorMap[id]};border-radius:2px;display:inline-block;"></div></td><td>${unit.firstName} ${unit.lastName}</td><td>${unit.badge}</td></tr>`).join('')}
+          ${trackedUnits.map(([id, unit]) => `<tr><td><div style="width:20px;height:12px;background:${this._trackColorMap[id]};border-radius:2px;display:inline-block;"></div></td><td>${this.escapeHtml(unit.firstName)} ${this.escapeHtml(unit.lastName)}</td><td>${this.escapeHtml(unit.badge)}</td></tr>`).join('')}
         </table></div>` : '';
 
       // Build map screenshot pages if includeMap
@@ -2099,7 +2099,7 @@ async exportIncident(includeMap) {
           const canvas = await html2canvas(mapContainer, { useCORS: true, scale: 1.5, logging: false });
           const mapImgSrc = canvas.toDataURL('image/jpeg', 0.92);
           const allTrackedLabel = trackedUnits.length > 0
-            ? trackedUnits.map(([_, u]) => `${u.firstName} ${u.lastName} (${u.badge})`).join(', ')
+            ? trackedUnits.map(([_, u]) => `${this.escapeHtml(u.firstName)} ${this.escapeHtml(u.lastName)} (${this.escapeHtml(u.badge)})`).join(', ')
             : 'All units';
           mapPagesHtml = `<div style="page-break-before:always;padding:20px;">
             <h2 style="color:#1d4ed8;font-size:14px;margin-bottom:8px;">Track Map — ${allTrackedLabel}</h2>

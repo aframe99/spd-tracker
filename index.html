@@ -612,6 +612,10 @@ firebase.auth().signInAnonymously().then(() => {
 }).catch(err => console.error('Firebase auth error:', err));
 
 const app = {
+escapeHtml(str) {
+    if (str === null || str === undefined) return '';
+    return String(str).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  },
 currentUser: null, userRole: null, currentIncident: null, selectedUnit: null,
   selectedService: null, selectedPoliceType: null, map: null, officerMap: null,
   mapLayers: {}, mapTileLayer: null, currentMapLayer: 'street', gpsWatchId: null,
@@ -2432,8 +2436,8 @@ async initDispatchView(incidentId) {
           const fromCol = isSosEvent ? '#ef4444' : isUnit ? '#4fa3ff' : 'var(--accent-primary)';
           const typeTag = isSosEvent ? '(SOS)' : isUnit ? '(UNIT)' : '(IC)';
           return `<div style="background:${bgCol};border:1px solid ${borderCol};border-radius:4px;padding:8px;margin-bottom:8px;">
-            <div style="font-weight:700;color:${fromCol};font-size:10px;margin-bottom:3px;">${msg.from} ${typeTag}</div>
-            <div style="font-size:11px;color:var(--text-primary);margin-bottom:3px;">${msg.text}</div>
+            <div style="font-weight:700;color:${fromCol};font-size:10px;margin-bottom:3px;">${this.escapeHtml(msg.from)} ${typeTag}</div>
+            <div style="font-size:11px;color:var(--text-primary);margin-bottom:3px;">${this.escapeHtml(msg.text)}</div>
             <div style="font-size:9px;color:var(--text-tertiary);">${time}</div>
           </div>`;
         }).join('');

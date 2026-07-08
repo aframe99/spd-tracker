@@ -1762,14 +1762,14 @@ async manageDraft() {
   displayUnitInfo(unit) {
     if (!unit) { document.getElementById('unit-panel').innerHTML = '<div style="text-align:center;color:var(--text-tertiary);padding:40px 0;font-size:11px;">Select a unit</div>'; return; }
     document.getElementById('unit-panel').innerHTML = `
-      <div class="panel-section"><div class="panel-label">Badge</div><input type="text" class="panel-input" value="${unit.badge}" readonly></div>
-      <div class="panel-section"><div class="panel-label">Name</div><input type="text" class="panel-input" value="${unit.firstName} ${unit.lastName}" readonly></div>
-      <div class="panel-section"><div class="panel-label">Service</div><input type="text" class="panel-input" value="${unit.category}" readonly></div>
-      <div class="panel-section"><div class="panel-label">Department</div><input type="text" class="panel-input" value="${unit.homeDept||''}" readonly></div>
-      <div class="panel-section"><div class="panel-label">Phone</div><input type="text" class="panel-input" value="${unit.cellNumber||''}" readonly></div>
-      <div class="panel-section"><div class="panel-label">Radio</div><input type="text" class="panel-input" value="${unit.radioChannel||''}" readonly></div>
-      <div class="panel-section"><div class="panel-label">Vehicle</div><input type="text" class="panel-input" value="${unit.vehicleInfo||''}" readonly></div>
-      <div class="panel-section"><div class="panel-label">Status</div><input type="text" class="panel-input" value="${unit.status}" readonly></div>
+      <div class="panel-section"><div class="panel-label">Badge</div><input type="text" class="panel-input" value="${this.escapeHtml(unit.badge)}" readonly></div>
+      <div class="panel-section"><div class="panel-label">Name</div><input type="text" class="panel-input" value="${this.escapeHtml(unit.firstName)} ${this.escapeHtml(unit.lastName)}" readonly></div>
+      <div class="panel-section"><div class="panel-label">Service</div><input type="text" class="panel-input" value="${this.escapeHtml(unit.category)}" readonly></div>
+      <div class="panel-section"><div class="panel-label">Department</div><input type="text" class="panel-input" value="${this.escapeHtml(unit.homeDept||'')}" readonly></div>
+      <div class="panel-section"><div class="panel-label">Phone</div><input type="text" class="panel-input" value="${this.escapeHtml(unit.cellNumber||'')}" readonly></div>
+      <div class="panel-section"><div class="panel-label">Radio</div><input type="text" class="panel-input" value="${this.escapeHtml(unit.radioChannel||'')}" readonly></div>
+      <div class="panel-section"><div class="panel-label">Vehicle</div><input type="text" class="panel-input" value="${this.escapeHtml(unit.vehicleInfo||'')}" readonly></div>
+      <div class="panel-section"><div class="panel-label">Status</div><input type="text" class="panel-input" value="${this.escapeHtml(unit.status)}" readonly></div>
       ${unit.status === 'checkedIn' ? `<div class="panel-section"><button class="btn danger" onclick="app.forceCheckOut('${unit.badge}')" style="width:100%;padding:10px;font-size:10px;">FORCE CHECK OUT</button></div>` : ''}
     `;
   },
@@ -2204,12 +2204,12 @@ async exportIncident(includeMap) {
             <div style="display:flex;justify-content:space-between;align-items:start;gap:8px;">
               <div style="flex:1;min-width:0;">
                 ${isLiveFeed ? `<div style="font-size:9px;font-weight:700;color:#f59e0b;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">📺 Live Feed</div>` : ''}
-                <div style="font-weight:600;font-size:12px;color:var(--text-primary);margin-bottom:6px;">${doc.name}</div>
-                <a href="${doc.url}" target="_blank" style="display:inline-block;padding:6px 12px;border-radius:4px;font-size:10px;font-weight:700;text-transform:uppercase;text-decoration:none;letter-spacing:0.5px;${isLiveFeed ? 'background:#f59e0b;color:#000;' : 'background:var(--accent-primary);color:white;'}">${isLiveFeed ? '▶ VIEW LIVE FEED' : '🔗 OPEN'}</a>
+                <div style="font-weight:600;font-size:12px;color:var(--text-primary);margin-bottom:6px;">${this.escapeHtml(doc.name)}</div>
+                <a href="${this.escapeHtml(doc.url)}" target="_blank" style="display:inline-block;padding:6px 12px;border-radius:4px;font-size:10px;font-weight:700;text-transform:uppercase;text-decoration:none;letter-spacing:0.5px;${isLiveFeed ? 'background:#f59e0b;color:#000;' : 'background:var(--accent-primary);color:white;'}">${isLiveFeed ? '▶ VIEW LIVE FEED' : '🔗 OPEN'}</a>
               </div>
               <button class="btn danger" onclick="app.deleteDocument('${id}')" style="padding:4px 8px;font-size:10px;flex-shrink:0;">✕</button>
             </div>
-            <div style="font-size:9px;color:var(--text-tertiary);margin-top:6px;">Added ${new Date(doc.addedAt).toLocaleString()} by ${doc.addedBy}</div>
+            <div style="font-size:9px;color:var(--text-tertiary);margin-top:6px;">Added ${new Date(doc.addedAt).toLocaleString()} by ${this.escapeHtml(doc.addedBy)}</div>
           </div>`;
         }).join('');
     });

@@ -1455,7 +1455,7 @@ async manageDraft() {
       this.incidentMarker = L.marker([incident.gps.lat, incident.gps.lng], {
         icon: L.divIcon({ html: '<div style="background:#f59e0b;color:white;padding:6px 10px;border-radius:4px;font-weight:700;font-size:12px;">INCIDENT</div>', className: 'custom-marker', iconSize: [80, 40] }),
         draggable: !closedInc
-      }).addTo(this.map).bindPopup('<strong>' + incident.name + '</strong><br>' + incident.location);
+      }).addTo(this.map).bindPopup('<strong>' + this.escapeHtml(incident.name) + '</strong><br>' + this.escapeHtml(incident.location));
       if (!closedInc) this.incidentMarker.on('dragend', (e) => { this.updateIncidentLocation(e.target.getLatLng().lat, e.target.getLatLng().lng); });
     }
   },
@@ -1477,14 +1477,14 @@ async manageDraft() {
       this.cpMarker = L.marker([incident.commandPostGps.lat, incident.commandPostGps.lng], {
         icon: L.divIcon({ html: '<div style="background:#2979e8;color:white;padding:4px 8px;border-radius:4px;font-weight:700;font-size:11px;">CP</div>', className: 'custom-marker', iconSize: [35, 30] }),
         draggable: !closedLoc
-      }).addTo(this.map).bindPopup('<strong>Command Post</strong><br>' + incident.commandPost);
+      }).addTo(this.map).bindPopup('<strong>Command Post</strong><br>' + this.escapeHtml(incident.commandPost));
       if (!closedLoc) this.cpMarker.on('dragend', (e) => { this.updateLocationMarkerPosition('commandPost', e.target.getLatLng().lat, e.target.getLatLng().lng); });
     }
     if (incident.stagingAreaGps) {
       this.saMarker = L.marker([incident.stagingAreaGps.lat, incident.stagingAreaGps.lng], {
         icon: L.divIcon({ html: '<div style="background:#4fa3ff;color:white;padding:4px 8px;border-radius:4px;font-weight:700;font-size:11px;white-space:nowrap;">Stage</div>', className: 'custom-marker', iconSize: [50, 30] }),
         draggable: !closedLoc
-      }).addTo(this.map).bindPopup('<strong>Staging Area</strong><br>' + incident.stagingArea);
+      }).addTo(this.map).bindPopup('<strong>Staging Area</strong><br>' + this.escapeHtml(incident.stagingArea));
       if (!closedLoc) this.saMarker.on('dragend', (e) => { this.updateLocationMarkerPosition('stagingArea', e.target.getLatLng().lat, e.target.getLatLng().lng); });
     }
   },
@@ -1577,7 +1577,7 @@ async manageDraft() {
         const barricade = L.marker([marker.lat, marker.lng], {
           icon: L.divIcon({ html: '<div style="font-size:20px;">🚧</div>', className: 'custom-marker', iconSize: [32, 32] }),
           draggable: true
-        }).addTo(this.map).bindPopup(`<strong>Barricade</strong><br>${marker.address}<br><button onclick="app.deleteMarker('${id}')" style="margin-top:8px;padding:4px 8px;background:#ef4444;color:white;border:none;border-radius:4px;cursor:pointer;font-size:10px;">DELETE</button>`);
+        }).addTo(this.map).bindPopup(`<strong>Barricade</strong><br>${this.escapeHtml(marker.address)}<br><button onclick="app.deleteMarker('${id}')" style="margin-top:8px;padding:4px 8px;background:#ef4444;color:white;border:none;border-radius:4px;cursor:pointer;font-size:10px;">DELETE</button>`);
         barricade.on('dragend', (e) => { this.updateBarricadePosition(id, e.target.getLatLng()); });
         this.barricadeMarkers.push(barricade);
       }
@@ -2282,24 +2282,24 @@ async initDispatchView(incidentId) {
         this.dispatchMap.setView([incident.gps.lat, incident.gps.lng], 15);
         this.dispatchIncidentMarker = L.marker([incident.gps.lat, incident.gps.lng], {
           icon: L.divIcon({ html: '<div style="background:#f59e0b;color:white;padding:6px 10px;border-radius:4px;font-weight:700;font-size:12px;">INCIDENT</div>', className: 'custom-marker', iconSize: [80, 34] })
-        }).addTo(this.dispatchMap).bindPopup(`<strong>${incident.name}</strong><br>${incident.location}`);
+        }).addTo(this.dispatchMap).bindPopup(`<strong>${this.escapeHtml(incident.name)}</strong><br>${this.escapeHtml(incident.location)}`);
       }
       if (incident.commandPostGps) {
         this.dispatchCpMarker = L.marker([incident.commandPostGps.lat, incident.commandPostGps.lng], {
           icon: L.divIcon({ html: '<div style="background:#2979e8;color:white;padding:4px 8px;border-radius:4px;font-weight:700;font-size:11px;">CP</div>', className: 'custom-marker', iconSize: [35, 28] })
-        }).addTo(this.dispatchMap).bindPopup(`<strong>Command Post</strong><br>${incident.commandPost}`);
+        }).addTo(this.dispatchMap).bindPopup(`<strong>Command Post</strong><br>${this.escapeHtml(incident.commandPost)}`);
       }
       if (incident.stagingAreaGps) {
         this.dispatchSaMarker = L.marker([incident.stagingAreaGps.lat, incident.stagingAreaGps.lng], {
           icon: L.divIcon({ html: '<div style="background:#4fa3ff;color:white;padding:4px 8px;border-radius:4px;font-weight:700;font-size:11px;">STAGE</div>', className: 'custom-marker', iconSize: [55, 28] })
-        }).addTo(this.dispatchMap).bindPopup(`<strong>Staging Area</strong><br>${incident.stagingArea}`);
+        }).addTo(this.dispatchMap).bindPopup(`<strong>Staging Area</strong><br>${this.escapeHtml(incident.stagingArea)}`);
       }
      const markers = incident.markers || {};
       Object.entries(markers).forEach(([id, marker]) => {
         if (marker.type === 'barricade') {
           const b = L.marker([marker.lat, marker.lng], {
             icon: L.divIcon({ html: '<div style="font-size:20px;">🚧</div>', className: 'custom-marker', iconSize: [32, 32] })
-          }).addTo(this.dispatchMap).bindPopup(`<strong>Barricade</strong><br>${marker.address}`);
+          }).addTo(this.dispatchMap).bindPopup(`<strong>Barricade</strong><br>${this.escapeHtml(marker.address)}`);
           this.dispatchBarricadeMarkers.push(b);
         }
       });

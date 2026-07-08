@@ -2122,30 +2122,30 @@ async exportIncident(includeMap) {
         .header-meta{font-size:12px;color:#444;margin-bottom:16px;}
       </style></head><body>
         <h1>Field Command Incident Summary</h1>
-        <div class="header-meta">Generated: ${new Date().toLocaleString()} &nbsp;|&nbsp; Exported by: ${this.currentUser}</div>
+        <div class="header-meta">Generated: ${new Date().toLocaleString()} &nbsp;|&nbsp; Exported by: ${this.escapeHtml(this.currentUser)}</div>
         <div class="info-box"><h2>Incident Information</h2><table>
           <tr><th>Field</th><th>Value</th></tr>
-          <tr><td>Incident ID</td><td>${incident.id||'N/A'}</td></tr>
-          <tr><td>Name</td><td>${incident.name||'N/A'}</td></tr>
-          <tr><td>Type</td><td>${incident.type||'N/A'}</td></tr>
-          <tr><td>Location</td><td>${incident.location||'N/A'}</td></tr>
-          <tr><td>OIC</td><td>${incident.oic||'N/A'}</td></tr>
-          <tr><td>Command Post</td><td>${incident.commandPost||'N/A'}</td></tr>
-          <tr><td>Staging Area</td><td>${incident.stagingArea||'N/A'}</td></tr>
-          <tr><td>Status</td><td>${incident.status||'N/A'}</td></tr>
+          <tr><td>Incident ID</td><td>${this.escapeHtml(incident.id)||'N/A'}</td></tr>
+          <tr><td>Name</td><td>${this.escapeHtml(incident.name)||'N/A'}</td></tr>
+          <tr><td>Type</td><td>${this.escapeHtml(incident.type)||'N/A'}</td></tr>
+          <tr><td>Location</td><td>${this.escapeHtml(incident.location)||'N/A'}</td></tr>
+          <tr><td>OIC</td><td>${this.escapeHtml(incident.oic)||'N/A'}</td></tr>
+          <tr><td>Command Post</td><td>${this.escapeHtml(incident.commandPost)||'N/A'}</td></tr>
+          <tr><td>Staging Area</td><td>${this.escapeHtml(incident.stagingArea)||'N/A'}</td></tr>
+          <tr><td>Status</td><td>${this.escapeHtml(incident.status)||'N/A'}</td></tr>
           <tr><td>Created</td><td>${new Date(incident.createdAt).toLocaleString()}</td></tr>
         </table></div>
        <div class="info-box"><h2>Unit Log</h2><table>
           <tr><th>Name</th><th>Badge</th><th>Service</th><th>Department</th><th>Checked In</th><th>Checked Out</th></tr>
-          ${Object.entries(units).map(([id,unit])=>`<tr><td>${unit.firstName} ${unit.lastName}</td><td>${unit.badge}</td><td>${(unit.category||'').charAt(0).toUpperCase()+(unit.category||'').slice(1)}</td><td>${unit.homeDept||''}</td><td>${unit.checkedInAt ? new Date(unit.checkedInAt).toLocaleString() : 'N/A'}</td><td>${unit.checkedOutAt ? new Date(unit.checkedOutAt).toLocaleString() : '—'}</td></tr>`).join('')||'<tr><td colspan="6">No units</td></tr>'}
+          ${Object.entries(units).map(([id,unit])=>`<tr><td>${this.escapeHtml(unit.firstName)} ${this.escapeHtml(unit.lastName)}</td><td>${this.escapeHtml(unit.badge)}</td><td>${(unit.category||'').charAt(0).toUpperCase()+(unit.category||'').slice(1)}</td><td>${this.escapeHtml(unit.homeDept||'')}</td><td>${unit.checkedInAt ? new Date(unit.checkedInAt).toLocaleString() : 'N/A'}</td><td>${unit.checkedOutAt ? new Date(unit.checkedOutAt).toLocaleString() : '—'}</td></tr>`).join('')||'<tr><td colspan="6">No units</td></tr>'}
         </table></div>
         <div class="info-box"><h2>Messages</h2><table>
           <tr><th>From</th><th>Message</th><th>Time</th></tr>
-          ${Object.entries(messages).sort((a,b)=>new Date(a[1].timestamp)-new Date(b[1].timestamp)).map(([id,msg])=>`<tr><td>${msg.from}</td><td>${msg.text}</td><td>${new Date(msg.timestamp).toLocaleString()}</td></tr>`).join('')||'<tr><td colspan="3">No messages</td></tr>'}
+          ${Object.entries(messages).sort((a,b)=>new Date(a[1].timestamp)-new Date(b[1].timestamp)).map(([id,msg])=>`<tr><td>${this.escapeHtml(msg.from)}</td><td>${this.escapeHtml(msg.text)}</td><td>${new Date(msg.timestamp).toLocaleString()}</td></tr>`).join('')||'<tr><td colspan="3">No messages</td></tr>'}
         </table></div>
         ${Object.keys(incident.documents||{}).length > 0 ? `<div class="info-box"><h2>Documents &amp; Links</h2><table>
           <tr><th>Name</th><th>Type</th><th>URL</th><th>Added By</th><th>Added At</th></tr>
-          ${Object.entries(incident.documents).sort((a,b)=>new Date(a[1].addedAt)-new Date(b[1].addedAt)).map(([id,doc])=>`<tr><td>${doc.name}</td><td>${doc.type==='livefeed'?'Live Feed':'Document'}</td><td>${doc.url}</td><td>${doc.addedBy}</td><td>${new Date(doc.addedAt).toLocaleString()}</td></tr>`).join('')}
+          ${Object.entries(incident.documents).sort((a,b)=>new Date(a[1].addedAt)-new Date(b[1].addedAt)).map(([id,doc])=>`<tr><td>${this.escapeHtml(doc.name)}</td><td>${doc.type==='livefeed'?'Live Feed':'Document'}</td><td>${this.escapeHtml(doc.url)}</td><td>${this.escapeHtml(doc.addedBy)}</td><td>${new Date(doc.addedAt).toLocaleString()}</td></tr>`).join('')}
         </table></div>` : ''}
         ${colorKeyHtml}
         ${mapPagesHtml}

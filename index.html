@@ -1896,13 +1896,13 @@ getUnitIcon(category, badge, policeType) {
           if (isUnit) { bgColor = 'rgba(41,121,232,0.1)'; borderColor = 'rgba(41,121,232,0.3)'; fromColor = '#4fa3ff'; tag = '(UNIT)'; }
           if (isDirect) { bgColor = 'rgba(168,85,247,0.1)'; borderColor = 'rgba(168,85,247,0.3)'; fromColor = '#a855f7'; tag = '(IC → DIRECT)'; }
           if (isSosEvent) { bgColor = 'rgba(239,68,68,0.1)'; borderColor = 'rgba(239,68,68,0.4)'; fromColor = '#ef4444'; tag = '(SOS)'; }
-         const toLine = isDirect && msg.toName ? `<div style="font-size:9px;color:#a855f7;margin-bottom:3px;">→ ${msg.toName}</div>` : '';
+         const toLine = isDirect && msg.toName ? `<div style="font-size:9px;color:#a855f7;margin-bottom:3px;">→ ${this.escapeHtml(msg.toName)}</div>` : '';
           const readReceipt = isDirect
             ? (msg.readBy && msg.to && msg.readBy[msg.to]
               ? `<div style="font-size:9px;color:#10b981;margin-top:4px;">✓ Seen ${new Date(msg.readBy[msg.to]).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>`
               : `<div style="font-size:9px;color:#6b7a8f;margin-top:4px;">⏳ Unread</div>`)
             : '';
-          return `<div style="background:${bgColor};border:1px solid ${borderColor};border-radius:4px;padding:8px;margin-bottom:8px;"><div style="font-weight:700;color:${fromColor};font-size:10px;margin-bottom:3px;">${msg.from} ${tag}</div>${toLine}<div style="font-size:11px;color:var(--text-primary);margin-bottom:3px;">${msg.text}</div><div style="font-size:9px;color:var(--text-tertiary);">${time}</div>${readReceipt}</div>`;
+          return `<div style="background:${bgColor};border:1px solid ${borderColor};border-radius:4px;padding:8px;margin-bottom:8px;"><div style="font-weight:700;color:${fromColor};font-size:10px;margin-bottom:3px;">${this.escapeHtml(msg.from)} ${tag}</div>${toLine}<div style="font-size:11px;color:var(--text-primary);margin-bottom:3px;">${this.escapeHtml(msg.text)}</div><div style="font-size:9px;color:var(--text-tertiary);">${time}</div>${readReceipt}</div>`;
         }).join('');
     });
   },

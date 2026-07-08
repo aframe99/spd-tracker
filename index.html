@@ -985,16 +985,39 @@ currentUser: null, userRole: null, currentIncident: null, selectedUnit: null,
   async toggleOfficerStatus(username, currentStatus) {
     const newStatus = currentStatus === 'active' ? 'inactive' : 'active';
     if (!confirm(`${newStatus === 'inactive' ? 'Deactivate' : 'Activate'} account for ${username}?`)) return;
-    try { await db.ref(`officers/${username}/status`).set(newStatus); this.loadOfficerAccounts(); }
-    catch (err) { alert('Error: ' + err.message); }
+    try {
+      await db.ref(`officers/${username}/status`).set(newStatus);
+      const idToken = await firebase.auth().currentUser.getIdToken();
+      const res = await fetch('https://us-central1-shrewsbury-pd-track.cloudfunctions.net/setOfficerAuthStatus', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + idToken },
+        body: JSON.stringify({ targetUid: username, disabled: newStatus === 'inactive' })
+      });
+      const data = await res.json();
+      if (data.error) {
+        alert('Database updated, but login access change failed: ' + data.error + '\n\nThe officer\'s status shows correctly, but you may need to manually disable their login in Firebase Console → Authentication.');
+      }
+      this.loadOfficerAccounts();
+    } catch (err) { alert('Error: ' + err.message); }
   },
 
   async deleteOfficerAccount(uid) {
     const snap = await db.ref(`officers/${uid}`).once('value');
     const officer = snap.val();
     const displayName = officer ? `${officer.firstName} ${officer.lastName}` : uid;
-    if (!confirm(`Permanently delete ${displayName} from FieldCommand?\n\nNote: You must also delete their account in Firebase Console → Authentication → Users to allow re-invitation with the same email.`)) return;
+    if (!confirm(`Permanently delete ${displayName} from FieldCommand? This will also immediately revoke their login.`)) return;
     try {
+      const idToken = await firebase.auth().currentUser.getIdToken();
+      const res = await fetch('https://us-central1-shrewsbury-pd-track.cloudfunctions.net/deleteOfficerAuthAccount', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + idToken },
+        body: JSON.stringify({ targetUid: uid })
+      });
+      const data = await res.json();
+      if (data.error) {
+        alert('Login could not be revoked: ' + data.error + '\n\nThe database record was NOT deleted either, to avoid orphaning the login. Please investigate before retrying.');
+        return;
+      }
       await db.ref(`officers/${uid}`).remove();
       this.loadOfficerAccounts();
     } catch (err) { alert('Error: ' + err.message); }

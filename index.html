@@ -984,7 +984,10 @@ currentUser: null, userRole: null, currentIncident: null, selectedUnit: null,
 
   async toggleOfficerStatus(username, currentStatus) {
     const newStatus = currentStatus === 'active' ? 'inactive' : 'active';
-    if (!confirm(`${newStatus === 'inactive' ? 'Deactivate' : 'Activate'} account for ${username}?`)) return;
+    const officerSnap = await db.ref(`officers/${username}`).once('value');
+    const officer = officerSnap.val();
+    const displayLabel = officer ? `${officer.firstName} ${officer.lastName} (${officer.email})` : username;
+    if (!confirm(`${newStatus === 'inactive' ? 'Deactivate' : 'Activate'} account for ${displayLabel}?`)) return;
     try {
       await db.ref(`officers/${username}/status`).set(newStatus);
       const idToken = await firebase.auth().currentUser.getIdToken();

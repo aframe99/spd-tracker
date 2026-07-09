@@ -237,6 +237,7 @@
       <button class="btn primary" onclick="app.showAdminPanel('officers')" style="width:100%;font-size:11px;padding:10px;margin-bottom:8px;">OFFICER ACCOUNTS</button>
       <button class="btn primary" onclick="app.showAdminPanel('invite-officer')" style="width:100%;font-size:11px;padding:10px;margin-bottom:8px;">+ INVITE OFFICER</button>
       <button class="btn primary" onclick="app.showAdminPanel('invite-user')" style="width:100%;font-size:11px;padding:10px;margin-bottom:8px;">+ INVITE ADMIN/IC USER</button>
+      <button class="btn" onclick="app.openPurgePanel()" style="width:100%;font-size:11px;padding:10px;">🗑️ PURGE OLD INCIDENTS</button>
     </div>
   </div>
   <div style="flex:1;display:flex;flex-direction:column;background:var(--bg-primary);overflow:auto;">
@@ -317,7 +318,7 @@
     <div class="sidebar-section">
      <div class="sidebar-section-title" style="color:#ef4444;">Closed Incidents</div>
       <select id="closed-incident-selector" class="form-select" onchange="app.viewClosedIncident()" style="font-size:11px;border-color:#ef4444;"><option value="">-- VIEW CLOSED --</option></select>
-      <button class="btn" onclick="app.openPurgePanel()" style="width:100%;font-size:10px;padding:8px;margin-top:8px;">🗑️ PURGE OLD INCIDENTS</button>
+      
     </div>
     <div class="sidebar-section">
       <button class="btn primary" onclick="app.toggleCreateIncident()" style="width:100%;font-size:11px;padding:10px;">+ NEW INCIDENT</button>

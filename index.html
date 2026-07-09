@@ -124,10 +124,9 @@
       </div>
       <div class="form-group">
         <label class="form-label">Password</label>
-        <input type="password" id="login-password" class="form-input" placeholder="Enter password" onkeypress="if(event.key==='Enter') app.login('ic')">
+        <input type="password" id="login-password" class="form-input" placeholder="Enter password" onkeypress="if(event.key==='Enter') app.login()">
       </div>
-      <button class="btn primary" onclick="app.login('ic')" style="width:100%;padding:16px;font-size:13px;margin-bottom:12px;">IC LOGIN</button>
-      <button class="btn" onclick="app.login('admin')" style="width:100%;padding:16px;font-size:13px;">ADMIN LOGIN</button>
+      <button class="btn primary" onclick="app.login()" style="width:100%;padding:16px;font-size:13px;">LOGIN</button>
     </div>
   </div>
 </div>
@@ -676,7 +675,7 @@ currentUser: null, userRole: null, currentIncident: null, selectedUnit: null,
     document.getElementById(screenId).classList.add('active');
   },
 
- async login(role) {
+ async login() {
     const username = document.getElementById('login-username').value.trim();
     const password = document.getElementById('login-password').value.trim();
     if (!username || !password) { alert('Please enter username and password'); return; }
@@ -716,20 +715,26 @@ currentUser: null, userRole: null, currentIncident: null, selectedUnit: null,
       }
     }
 
-    // EXISTING legacy path — unchanged, kept as fallback for old accounts
+    // EXISTING legacy path — kept as fallback for old accounts, now checks both admin and IC without needing a button choice
     if (!firebase.auth().currentUser) {
       try { await firebase.auth().signInAnonymously(); } catch(e) { console.warn('Auth unavailable, proceeding anyway:', e.message); }
     }
     try {
-     
-      const path = role === 'admin' ? 'admins' : 'ics';
-      const snap = await db.ref(`${path}/${username}`).once('value');
-      const account = snap.val();
-      if (account && account.password === password) {
-        this.currentUser = username; this.userRole = role;
-        if (role === 'admin') { this.showScreen('admin-dashboard'); this.loadICAccounts(); }
-        else { this.showScreen('ic-dashboard'); this.initICDashboard(); }
-      } else { alert('Invalid credentials'); }
+      const adminSnap = await db.ref(`admins/${username}`).once('value');
+      const adminAccount = adminSnap.val();
+      if (adminAccount && adminAccount.password === password) {
+        this.currentUser = username; this.userRole = 'admin';
+        this.showScreen('admin-dashboard'); this.loadICAccounts();
+        return;
+      }
+      const icSnap = await db.ref(`ics/${username}`).once('value');
+      const icAccount = icSnap.val();
+      if (icAccount && icAccount.password === password) {
+        this.currentUser = username; this.userRole = 'ic';
+        this.showScreen('ic-dashboard'); this.initICDashboard();
+        return;
+      }
+      alert('Invalid credentials');
     } catch (err) { alert('Error: ' + err.message); }
   },
 

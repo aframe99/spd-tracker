@@ -600,7 +600,8 @@
   <div class="modal-content">
     <div class="modal-title">Select or Create Incident</div>
     <div id="incident-startup-list" style="margin-bottom:20px;"><div style="text-align:center;color:var(--text-tertiary);padding:20px;">Loading...</div></div>
-    <button class="btn primary" onclick="app.createNewIncidentPrompt()" style="width:100%;padding:12px;">+ CREATE NEW</button>
+    <button class="btn primary" onclick="app.createNewIncidentPrompt()" style="width:100%;padding:12px;margin-bottom:8px;">+ CREATE NEW</button>
+    <button class="btn" onclick="document.getElementById('incident-startup-modal').classList.remove('open')" style="width:100%;padding:12px;">SKIP — BROWSE EXISTING / CLOSED INCIDENTS</button>
   </div>
 </div>
 

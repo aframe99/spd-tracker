@@ -317,6 +317,7 @@
     <div class="sidebar-section">
      <div class="sidebar-section-title" style="color:#ef4444;">Closed Incidents</div>
       <select id="closed-incident-selector" class="form-select" onchange="app.viewClosedIncident()" style="font-size:11px;border-color:#ef4444;"><option value="">-- VIEW CLOSED --</option></select>
+      <button class="btn" onclick="app.openPurgePanel()" style="width:100%;font-size:10px;padding:8px;margin-top:8px;">🗑️ PURGE OLD INCIDENTS</button>
     </div>
     <div class="sidebar-section">
       <button class="btn primary" onclick="app.toggleCreateIncident()" style="width:100%;font-size:11px;padding:10px;">+ NEW INCIDENT</button>
@@ -581,6 +582,16 @@
       <button class="btn primary" onclick="app.createIncident('active')" style="padding:12px;">CREATE & ACTIVATE</button>
       <button class="btn" onclick="app.toggleCreateIncident()" style="padding:12px;">CANCEL</button>
     </div>
+  </div>
+</div>
+
+<!-- PURGE OLD INCIDENTS MODAL -->
+<div class="modal" id="purge-incidents-modal">
+  <div class="modal-content" style="max-width:700px;">
+    <div class="modal-title">Purge Old Incidents</div>
+    <div style="font-size:11px;color:var(--text-tertiary);margin-bottom:16px;">Closed incidents older than 1 year. Download a copy first if you want to keep a record — deletion is permanent and cannot be undone.</div>
+    <div id="purge-incidents-list" style="max-height:400px;overflow-y:auto;"><div style="text-align:center;color:var(--text-tertiary);padding:20px;">Loading...</div></div>
+    <button class="btn" onclick="document.getElementById('purge-incidents-modal').classList.remove('open')" style="width:100%;padding:12px;margin-top:16px;">CLOSE</button>
   </div>
 </div>
 
@@ -1248,6 +1259,50 @@ currentUser: null, userRole: null, currentIncident: null, selectedUnit: null,
   },
 
   createNewIncidentPrompt() { document.getElementById('incident-startup-modal').classList.remove('open'); this.toggleCreateIncident(); },
+
+  async openPurgePanel() {
+    document.getElementById('purge-incidents-modal').classList.add('open');
+    const list = document.getElementById('purge-incidents-list');
+    list.innerHTML = '<div style="text-align:center;color:var(--text-tertiary);padding:20px;">Loading...</div>';
+    try {
+      const snap = await db.ref('incidents').once('value');
+      const incidents = snap.val() || {};
+      const oneYearAgo = Date.now() - (365 * 24 * 60 * 60 * 1000);
+      const eligible = Object.entries(incidents).filter(([id, inc]) => {
+        return inc.status === 'closed' && inc.closedAt && new Date(inc.closedAt).getTime() < oneYearAgo;
+      }).sort((a, b) => new Date(a[1].closedAt) - new Date(b[1].closedAt));
+
+      if (eligible.length === 0) {
+        list.innerHTML = '<div style="text-align:center;color:var(--text-tertiary);padding:20px;">No incidents older than 1 year.</div>';
+        return;
+      }
+
+      list.innerHTML = eligible.map(([id, inc]) => `
+        <div style="background:var(--bg-tertiary);border:1px solid var(--border-color);border-radius:6px;padding:14px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;gap:12px;">
+          <div>
+            <div style="font-weight:700;color:var(--text-primary);font-size:13px;">${this.escapeHtml(inc.id)} — ${this.escapeHtml(inc.name)}</div>
+            <div style="font-size:10px;color:var(--text-tertiary);margin-top:4px;">Closed: ${new Date(inc.closedAt).toLocaleDateString()}</div>
+          </div>
+          <div style="display:flex;gap:8px;flex-shrink:0;">
+            <button class="btn primary" onclick="app.exportIncident(false, '${id}')" style="padding:8px 12px;font-size:10px;">DOWNLOAD PDF</button>
+            <button class="btn danger" onclick="app.deletePurgedIncident('${id}')" style="padding:8px 12px;font-size:10px;">DELETE</button>
+          </div>
+        </div>`).join('');
+    } catch (err) {
+      list.innerHTML = `<div style="color:var(--danger);padding:20px;">Error loading incidents: ${err.message}</div>`;
+    }
+  },
+
+  async deletePurgedIncident(incidentId) {
+    if (!confirm(`Permanently delete incident ${incidentId}?\n\nMake sure you've downloaded a PDF copy first if you want to keep a record. This cannot be undone.`)) return;
+    try {
+      await db.ref(`incidents/${incidentId}`).remove();
+      this.openPurgePanel(); // refresh the list
+      this.loadIncidents(); // refresh sidebar dropdowns too
+    } catch (err) {
+      alert('Error deleting incident: ' + err.message);
+    }
+  },
  toggleCreateIncident() {
     const modal = document.getElementById('create-incident-modal');
     modal.classList.toggle('open');
@@ -2073,10 +2128,11 @@ updateTrackingList() {
     });
   },
 
-async exportIncident(includeMap) {
-    if (!this.currentIncident) { alert('Select an incident first'); return; }
+async exportIncident(includeMap, incidentIdOverride) {
+    const targetIncidentId = incidentIdOverride || this.currentIncident;
+    if (!targetIncidentId) { alert('Select an incident first'); return; }
     try {
-      const snap = await db.ref(`incidents/${this.currentIncident}`).once('value');
+      const snap = await db.ref(`incidents/${targetIncidentId}`).once('value');
       const incident = snap.val();
       if (!incident) { alert('Incident not found'); return; }
       const units = incident.units || {};
@@ -2092,7 +2148,7 @@ async exportIncident(includeMap) {
 
       // Build map screenshot pages if includeMap
       let mapPagesHtml = '';
-      if (includeMap && this.map) {
+      if (includeMap && this.map && !incidentIdOverride) {
         try {
           // Use html2canvas directly on the map container
           const mapContainer = this.map.getContainer();

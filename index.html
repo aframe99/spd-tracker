@@ -236,6 +236,7 @@
       <button class="btn primary" onclick="app.showAdminPanel('officers')" style="width:100%;font-size:11px;padding:10px;margin-bottom:8px;">OFFICER ACCOUNTS</button>
       <button class="btn primary" onclick="app.showAdminPanel('invite-officer')" style="width:100%;font-size:11px;padding:10px;margin-bottom:8px;">+ INVITE OFFICER</button>
       <button class="btn primary" onclick="app.showAdminPanel('invite-user')" style="width:100%;font-size:11px;padding:10px;margin-bottom:8px;">+ INVITE ADMIN/IC USER</button>
+      <button class="btn primary" onclick="app.showAdminPanel('users')" style="width:100%;font-size:11px;padding:10px;margin-bottom:8px;">ADMIN/IC ACCOUNTS</button>
       <button class="btn" onclick="app.openPurgePanel()" style="width:100%;font-size:11px;padding:10px;">🗑️ PURGE OLD INCIDENTS</button>
     </div>
   </div>
@@ -247,6 +248,10 @@
     <div id="admin-officers-panel" style="display:none;flex:1;overflow-y:auto;padding:20px;">
       <div style="font-size:16px;font-weight:700;margin-bottom:20px;color:var(--text-primary);">Officer Accounts</div>
       <div id="officer-accounts-list" style="display:flex;flex-direction:column;gap:12px;"><div style="text-align:center;color:var(--text-tertiary);padding:40px 20px;">Loading...</div></div>
+    </div>
+    <div id="admin-users-panel" style="display:none;flex:1;overflow-y:auto;padding:20px;">
+      <div style="font-size:16px;font-weight:700;margin-bottom:20px;color:var(--text-primary);">Admin/IC Accounts</div>
+      <div id="admin-users-list" style="display:flex;flex-direction:column;gap:12px;"><div style="text-align:center;color:var(--text-tertiary);padding:40px 20px;">Loading...</div></div>
     </div>
     <div id="admin-invite-user-panel" style="display:none;flex:1;overflow-y:auto;padding:20px;">
       <div style="font-size:16px;font-weight:700;margin-bottom:20px;color:var(--text-primary);">Invite Admin/IC User</div>
@@ -821,11 +826,13 @@ currentUser: null, userRole: null, currentIncident: null, selectedUnit: null,
     document.getElementById('admin-officers-panel').style.display = panel === 'officers' ? 'block' : 'none';
     document.getElementById('admin-invite-officer-panel').style.display = panel === 'invite-officer' ? 'block' : 'none';
     document.getElementById('admin-invite-user-panel').style.display = panel === 'invite-user' ? 'block' : 'none';
+    document.getElementById('admin-users-panel').style.display = panel === 'users' ? 'block' : 'none';
     if (panel === 'list') {
       this.loadICAccounts();
       ['admin-new-username','admin-new-fullname','admin-new-password','admin-new-password-confirm'].forEach(id => { document.getElementById(id).value = ''; });
     }
     if (panel === 'officers') this.loadOfficerAccounts();
+    if (panel === 'users') this.loadAdminUsers();
     if (panel === 'invite-officer') {
       ['officer-new-email','officer-new-firstname','officer-new-lastname','officer-new-badge'].forEach(id => { document.getElementById(id).value = ''; });
       document.getElementById('officer-new-dept').value = 'Shrewsbury Police';
@@ -1045,6 +1052,93 @@ currentUser: null, userRole: null, currentIncident: null, selectedUnit: null,
       }
       await db.ref(`officers/${uid}`).remove();
       this.loadOfficerAccounts();
+    } catch (err) { alert('Error: ' + err.message); }
+  },
+
+  async loadAdminUsers() {
+    try {
+      const snap = await db.ref('users').once('value');
+      const users = snap.val() || {};
+      const list = document.getElementById('admin-users-list');
+      if (Object.keys(users).length === 0) { list.innerHTML = '<div style="text-align:center;color:var(--text-tertiary);padding:40px 20px;">No admin/IC accounts yet</div>'; return; }
+      list.innerHTML = Object.entries(users).map(([uid, u]) => `
+        <div style="background:var(--bg-secondary);border:1px solid var(--border-color);border-radius:6px;padding:15px;">
+          <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:10px;">
+            <div>
+              <div style="font-weight:700;color:var(--text-primary);font-size:13px;">${u.fullName}</div>
+              <div style="color:var(--text-tertiary);font-size:11px;margin-top:2px;">${u.email}</div>
+              <div style="margin-top:6px;display:flex;gap:6px;">
+                ${u.permissions && u.permissions.admin ? '<span style="background:rgba(41,121,232,0.2);color:#2979e8;padding:2px 8px;border-radius:3px;font-size:10px;font-weight:700;">ADMIN</span>' : ''}
+                ${u.permissions && u.permissions.ic ? '<span style="background:rgba(16,185,129,0.2);color:var(--success);padding:2px 8px;border-radius:3px;font-size:10px;font-weight:700;">IC</span>' : ''}
+                <span style="background:${u.status==='active'?'rgba(16,185,129,0.2)':'rgba(239,68,68,0.2)'};color:${u.status==='active'?'var(--success)':'var(--danger)'};padding:2px 8px;border-radius:3px;font-size:10px;font-weight:700;">${(u.status||'active').toUpperCase()}</span>
+              </div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:6px;">
+              <button class="btn" onclick="app.resetUserPassword('${uid}','${u.email}')" style="padding:6px 10px;font-size:10px;">RESET PW</button>
+              <button class="btn ${u.status==='active'?'danger':''}" onclick="app.toggleUserStatus('${uid}','${u.status}')" style="padding:6px 10px;font-size:10px;">${u.status==='active'?'DEACTIVATE':'ACTIVATE'}</button>
+              <button class="btn danger" onclick="app.deleteUserAccount('${uid}')" style="padding:6px 10px;font-size:10px;">DELETE</button>
+            </div>
+          </div>
+          <div style="color:var(--text-secondary);font-size:10px;">Created: ${new Date(u.createdAt).toLocaleDateString()}</div>
+        </div>`).join('');
+    } catch (err) { console.error('Error loading admin/IC accounts:', err); }
+  },
+
+  async resetUserPassword(uid, email) {
+    if (!confirm(`Send a password reset email to ${email}?`)) return;
+    try {
+      const res = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:sendOobCode?key=${firebaseConfig.apiKey}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ requestType: 'PASSWORD_RESET', email })
+      });
+      const data = await res.json();
+      if (data.error) { alert('Error: ' + data.error.message); return; }
+      alert(`Password reset email sent to ${email}`);
+    } catch (err) { alert('Error: ' + err.message); }
+  },
+
+  async toggleUserStatus(uid, currentStatus) {
+    const newStatus = currentStatus === 'active' ? 'inactive' : 'active';
+    const userSnap = await db.ref(`users/${uid}`).once('value');
+    const u = userSnap.val();
+    const displayLabel = u ? `${u.fullName} (${u.email})` : uid;
+    if (!confirm(`${newStatus === 'inactive' ? 'Deactivate' : 'Activate'} account for ${displayLabel}?`)) return;
+    try {
+      await db.ref(`users/${uid}/status`).set(newStatus);
+      const idToken = await firebase.auth().currentUser.getIdToken();
+      const res = await fetch('https://us-central1-shrewsbury-pd-track.cloudfunctions.net/setOfficerAuthStatus', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + idToken },
+        body: JSON.stringify({ targetUid: uid, disabled: newStatus === 'inactive' })
+      });
+      const data = await res.json();
+      if (data.error) {
+        alert('Database updated, but login access change failed: ' + data.error + '\n\nThe account\'s status shows correctly, but you may need to manually disable their login in Firebase Console → Authentication.');
+      }
+      this.loadAdminUsers();
+    } catch (err) { alert('Error: ' + err.message); }
+  },
+
+  async deleteUserAccount(uid) {
+    const snap = await db.ref(`users/${uid}`).once('value');
+    const u = snap.val();
+    const displayName = u ? u.fullName : uid;
+    if (!confirm(`Permanently delete ${displayName} from FieldCommand? This will also immediately revoke their login.`)) return;
+    try {
+      const idToken = await firebase.auth().currentUser.getIdToken();
+      const res = await fetch('https://us-central1-shrewsbury-pd-track.cloudfunctions.net/deleteOfficerAuthAccount', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + idToken },
+        body: JSON.stringify({ targetUid: uid })
+      });
+      const data = await res.json();
+      if (data.error) {
+        alert('Login could not be revoked: ' + data.error + '\n\nThe database record was NOT deleted either, to avoid orphaning the login. Please investigate before retrying.');
+        return;
+      }
+      await db.ref(`users/${uid}`).remove();
+      this.loadAdminUsers();
     } catch (err) { alert('Error: ' + err.message); }
   },
 
